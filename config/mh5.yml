@@ -1,0 +1,96 @@
+inits:
+  common:
+    9: [1, 0]      # return delay time
+    10: [1, 0]     # drive mode
+    11: [1, 3]     # operating mode
+    24: [4, 10]    # moving threshold
+    31: [1, 75]    # temperature limit
+    32: [2, 140]   # max voltage
+    44: [4, 1023]  # velocity limit
+    48: [4, 4095]  # max position
+    52: [4, 0]      # min position
+
+upper_bus:
+  port: '/dev/ttySC0'
+  baud_rate: 1000000
+  # processing every:
+  read_pvl: 1.0
+  write_pvl: 1.0
+  read_tv: 100.0
+  devices:
+    head_p: 
+      id: 52
+      inits: [common]
+    head_y:
+      id: 51
+      inits: [common]
+    l_sho_p:
+      id: 34
+      inits: [common]
+    l_sho_r:
+      id: 33
+      inits: [common]
+    l_elb_y:
+      id: 32
+      inits: [common]
+    l_elb_p:
+      id: 31
+      inits: [common]
+    r_sho_p:
+      id: 44
+      inits: [common]
+    r_sho_r:
+      id: 43
+      inits: [common]
+    r_elb_y:
+      id: 42
+      inits: [common]
+    r_elb_p:
+      id: 41
+      inits: [common]
+
+
+lower_bus:
+  port: '/dev/ttySC1'
+  baud_rate: 1000000
+  # processing every:
+  read_pvl: 1.0
+  write_pvl: 1.0
+  read_tv: 100.0
+  devices:
+    l_ank_r:
+      id: 11
+      inits: [common]
+    l_ank_p:
+      id: 12
+      inits: [common]
+    l_kne_p:
+      id: 13
+      inits: [common]
+    l_hip_r:
+      id: 14
+      inits: [common]
+    l_hip_p:
+      id: 15
+      inits: [common]
+    l_hip_y:
+      id: 16
+      inits: [common]
+    r_ank_r:
+      id: 21
+      inits: [common]
+    r_ank_p:
+      id: 22
+      inits: [common]
+    r_kne_p:
+      id: 23
+      inits: [common]
+    r_hip_r:
+      id: 24
+      inits: [common]
+    r_hip_p:
+      id: 25
+      inits: [common]
+    r_hip_y:
+      id: 26
+      inits: [common]

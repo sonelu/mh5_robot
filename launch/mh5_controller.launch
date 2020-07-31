@@ -1,0 +1,13 @@
+<?xml version="1.0" ?>
+<launch>        
+    <!-- Controllers -->
+    <node pkg="mh5_robot" type="dynamixel_controller.py" name="upper_body_controller" output="screen">
+        <param name="config_file" value="$(find mh5_robot)/config/mh5.yml" />
+        <param name="bus" value="upper_bus" />
+    </node>
+    <node pkg="mh5_robot" type="dynamixel_controller.py" name="lower_body_controller" output="screen">
+        <param name="config_file" value="$(find mh5_robot)/config/mh5.yml" />
+        <param name="bus" value="lower_bus" />
+    </node>
+
+</launch>
