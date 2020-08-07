@@ -274,11 +274,11 @@ class DynamixelController():
         for dev_info in self.devices.values():
             res, err = func(self.port, dev_info['id'], reg_number, value)
             if res != 0:
-                rospy.logwarn(
+                rospy.loginfo(
                     f'Error writing register {reg_number} '
                     f'of device {dev_info["id"]} '
                     f'with value {value}')
-                rospy.logwarn(f'Error returned: {self.ph.getTxRxResult(err)}')
+                rospy.loginfo(f'Error returned: {self.ph.getTxRxResult(err)}')
 
     def torque_off(self):
         self.send_all(reg_number=64, reg_len=1, value=0)
@@ -302,7 +302,7 @@ class DynamixelController():
             if 'inits' in dev_info:
                 for init in dev_info['inits']:
                     if init not in self.inits:
-                        rospy.logwarn(
+                        rospy.loginfo(
                             f'Init {init} specified for device {name} '
                             f'does not exist. Will be ignored.')
                     else:
@@ -317,7 +317,7 @@ class DynamixelController():
         if rospy.has_param(param):
             return rospy.get_param(param)
         if default is not None:
-            rospy.logwarn(f'Default value {default} will be used for '
+            rospy.loginfo(f'Default value {default} will be used for '
                           f'ROS parameter {param}')
             return default
         rospy.logfatal(f'Parameter {param} not supplied '
@@ -328,7 +328,7 @@ class DynamixelController():
         if key in params:
             return params[key]
         if default is not None:
-            rospy.logwarn(f'Default value {default} will be used for '
+            rospy.loginfo(f'Default value {default} will be used for '
                           f'config parameter {key}')
             return default
         rospy.logfatal(f'Parameter {key} mising in configuration file '

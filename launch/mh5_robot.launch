@@ -10,6 +10,8 @@
         <param name="bus" value="lower_bus" />
     </node>
     <!-- UI -->
+    <!-- Warning: do not remove outpput="screen". It is needed so that the 
+         UI is shown on the TTY -->
     <node pkg="mh5_robot" type="mh5_ui.py" name="ui" output="screen">
         <param name="rate" value="10" />
     </node>
