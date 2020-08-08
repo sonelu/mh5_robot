@@ -1,21 +1,14 @@
 #!/usr/bin/env python
 
-from snack import SnackScreen, GridForm, Textbox, Listbox, Scale, Label
-import rospy
-from sensor_msgs.msg import Temperature, BatteryState
-from sensor_msgs.msg import JointState
 import statistics
+import subprocess
+
+import rospy
+from sensor_msgs.msg import BatteryState, JointState, Temperature
+from snack import Grid, GridForm, Label, Listbox, Scale, SnackScreen, Textbox
 
 
 class MainUI():
-
-    MAX_VOLTAGE = 3 * 4.2      # voltage for 100% charge battery
-    MIN_VOLTAGE = 3 * 3.0      # voltage for 0% charge battery
-    RANGE_VOLTAGE = MAX_VOLTAGE - MIN_VOLTAGE
-
-    MIN_TEMPERATURE = 25.0       # 25 deg Celsius
-    MAX_TEMPERATURE = 80.0       # 80 deg Celsius
-    RANGE_TEMPERATURE = MAX_TEMPERATURE - MIN_TEMPERATURE
     
     def __init__(self, update_frequency=10):
         # refresh period in mili-seconds
@@ -26,7 +19,7 @@ class MainUI():
         self.w = self.screen.width
         self.h = self.screen.height
         # main window
-        self.view = JointView(self.screen, self.period, self.hot_keys)
+        self.view = RobotStatusView(self.screen, self.period, self.hot_keys, 'Robot Status')
         # self.grid = GridForm(self.screen, 'Title', 1, 1)
         # self.content = Textbox(20, 2,
         #                        text='Default text for the main UI', wrap=1)
@@ -209,6 +202,157 @@ class JointView(View):
         self.js_subsr.unregister()
         self.jt_subsr.unregister()
         self.jv_subsr.unregister()
+
+
+class NameValueScale():
+
+    def __init__(self, name, unit, grid, row, widths, min_val, max_val):
+        self.unit = unit
+        self.name = Textbox(widths[0], 1, name)
+        grid.setField(self.name, 0, row)
+        self.value = Textbox(widths[1], 1, '')
+        grid.setField(self.value, 1, row)
+        self.min_val = min_val
+        self.max_val = max_val
+        self.range_val = self.max_val - self.min_val
+        self.scale = Scale(widths[2], int(self.range_val * 100))
+        grid.setField(self.scale, 2, row)
+
+    def update_value(self, value):
+        self.value.setText(f'{value:4.1f}{self.unit}')
+        self.scale.set(int((value -self.min_val)*100))
+
+class NameStatValue():
+
+    def __init__(self, name, unit, grid, row, widths):
+        self.unit = unit
+        self.name = Textbox(widths[0], 1, name)
+        grid.setField(self.name, 0, row)
+        self.stat = Textbox(widths[1], 1, '')
+        grid.setField(self.stat, 1, row)
+        self.value = Textbox(widths[2], 1, '')
+        grid.setField(self.value, 2, row)
+
+    def update_value(self, stat, value=''):
+        self.stat.setText(f'{stat:>4s}{self.unit}')
+        self.value.setText(value)
+
+
+class RobotStatusView(View):
+
+    def __init__(self, screen, timer, master_hotkeys, title='Joint State'):
+        super().__init__(screen, timer, master_hotkeys, title)
+        self.grid.setTimer(1000)
+
+    def create_content(self):
+        grid = Grid(3,17)
+        w = [16, 6, 14]         # widths for columns
+        row = 0                 # current row
+        # Voltage
+        grid.setField(Label('Voltage'), 0, row)
+        row += 1
+        self.battery = NameValueScale('Battery', 'V', grid, row, w, 9.0, 12.6)
+        self.battery.update_value(12.2)
+        row += 1
+        self.rpi5v = NameStatValue('5V rail', 'V', grid, row, w)
+        self.rpi5v.update_value('5.0')
+        row += 1
+        self.rpi3v = NameStatValue('3.3V rail', 'V', grid, row, w)
+        self.rpi3v.update_value('3.2')
+        row += 1
+        grid.setField(Label(''), 0, row)
+        # Temperature
+        row += 1
+        grid.setField(Label('Temperature'), 0, row)
+        row += 1
+        self.temp = NameValueScale('RPi temperature', '°', grid, row, w, 25.0, 85.0)
+        self.temp.update_value(45.0)
+        row += 1
+        self.fan = NameStatValue('Fan', '', grid, row, w)
+        self.fan.update_value('Off')
+        row += 1
+        grid.setField(Label(''), 0, row)
+        # CPU
+        row += 1
+        grid.setField(Label('CPU'), 0, row)
+        row += 1
+        self.cpu_load = NameValueScale('Load', '', grid, row, w, 0.0, 4.0)
+        self.cpu_load.update_value(2.5)
+        row += 1
+        max_mem_str = self.shell_cmd('cat /proc/meminfo | grep MemTotal')
+        self.max_mem = int(max_mem_str.split()[1]) / 1000000.0
+        self.cpu_mem = NameValueScale('Memory', '', grid, row, w, 0.0, self.max_mem)
+        self.cpu_mem.update_value(0.0)
+        row += 1
+        grid.setField(Label(''), 0, row)
+        # WiFi
+        row += 1
+        grid.setField(Label('Wi-Fi'), 0, row)
+        row += 1
+        # get the interface name from AP config
+        ap_config = self.shell_cmd('cat /etc/hostapd/hostapd.conf | grep interface')
+        self.ap_interf = ap_config.strip().split('=')[1]
+        self.ap_stat = NameStatValue('AP', '', grid, row, w)
+        self.ap_stat.update_value('', '')
+        row += 1
+        nets = self.shell_cmd('ls /sys/class/net/ | grep wl*').split('\n')
+        nets.remove(self.ap_interf)
+        if nets:
+            self.wf_interf = nets[0]
+        else:
+            self.wf_interf = ''
+        self.wf_stat = NameStatValue('WAN', '', grid, row, w)
+        self.wf_stat.update_value('On', '')
+        row += 1
+        self.eth_stat = NameStatValue('Eth', '', grid, row, w)
+        self.eth_stat.update_value('', '')
+        # row += 1
+        # grid.setField(Label(''), 0, row)
+        return grid
+
+    def shell_cmd(self, command):
+        comm= subprocess.run(command, shell=True, stdout=subprocess.PIPE,
+            encoding='utf-8')
+        if comm.returncode == 0:
+            return comm.stdout.strip()
+        else:
+            return ''
+
+    def get_interf_status(self, interf):
+        inet_line = self.shell_cmd(f'ifconfig {interf} | grep "inet "')
+        if inet_line:
+            return 'On', inet_line.split(' ')[1]
+        else:
+            return 'Off', ''
+
+    def update_content(self):
+        # temperature
+        temp_str = self.shell_cmd('cat /sys/class/thermal/thermal_zone0/temp')
+        self.temp.update_value(int(temp_str)/1000.0)
+        fan_str = self.shell_cmd('cat /sys/class/thermal/cooling_device0/cur_state')
+        if fan_str == '1':
+            self.fan.update_value('On')
+        else:
+            self.fan.update_value('Off')
+        # CPU
+        mem_str = self.shell_cmd('cat /proc/meminfo | grep MemFree')
+        mem = int(mem_str.split()[1]) / 1000000.0
+        self.cpu_mem.update_value(self.max_mem - mem)
+        # wi-fi
+        if self.ap_interf:
+            stat, ip_addr = self.get_interf_status(self.ap_interf)
+            self.ap_stat.update_value(stat, ip_addr)
+        else:
+            self.ap_stat.update_value('N/A')
+
+        if self.wf_interf:
+            stat, ip_addr = self.get_interf_status(self.wf_interf)
+            self.wf_stat.update_value(stat, ip_addr)
+        else:
+            self.wf_stat.update_value('N/A')
+
+        stat, ip_addr = self.get_interf_status('eth0')
+        self.eth_stat.update_value(stat, ip_addr)
 
 
 if __name__ == '__main__':
