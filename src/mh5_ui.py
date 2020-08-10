@@ -5,80 +5,47 @@ import subprocess
 
 import rospy
 from sensor_msgs.msg import BatteryState, JointState, Temperature
+from diagnostic_msgs.msg import DiagnosticArray, DiagnosticStatus, KeyValue
+
 from snack import Grid, GridForm, Label, Listbox, Scale, SnackScreen, Textbox
 
 
 class MainUI():
     
-    def __init__(self, update_frequency=10):
-        # refresh period in mili-seconds
-        self.period = int(1000.0 / update_frequency)
+    def __init__(self):
         # setup the graphics
         self.screen = SnackScreen()
         # for convenience
         self.w = self.screen.width
         self.h = self.screen.height
         # main window
-        self.view = RobotStatusView(self.screen, self.period, self.hot_keys, 'Robot Status')
-        # self.grid = GridForm(self.screen, 'Title', 1, 1)
-        # self.content = Textbox(20, 2,
-        #                        text='Default text for the main UI', wrap=1)
-        # self.grid.add(self.content, 0, 0)
-        # self.grid.addHotKey('q')
-        # self.grid.setTimer(self.period)
-        # self.shortcuts = {'q': self.set_done}
-        # self.content_update_callback = None
-        # self.status = Grid(2,2)
-        # self.voltages = {}          # voltages reported by servos
-        # self.battery = 12.0         # will be updated by node
-        # self.batt_label = Label('')
-        # self.batt_scale = Scale(18, self.RANGE_VOLTAGE)
-        # self.update_battery_status(12.0)
-        # self.temperature = 55.0     # will be updated by node
-        # self.temp_label = Label('')
-        # self.temp_scale = Scale(18, self.RANGE_TEMPERATURE)
-        # self.update_temperature_status(55.0)
-        # self.status.setField(self.batt_label, 0, 0)
-        # self.status.setField(self.batt_scale, 0, 1)
-        # self.status.setField(self.temp_label, 1, 0)
-        # self.status.setField(self.temp_scale, 1, 1)
-        # subscribe to get temp and voltage updates
-        # self.temp_subcr = rospy.Subscriber('temperature', Temperature, self.new_temperature, queue_size=5)
-        # self.volt_subsr = rospy.Subscriber('voltage', BatteryState, self.new_voltage, queue_size=5)
+        self.views = {}
+        self.current_view = None
         self.done = False
 
-    def change_view(self, new_view):
-        self.view.finish()
-        self.screen.popWindow()
-        self.view = new_view
+    def add_view(self, view, hot_key, default_view=False):
+        self.views[hot_key] = view
+        if default_view:
+            self.default_view = hot_key
 
-    @property
-    def hot_keys(self):
-        return ['q']
-
-    # def update_battery_status(self, battery_value):
-    #     self.battery = battery_value
-    #     self.batt_label.setText(f'Battery:   ({battery_value:4.1f}V)')
-    #     self.batt_scale.set(max(0, battery_value - self.MIN_VOLTAGE))
-
-    # def update_temperature_status(self, temperature_value):
-    #     self.temperature = temperature_value
-    #     self.temp_label.setText(f'Temp.  :   ({temperature_value:4.1f}℃')
-    #     self.temp_scale.set(max(0, temperature_value - self.MIN_TEMPERATURE))
-
-    # def new_voltage(self, msg):
-    #     name = msg.header.frame_id
-    #     voltage = msg.voltage
-    #     self.voltages[name] = voltage
-
-    # def new_temperature(self, msg):
-    #     pass
+    def change_view(self, hotkey):
+        if self.current_view:
+            self.current_view.finish()
+            self.screen.popWindow()
+        self.current_view = self.views[hotkey]
+        self.current_view.setup()
+        for key in self.views.keys():
+            self.current_view.grid.addHotKey(key)
+        self.current_view.grid.addHotKey('q')
 
     def run(self):
+        self.change_view(self.default_view)
         while not self.done:
-            key = self.view.run()
+            key = self.current_view.run()
             if key == 'q':
                 self.done = True
+            if key in self.views:
+                self.change_view(key)
 
         # finish the loop
         self.screen.popWindow()
@@ -86,34 +53,56 @@ class MainUI():
 
 
 class View():
-
-    def __init__(self, screen, timer, master_hotkeys, title):
+    """Base class for a view."""
+    def __init__(self, screen, timer, title):
         self.screen = screen
-        self.grid = GridForm(screen, title, 1, 1)
+        self.timer = timer
+        self.title = title
+
+    def setup(self):
+        """Must be caleed by the MainUi before starting the view. This
+        creates all the objects of the UI and initializes them. Sets-up
+        a ``GridForm`` of size 1x1 and calls ``create_content`` to fill
+        the specific content of the view. Subclasses must implement this
+        method. It also revisters the hot keys as are reported by the
+        ``hotkeys`` property that must be subclassed if the view needs to
+        handle keys."""
+        self.grid = GridForm(self.screen, self.title, 1, 1)
         self.content = self.create_content()
         self.grid.add(self.content, 0, 0)
-        for key in master_hotkeys:
-            self.grid.addHotKey(key)
         for key in self.hotkeys:
             self.grid.addHotKey(key)
-        self.grid.setTimer(timer)
-
+        self.grid.setTimer(self.timer)
 
     def create_content(self):
+        """Should be impelemented in subclasses to produce the desired
+        view output."""
         return Textbox(width=20, height=4,
                        text='Default text for the main UI', wrap=1)
 
     @property
     def hotkeys(self):
+        """Returns the keys this view handles. If implemented by subclasses
+        then also ``process_hotkey`` should be implemented."""
         return []
 
     def update_content(self):
+        """Handles updates to the content of the view. Normally these are
+        triggered by the elpsed timer set up by the ``timer`` property. Should
+        be implemented in the subclass according to the desired behaviour."""
         pass
 
     def process_hotkey(self, key):
+        """Processes the declared hotkeys. Should be implemented in subclass."""
         pass
 
     def run(self):
+        """Performs a ``run`` of the grid. First calls the ``update_content``
+        to trigger updates to the interface and refreshes the screen. After
+        running a ``grid.run()`` it will ask the ``process_key`` method to
+        process the hotkey pressed (if any) after whicg it returns the hot key
+        to the caller program (tipically the MainUI) so that the loop there
+        can process it's own hot keys."""
         self.update_content()
         self.screen.refresh()
         key = self.grid.run()
@@ -121,13 +110,17 @@ class View():
         return key
 
     def finish(self):
+        """Provides a way for thge view to clear resources before being
+        switched from. For intance views that are displaying information
+        from ROS topics have the change to unsubscribe from the topics here.
+        """
         pass
 
 
 class JointView(View):
 
-    def __init__(self, screen, timer, master_hotkeys, title='Joint State'):
-        super().__init__(screen, timer, master_hotkeys, title)
+    def __init__(self, screen, timer, title='Joint State'):
+        super().__init__(screen, timer, title)
 
         self.joint_names = [
             'head_p', 'head_y',
@@ -240,12 +233,11 @@ class NameStatValue():
 
 class RobotStatusView(View):
 
-    def __init__(self, screen, timer, master_hotkeys, title='Joint State'):
-        super().__init__(screen, timer, master_hotkeys, title)
-        self.grid.setTimer(1000)
+    def __init__(self, screen, timer, title='Robot Status'):
+        super().__init__(screen, timer, title)
 
     def create_content(self):
-        grid = Grid(3,17)
+        grid = Grid(3,19)
         w = [16, 6, 14]         # widths for columns
         row = 0                 # current row
         # Voltage
@@ -276,8 +268,14 @@ class RobotStatusView(View):
         row += 1
         grid.setField(Label('CPU'), 0, row)
         row += 1
-        self.cpu_load = NameValueScale('Load', '', grid, row, w, 0.0, 4.0)
-        self.cpu_load.update_value(2.5)
+        self.cpu_1m = NameValueScale('Load [1m]', '', grid, row, w, 0.0, 4.0)
+        self.cpu_1m.update_value(2.5)
+        row += 1
+        self.cpu_5m = NameValueScale('Load [5m]', '', grid, row, w, 0.0, 4.0)
+        self.cpu_5m.update_value(2.5)
+        row += 1
+        self.cpu_15m = NameValueScale('Load [15m]', '', grid, row, w, 0.0, 4.0)
+        self.cpu_15m.update_value(2.5)
         row += 1
         max_mem_str = self.shell_cmd('cat /proc/meminfo | grep MemTotal')
         self.max_mem = int(max_mem_str.split()[1]) / 1000000.0
@@ -326,6 +324,16 @@ class RobotStatusView(View):
             return 'Off', ''
 
     def update_content(self):
+        # voltage
+        volt = self.shell_cmd('cat /sys/class/i2c-dev/i2c-1/device/1-0048/in4_input')
+        value = int(volt)/1000.0 if volt else 0
+        self.rpi3v.update_value(f'{value:4.1f}')
+        volt = self.shell_cmd('cat /sys/class/i2c-dev/i2c-1/device/1-0048/in5_input')
+        value = int(volt)/500.0 if volt else 0
+        self.rpi5v.update_value(f'{value:4.1f}')
+        volt = self.shell_cmd('cat /sys/class/i2c-dev/i2c-1/device/1-0048/in6_input')
+        value = int(volt)/250.0 if volt else 0
+        self.battery.update_value(value)
         # temperature
         temp_str = self.shell_cmd('cat /sys/class/thermal/thermal_zone0/temp')
         self.temp.update_value(int(temp_str)/1000.0)
@@ -335,6 +343,10 @@ class RobotStatusView(View):
         else:
             self.fan.update_value('Off')
         # CPU
+        load_str = self.shell_cmd('cat /proc/loadavg').split()
+        self.cpu_1m.update_value(float(load_str[0]))
+        self.cpu_5m.update_value(float(load_str[1]))
+        self.cpu_15m.update_value(float(load_str[2]))        
         mem_str = self.shell_cmd('cat /proc/meminfo | grep MemFree')
         mem = int(mem_str.split()[1]) / 1000000.0
         self.cpu_mem.update_value(self.max_mem - mem)
@@ -355,13 +367,49 @@ class RobotStatusView(View):
         self.eth_stat.update_value(stat, ip_addr)
 
 
+class CommStatusView(View):
+
+    def __init__(self, screen, timer, title='Comm Status'):
+        super().__init__(screen, timer, title)
+        self.stats = {}
+
+    def comms_call_back(self, msg):
+        for status in msg.status:
+            name = status.name
+            perc = 0.0
+            packs = 0
+            for value in status.values:
+                if value.key == 'cum_error_rate_perc':
+                    perc = float(value.value)
+                if value.key == 'cum_packets':
+                    packs = int(int(value.value)/1000)
+            self.stats[name] = {'perc': perc, 'packs': packs}
+
+    def create_content(self):
+        lb = Listbox(height=18, width=36)
+        lb.append('Name                  Packs[k] %Err ', 0)
+        for pos in range(1,18):
+            lb.append('', pos)
+        self.comm_subsr = rospy.Subscriber('communication_statistics', DiagnosticArray, self.comms_call_back)
+        return lb
+
+    def update_content(self):
+        for index, name in enumerate(self.stats):
+            stats = self.stats[name]
+            packs = stats['packs']
+            perc = stats['perc']
+            self.content.replace(f'{name:23s} {packs:6d} {perc:4.1f}%', index + 1)
+
+    def finish(self):
+        self.comm_subsr.unregister()
+
+
 if __name__ == '__main__':
 
     rospy.init_node('mh5_edge_ui')
-    if rospy.has_param('~rate'):
-        rate = rospy.get_param('~rate')
-    else:
-        rate = 10
 
-    ui = MainUI(rate)
+    ui = MainUI()
+    ui.add_view(RobotStatusView(ui.screen, 1000, 'MH5 Status'), 's', default_view=True)
+    ui.add_view(JointView(ui.screen, 100, 'Joint Status'), 'j')
+    ui.add_view(CommStatusView(ui.screen, 100, 'Comm Status'), 'c')
     ui.run()
