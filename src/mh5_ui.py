@@ -130,11 +130,12 @@ class JointView(View):
             'l_hip_y', 'l_hip_p', 'l_hip_r', 'l_kne_p', 'l_ank_p', 'l_ank_r']
         self.joint_values = {}
         self.mode = 'r'         # radians
+
+    def create_content(self):
         self.js_subsr = rospy.Subscriber('joint_state', JointState, self.joint_values_call_back)
         self.jt_subsr = rospy.Subscriber('temperature', Temperature, self.joint_temperature_call_back)
         self.jv_subsr = rospy.Subscriber('voltage', BatteryState, self.joint_voltage_call_back)
 
-    def create_content(self):
         lb = Listbox(height=22, width=36)
         for pos in range(22):
             lb.append(f'Text for position {pos:2d}', pos)
