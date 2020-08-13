@@ -137,6 +137,7 @@ class PVLReader(Communicator):
             # position
             if not self.gsr.isAvailable(dev_id, 132, 4):
                 self.errors += 1
+                rospy.logdebug(f'{self.name}: failed to get data for device {dev_id}')
             else:
                 msg.name.append(name)
                 # position in radians; factor = 2 * pi / 4095
@@ -201,6 +202,7 @@ class TVReader(Communicator):
             self.packets += 1
             if not self.gsr.isAvailable(dev_id, 144, 2):
                 self.errors += 1
+                rospy.logdebug(f'{self.name}: failed to get data for device {dev_id}')
             else:
                 # temperature
                 t_msg.header.frame_id = name
@@ -260,8 +262,9 @@ class DynamixelController():
             'communication_statistics', DiagnosticArray, queue_size=5)
         self.torque_active = False
 
-    def send_all(self, reg_number, reg_len, value):
-        """Sends a write message to all devices."""
+    def write_one(self, dev_id, reg_num, reg_len, value):
+        """Writes a register in a dyanamixel. Should only be used for
+        initialization purposes."""
         if reg_len == 1:
             func = self.ph.write1ByteTxRx
         elif reg_len == 2:
@@ -271,17 +274,22 @@ class DynamixelController():
         else:
             rospy.logerr(f'Invalid register length received: {reg_len}')
             return
+        res, err = func(self.port, dev_id, reg_num, value)
+        if res != 0:
+            rospy.loginfo(
+                f'Error writing register {reg_num} '
+                f'of device {dev_id} '
+                f'with value {value}')
+            rospy.loginfo(f'Error returned: {self.ph.getTxRxResult(err)}')
+
+    def send_all(self, reg_number, reg_len, value):
+        """Sends a write message to all devices."""
         for dev_info in self.devices.values():
-            res, err = func(self.port, dev_info['id'], reg_number, value)
-            if res != 0:
-                rospy.logwarn(
-                    f'Error writing register {reg_number} '
-                    f'of device {dev_info["id"]} '
-                    f'with value {value}')
-                rospy.logwarn(f'Error returned: {self.ph.getTxRxResult(err)}')
+            self.write_one(dev_info['id'], reg_number, reg_len, value)
 
     def torque_off(self):
         self.send_all(reg_number=64, reg_len=1, value=0)
+        self.torque_active = False
 
     def torque_on(self):
         self.send_all(reg_number=64, reg_len=1, value=0)
@@ -295,29 +303,29 @@ class DynamixelController():
     def start(self):
         # torque off; just to make sure
         self.torque_off()
-        self.torque_active = False
         # initialize devices
         for name, dev_info in self.devices.items():
             rospy.loginfo(f'Initializing {name}')
             if 'inits' in dev_info:
+                regs = {}
                 for init in dev_info['inits']:
                     if init not in self.inits:
-                        rospy.logwarn(
+                        rospy.loginfo(
                             f'Init {init} specified for device {name} '
                             f'does not exist. Will be ignored.')
                     else:
-                        for reg_num, values in self.inits[init].items():
-                            self.send_all(
-                                reg_number=reg_num,
-                                reg_len=values[0],
-                                value=values[1])
+                        regs.update(self.inits[init])
+                if regs:
+                    for reg_num, values in regs.items():
+                        self.write_one(dev_info['id'], reg_num, values[0], values[1])
+
         self.fjt_server.start()
 
     def get_param(self, param, default=None):
         if rospy.has_param(param):
             return rospy.get_param(param)
         if default is not None:
-            rospy.logwarn(f'Default value {default} will be used for '
+            rospy.loginfo(f'Default value {default} will be used for '
                           f'ROS parameter {param}')
             return default
         rospy.logfatal(f'Parameter {param} not supplied '
@@ -328,7 +336,7 @@ class DynamixelController():
         if key in params:
             return params[key]
         if default is not None:
-            rospy.logwarn(f'Default value {default} will be used for '
+            rospy.loginfo(f'Default value {default} will be used for '
                           f'config parameter {key}')
             return default
         rospy.logfatal(f'Parameter {key} mising in configuration file '
