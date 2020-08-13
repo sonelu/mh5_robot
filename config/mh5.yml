@@ -99,3 +99,15 @@ lower_bus:
     r_hip_y:
       id: 26
       inits: [common, time-dir]
+
+groups:
+  head: [head_y, head_p]
+  left_arm: [l_sho_p, l_sho_r, l_elb_y, l_elb_p]
+  right_arm: [r_sho_p, r_sho_r, r_elb_y, r_elb_p]
+  arms: [left_arm, right_arm]
+  upper_body: [head, left_arm, right_arm]
+  left_leg: [l_hip_y, l_hip_p, l_hip_r, l_kne_p, l_ank_p, l_ank_r]
+  right_leg: [r_hip_y, r_hip_p, r_hip_r, r_kne_p, r_ank_p, r_ank_r]
+  legs: [left_leg, right_leg]
+  lower_body: [legs]
+  all: [upper_body, lower_body]

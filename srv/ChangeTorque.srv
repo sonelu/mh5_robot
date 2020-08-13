@@ -1,0 +1,6 @@
+bool state
+string[] joints
+string[] groups
+---
+string[] joints
+int16[] results

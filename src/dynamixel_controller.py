@@ -14,6 +14,8 @@ from diagnostic_msgs.msg import DiagnosticArray, DiagnosticStatus, KeyValue
 from control_msgs.msg import FollowJointTrajectoryAction, \
                              FollowJointTrajectoryResult, \
                              FollowJointTrajectoryActionGoal
+from mh5_robot.srv import ChangeTorque, ChangeTorqueResponse
+
 
 
 class Communicator():
@@ -243,6 +245,20 @@ class DynamixelController():
         self.execs = 0
         # inits
         self.inits = self.get_key('inits', config_items, {})
+        # groups
+        self.groups = {}
+        if 'groups' in config_items:
+            for group_name, group_items in config_items['groups'].items():
+                joints = []
+                for item in group_items:
+                    if item in self.devices:
+                        joints.append(item)
+                    elif item in self.groups:
+                        for joint in self.groups[item]:
+                            if joint not in joints:
+                                joints.append(joint)
+                self.groups[group_name] = joints
+                rospy.loginfo(f'Adding group {group_name} with joints {joints}')
         # setup stuff
         self.port = dyn.PortHandler(port_path)
         rospy.loginfo(f'Opening port {port_path}')
@@ -257,13 +273,14 @@ class DynamixelController():
         self.fjt_server = actionlib.SimpleActionServer(
             'follow_joint_trajectory', FollowJointTrajectoryAction,
             self.do_follow_joint_trajectory, False)
+        # services
+        self.torque_srv = rospy.Service('change_torque', ChangeTorque, self.do_change_torque)
         # stats publisher
         self.pub_stat = rospy.Publisher(
             'communication_statistics', DiagnosticArray, queue_size=5)
-        self.torque_active = False
 
     def write_one(self, dev_id, reg_num, reg_len, value):
-        """Writes a register in a dyanamixel. Should only be used for
+        """Writes a register in a dynamixel. Should only be used for
         initialization purposes."""
         if reg_len == 1:
             func = self.ph.write1ByteTxRx
@@ -281,30 +298,34 @@ class DynamixelController():
                 f'of device {dev_id} '
                 f'with value {value}')
             rospy.loginfo(f'Error returned: {self.ph.getTxRxResult(err)}')
+        return res
 
-    def send_all(self, reg_number, reg_len, value):
-        """Sends a write message to all devices."""
-        for dev_info in self.devices.values():
-            self.write_one(dev_info['id'], reg_number, reg_len, value)
-
-    def torque_off(self):
-        self.send_all(reg_number=64, reg_len=1, value=0)
-        self.torque_active = False
-
-    def torque_on(self):
-        self.send_all(reg_number=64, reg_len=1, value=0)
-        # update all goal info to the latest current:
-        for device in self.devices:
-            present = device['present']
-            device['goal'] = {'position': present['position'],
-                              'velocity': 0,
-                              'acceleration': 0}
+    def torque_change(self, devices, state=False):
+        """Changes torque for the given devices. It is the responsiblity of
+        the caller to make sure that the devices are existing in the controller's
+        devices."""
+        result = []
+        for dev_name in devices:
+            device = self.devices[dev_name]
+            res = self.write_one(dev_id=device['id'], reg_num=64, reg_len=1, value=int(state))
+            if res == 0:
+                device['torque_active'] = state
+                # update all goal info to the latest current:
+                if state:
+                    present = device['present']
+                    device['goal'] = {'position': present['position'],
+                                      'velocity': 0,
+                                      'acceleration': 0}
+            result.append(res)
+        return result
 
     def start(self):
         # torque off; just to make sure
-        self.torque_off()
+        self.torque_change(devices=self.devices.keys(), state=False)
         # initialize devices
         for name, dev_info in self.devices.items():
+            # assume torque is off
+            dev_info['torque_active'] = False
             rospy.loginfo(f'Initializing {name}')
             if 'inits' in dev_info:
                 regs = {}
@@ -360,11 +381,34 @@ class DynamixelController():
             self.execs = 0
 
     def finish(self):
-        if self.torque_active:
+        devices = [dev_name for dev_name, dev_info in self.devices.items() if dev_info['torque_active'] == True]
+        if devices:
             rospy.loginfo('Turning torque off...')
-            self.torque_off()
+            self.torque_change(devices=self.devices.keys(), state=False)
         rospy.loginfo(f'Closing port {self.port.port_name}')
         self.port.closePort()
+
+    def do_change_torque(self, request):
+        """Call back for ChangeTorque server.
+        Toggles torque for the indicated joints as long as they are part
+        of the current controller. It will return the joints processed (the
+        ones that are not part of the current controller will be excluded)
+        and the result of the transaction. It will also mark every joint
+        with the state of the torque in the ``torque_active`` dictionary key.
+        """
+        joints = []
+        for joint in request.joints:
+            if joint not in joints:
+                joints.append(joint)
+        for group in request.groups:
+            if group in self.groups:
+                for joint in self.groups[group]:
+                    if joint not in joints:
+                        joints.append(joint)
+        results = []
+        if joints:
+            results = self.torque_change(devices=joints, state=request.state)
+        return ChangeTorqueResponse(joints, results)
 
     def do_follow_joint_trajectory(self, request):
         """Call-back for follow_joint_trajectory server."""
