@@ -72,7 +72,8 @@ class View():
         self.grid.add(self.content, 0, 0)
         for key in self.hotkeys:
             self.grid.addHotKey(key)
-        self.grid.setTimer(self.timer)
+        if self.timer:
+            self.grid.setTimer(self.timer)
 
     def create_content(self):
         """Should be impelemented in subclasses to produce the desired
@@ -405,6 +406,86 @@ class CommStatusView(View):
         self.comm_subsr.unregister()
 
 
+class Menu(View):
+
+    def __init__(self, screen, title):
+        super().__init__(screen, 0, title)
+        self.navigation = []
+        self.current = 'main'
+        self.redraw = False
+        self.menus = {
+            'main': [
+                ('System', self.navigate, ('system',)),
+                ('Robot', self.navigate, ('robot',)),
+                ('Actions', self.navigate, ('actions',))
+            ],
+            'system': [
+                ('Close ROS', self.close_ros, ()),
+                ('Shutdown robot', self.shutdown_robot, ())
+            ],
+            'robot': [
+                ('Torque enable', self.torque_enable, ()),
+                ('Torque disable', self.torque_disable, ())
+            ],
+            'actions': [
+                ('Stand up', self.action_stand_up, ()),
+                ('Sit down', self.action_sit_down, ())
+            ]
+        }
+
+    def create_content(self):
+        lb = Listbox(height=18, width=24)
+        for index, (menu_item, _, _) in enumerate(self.menus[self.current]):
+            lb.append(menu_item, index)
+        return lb
+
+    def update_content(self):
+        if self.redraw:
+            self.content.clear()
+            for index, (menu_item, _, _) in enumerate(self.menus[self.current]):
+                self.content.append(menu_item, index)
+            self.redraw = False
+
+    @property
+    def hotkeys(self):
+        return ['ESC', 'ENTER']
+
+    def process_hotkey(self, key):
+        if key == 'ENTER':
+            sel = self.content.current()
+            func = self.menus[self.current][sel][1]
+            args = self.menus[self.current][sel][2]
+            func(*args)
+            return None
+        if key == 'ESC':
+            if self.navigation:
+                menu = self.navigation.pop()
+                self.navigate(menu)
+            return None
+
+    def navigate(self, menu):
+        self.navigation.append(self.current)
+        self.current = menu
+        self.redraw = True
+
+    def close_ros(self):
+        pass
+
+    def shutdown_robot(self):
+        pass
+
+    def torque_enable(self):
+        pass
+
+    def torque_disable(self):
+        pass
+
+    def action_stand_up(self):
+        pass
+
+    def action_sit_down(self):
+        pass
+
 if __name__ == '__main__':
 
     rospy.init_node('mh5_edge_ui')
@@ -413,4 +494,5 @@ if __name__ == '__main__':
     ui.add_view(RobotStatusView(ui.screen, 1000, 'MH5 Status'), 's', default_view=True)
     ui.add_view(JointView(ui.screen, 100, 'Joint Status'), 'j')
     ui.add_view(CommStatusView(ui.screen, 100, 'Comm Status'), 'c')
+    ui.add_view(Menu(ui.screen, 'MH5 Main Menu'), 'm')
     ui.run()
