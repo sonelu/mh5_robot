@@ -9,7 +9,8 @@ from diagnostic_msgs.msg import DiagnosticArray, DiagnosticStatus, KeyValue
 
 from mh5_robot.srv import ChangeTorque, ChangeTorqueResponse
 
-from snack import Grid, GridForm, Label, Listbox, Scale, SnackScreen, Textbox
+from snack import Grid, GridForm, Label, Listbox, Scale, SnackScreen, \
+                  Textbox, ButtonChoiceWindow
 
 
 class MainUI():
@@ -498,6 +499,14 @@ class Menu(View):
 
     def do_change_torque(self, state, group):
         result = self.change_torque(state, [], [group])
+        _ = ButtonChoiceWindow(
+            screen=self.screen,
+            title='Result',
+            text=f'Result of request:\n{result}',
+            width=30,
+            buttons=['Ok']
+        )
+
 
 if __name__ == '__main__':
 

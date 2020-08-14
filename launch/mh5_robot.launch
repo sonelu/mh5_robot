@@ -1,15 +1,9 @@
 <?xml version="1.0" ?>
 <launch>        
     <!-- Controllers -->
-    <node pkg="mh5_robot" type="dynamixel_controller.py" name="upper_body_controller" respawn="true">
+    <node pkg="mh5_robot" type="mh5_controller.py" name="mh5_controller" respawn="true">
         <param name="config_file" value="$(find mh5_robot)/config/mh5.yml" />
-        <param name="bus" value="upper_bus" />
-	<param name="rate" value="50" />
-    </node>
-    <node pkg="mh5_robot" type="dynamixel_controller.py" name="lower_body_controller" respawn="true">
-        <param name="config_file" value="$(find mh5_robot)/config/mh5.yml" />
-        <param name="bus" value="lower_bus" />
-	<param name="rate" value="50" />
+	    <param name="rate" value="50" />
     </node>
     <!-- UI -->
     <!-- Warning: do not remove outpput="screen". It is needed so that the 

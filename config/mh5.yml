@@ -15,90 +15,91 @@ inits:
   time-inv:
     10: [1, 5]     # time profile, inverse rotation
 
-upper_bus:
-  port: '/dev/ttySC0'
-  baud_rate: 1000000
-  # processing every:
-  read_pvl: 1.0
-  write_pvl: 1.0
-  read_tv: 100.0
-  devices:
-    head_p: 
-      id: 51
-      inits: [common, time-inv]
-    head_y:
-      id: 52
-      inits: [common, time-dir]
-    l_sho_p:
-      id: 34
-      inits: [common, time-inv]
-    l_sho_r:
-      id: 33
-      inits: [common, time-inv]
-    l_elb_y:
-      id: 32
-      inits: [common, time-inv]
-    l_elb_p:
-      id: 31
-      inits: [common, time-inv]
-    r_sho_p:
-      id: 44
-      inits: [common, time-dir]
-    r_sho_r:
-      id: 43
-      inits: [common, time-dir]
-    r_elb_y:
-      id: 42
-      inits: [common, time-dir]
-    r_elb_p:
-      id: 41
-      inits: [common, time-inv]
+buses:
+  upper_body:
+    port: '/dev/ttySC0'
+    baud_rate: 1000000
+    # processing every:
+    read_pve: 1.0
+    write_pve: 1.0
+    read_tv: 100.0
+    devices:
+      head_p: 
+        dev_id: 51
+        inits: [common, time-inv]
+      head_y:
+        dev_id: 52
+        inits: [common, time-dir]
+      l_sho_p:
+        dev_id: 34
+        inits: [common, time-inv]
+      l_sho_r:
+        dev_id: 33
+        inits: [common, time-inv]
+      l_elb_y:
+        dev_id: 32
+        inits: [common, time-inv]
+      l_elb_p:
+        dev_id: 31
+        inits: [common, time-inv]
+      r_sho_p:
+        dev_id: 44
+        inits: [common, time-dir]
+      r_sho_r:
+        dev_id: 43
+        inits: [common, time-dir]
+      r_elb_y:
+        dev_id: 42
+        inits: [common, time-dir]
+      r_elb_p:
+        dev_id: 41
+        inits: [common, time-inv]
 
 
-lower_bus:
-  port: '/dev/ttySC1'
-  baud_rate: 1000000
-  # processing every:
-  read_pvl: 1.0
-  write_pvl: 1.0
-  read_tv: 100.0
-  devices:
-    l_ank_r:
-      id: 11
-      inits: [common, time-inv]
-    l_ank_p:
-      id: 12
-      inits: [common, time-dir]
-    l_kne_p:
-      id: 13
-      inits: [common, time-inv]
-    l_hip_r:
-      id: 14
-      inits: [common, time-inv]
-    l_hip_p:
-      id: 15
-      inits: [common, time-dir]
-    l_hip_y:
-      id: 16
-      inits: [common, time-inv]
-    r_ank_r:
-      id: 21
-      inits: [common, time-inv]
-    r_ank_p:
-      id: 22
-      inits: [common, time-inv]
-    r_kne_p:
-      id: 23
-      inits: [common, time-dir]
-    r_hip_r:
-      id: 24
-      inits: [common, time-inv]
-    r_hip_p:
-      id: 25
-      inits: [common, time-inv]
-    r_hip_y:
-      id: 26
-      inits: [common, time-dir]
+  lower_body:
+    port: '/dev/ttySC1'
+    baud_rate: 1000000
+    # processing every:
+    read_pve: 1.0
+    write_pve: 1.0
+    read_tv: 100.0
+    devices:
+      l_ank_r:
+        dev_id: 11
+        inits: [common, time-inv]
+      l_ank_p:
+        dev_id: 12
+        inits: [common, time-dir]
+      l_kne_p:
+        dev_id: 13
+        inits: [common, time-inv]
+      l_hip_r:
+        dev_id: 14
+        inits: [common, time-inv]
+      l_hip_p:
+        dev_id: 15
+        inits: [common, time-dir]
+      l_hip_y:
+        dev_id: 16
+        inits: [common, time-inv]
+      r_ank_r:
+        dev_id: 21
+        inits: [common, time-inv]
+      r_ank_p:
+        dev_id: 22
+        inits: [common, time-inv]
+      r_kne_p:
+        dev_id: 23
+        inits: [common, time-dir]
+      r_hip_r:
+        dev_id: 24
+        inits: [common, time-inv]
+      r_hip_p:
+        dev_id: 25
+        inits: [common, time-inv]
+      r_hip_y:
+        dev_id: 26
+        inits: [common, time-dir]
 
 groups:
   head: [head_y, head_p]
