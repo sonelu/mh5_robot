@@ -7,6 +7,8 @@ import rospy
 from sensor_msgs.msg import BatteryState, JointState, Temperature
 from diagnostic_msgs.msg import DiagnosticArray, DiagnosticStatus, KeyValue
 
+from mh5_robot.srv import ChangeTorque, ChangeTorqueResponse
+
 from snack import Grid, GridForm, Label, Listbox, Scale, SnackScreen, Textbox
 
 
@@ -413,6 +415,7 @@ class Menu(View):
         self.navigation = []
         self.current = 'main'
         self.redraw = False
+        self.change_torque = rospy.ServiceProxy('change_torque', ChangeTorque)
         self.menus = {
             'main': [
                 ('System', self.navigate, ('system',)),
@@ -424,8 +427,14 @@ class Menu(View):
                 ('Shutdown robot', self.shutdown_robot, ())
             ],
             'robot': [
-                ('Torque enable', self.torque_enable, ()),
-                ('Torque disable', self.torque_disable, ())
+                ('Torque enable', self.navigate, ('torque_enable',)),
+                ('Torque disable', self.navigate, ('torque_disable',))
+            ],
+            'torque_enable': [
+                ('Torque enable head', self.do_change_torque, (True, 'head'))
+            ],
+            'torque_disable': [
+                ('Torque disable head', self.do_change_torque, (False, 'head'))
             ],
             'actions': [
                 ('Stand up', self.action_stand_up, ()),
@@ -460,7 +469,8 @@ class Menu(View):
         if key == 'ESC':
             if self.navigation:
                 menu = self.navigation.pop()
-                self.navigate(menu)
+                self.current = menu
+                self.redraw = True
             return None
 
     def navigate(self, menu):
@@ -485,6 +495,9 @@ class Menu(View):
 
     def action_sit_down(self):
         pass
+
+    def do_change_torque(self, state, group):
+        result = self.change_torque(state, [], [group])
 
 if __name__ == '__main__':
 
