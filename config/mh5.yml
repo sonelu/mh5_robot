@@ -10,10 +10,10 @@ inits:
     52: [4, 0]      # min position
 
   time-dir:
-    10: [1, 4]     # time profile, direct
+    10: [1, 0]     # velocity profile, direct
 
   time-inv:
-    10: [1, 5]     # time profile, inverse rotation
+    10: [1, 1]     # velocity profile, inverse rotation
 
 buses:
   upper_body:

@@ -2,6 +2,7 @@
 
 import yaml
 from collections import namedtuple
+from threading import Lock
 
 import dynamixel_sdk as dyn
 from serial import rs485
@@ -59,10 +60,9 @@ class Communicator():
         100 a pparticular communication task will be executed only once a
         second.
     """
-    def __init__(self, name, port, ph, devices, run_every):
+    def __init__(self, name, bus, devices, run_every):
         self.name = name
-        self.port = port
-        self.ph = ph
+        self.bus = bus
         self.devices = devices
         self.run_every = run_every
         # keeps track for statistics
@@ -128,11 +128,10 @@ class PVEReader(Communicator):
     """
     def __init__(self, bus, run_every):
         super().__init__(name=f'{bus.name}_pvl_reader',
-                         port=bus.dyn_port,
-                         ph=bus.dyn_ph,
+                         bus=bus,
                          devices=bus.devices,
                          run_every=run_every)
-        self.gsr = dyn.GroupSyncRead(self.port, self.ph, 126, 10)
+        self.gsr = dyn.GroupSyncRead(bus.dyn_port, bus.dyn_ph, 126, 10)
         for device in self.devices.values():
             self.gsr.addParam(device.dev_id)
         # self.pub = rospy.Publisher('joint_state', JointState, queue_size=1)
@@ -141,7 +140,8 @@ class PVEReader(Communicator):
         # We will ignore the result of the txRxPacket because it is a stacked
         # result of multiple packet read and is not representative. We will
         # instead use the information per device to keep track of statistics
-        _ = self.gsr.txRxPacket()
+        with self.bus.lock:
+            _ = self.gsr.txRxPacket()
         for device in self.devices.values():
             dev_id = device.dev_id
             self.packets += 1
@@ -159,38 +159,25 @@ class PVEReader(Communicator):
                     device.current = PVE(raw_pos, raw_vel, raw_eff)
                 except IndexError as e:
                     rospy.loginfo(f'An IndexError exception was raised in the PVE Reader for {self.name}')
+                    rospy.loginfo(f'{e}')
 
 
 class TVReader(Communicator):
     """A SyncRead communication that reads temperature and voltage of
     Dynamnixel registers.
     """
-
-    # MAX_VOLTAGE = 3 * 4.2      # voltage for 100% charge battery
-    # MIN_VOLTAGE = 3 * 3.0      # voltage for 0% charge battery
-    # RANGE_VOLTAGE = MAX_VOLTAGE - MIN_VOLTAGE
-
     def __init__(self, bus, run_every):
         super().__init__(name=f'{bus.name}_tv_reader',
-                         port=bus.dyn_port,
-                         ph=bus.dyn_ph,
+                         bus=bus,
                          devices=bus.devices,
                          run_every=run_every)
-        self.gsr = dyn.GroupSyncRead(self.port, self.ph, 144, 3)
+        self.gsr = dyn.GroupSyncRead(bus.dyn_port, bus.dyn_ph, 144, 3)
         for device in self.devices.values():
             self.gsr.addParam(device.dev_id)
 
     def communicate(self):
-
-        # v_msg = BatteryState()
-        # We will ignore the result of the txRxPacket because it is a stacked
-        # result of multiple packet read and is not representative. We will
-        # instead use the information per device to keep track of statistics
-        _ = self.gsr.txRxPacket()
-        # time = rospy.Time.now()
-        # t_msg.header.stamp = time
-        # v_msg.header.stamp = time
-
+        with self.bus.lock:
+            _ = self.gsr.txRxPacket()
         for device in self.devices.values():
             dev_id = device.dev_id
             self.packets += 1
@@ -198,26 +185,16 @@ class TVReader(Communicator):
                 self.errors += 1
                 rospy.logdebug(f'{self.name}: failed to get data for device {dev_id}')
             else:
-                # temperature
-                # t_msg.header.frame_id = name
-                # temperature is already in degrees celsius
                 device.temperature = self.gsr.getData(dev_id, 146, 1)
-                # t_msg.temperature = raw_temp
-                # self.t_pub.publish(t_msg)
-                # voltage
-                # v_msg.header.frame_id = name
                 device.voltage = self.gsr.getData(dev_id, 144, 2)
-                # v_voltage = raw_voltage / 10.0
-                # v_msg.voltage = v_voltage
-                # v_msg.percentage = (v_voltage - self.MIN_VOLTAGE) / self.RANGE_VOLTAGE * 100.0
-                # self.v_pub.publish(v_msg)
 
 
 PVE = namedtuple('PVE', ['pos', 'vel', 'eff'])
 """A representaion of position, velocity, efort."""
 
 class DynamixelDevice():
-    """A dynamixel servo."""
+    """A reduced representation of a dynamixel servo. We only include the
+    data that we need here."""
     def __init__(self, name, bus, dev_id, inits, **kwargs):
         self.name = name
         self.bus = bus
@@ -243,13 +220,15 @@ class DynamixelDevice():
         else:
             rospy.logerr(f'Invalid register length received: {reg_len}')
             return
-        res, err = func(port, self.dev_id, reg_num, value)
+        with self.bus.lock:
+            res, err = func(port, self.dev_id, reg_num, value)
         if res != 0:
             rospy.loginfo(
                 f'Error writing register {reg_num} '
                 f'of device {self.dev_id} '
                 f'with value {value}')
-            rospy.loginfo(f'Error returned: {ph.getTxRxResult(err)}')
+            rospy.loginfo(f'-- result: {res}')
+            rospy.loginfo(f'-- error returned: {ph.getTxRxResult(err)} ({err})')
         return res
 
     def torque_change(self, state=False):
@@ -272,6 +251,7 @@ class DynamixelBus():
         for device_name, device_info in devices.items():
             new_device = DynamixelDevice(name=device_name, bus=self, **device_info)
             self.devices[device_name] = new_device
+        self.lock = Lock()
 
     def open(self):
         self.dyn_port = dyn.PortHandler(self.port)
@@ -281,7 +261,7 @@ class DynamixelBus():
         self.dyn_port.ser.rs485_mode = rs485.RS485Settings()
         self.dyn_ph = dyn.PacketHandler(2.0)
         # setup the communicators
-        self.sync_rate = self.kwargs.get('rate', 50.0)
+        self.sync_rate = self.kwargs.get('rate', 20.0)
         rate = self.kwargs.get('read_pve', 1.0)
         rospy.loginfo(f'Setting up PVE reader for {self.name} at {self.sync_rate/rate:.1f}Hz')
         self.pve_reader = PVEReader(self, rate)
@@ -308,7 +288,6 @@ class DynamixelController():
     """Manges exactly one Dynamixel bus and peforms periodically read/write
     to all the devices that are connected to that bus.
     """
-
     def __init__(self):
         # load config file
         self.__init_from_config()
@@ -319,15 +298,14 @@ class DynamixelController():
         # publishers
         self.pub_stat = rospy.Publisher('communication_statistics', DiagnosticArray, queue_size=1)
         self.pub_pve = rospy.Publisher('joint_state', JointState, queue_size=1)
-        self.pub_temp = rospy.Publisher('temperature', Temperature, queue_size=1)
-        self.pub_volt = rospy.Publisher('voltage', BatteryState, queue_size=1)
-        # follow joint trajectory server
+        self.pub_temp = rospy.Publisher('temperature', Temperature, queue_size=25)
+        self.pub_volt = rospy.Publisher('voltage', BatteryState, queue_size=25)
+        # follow joint trajectory action server
         self.fjt_server = actionlib.SimpleActionServer(
             'follow_joint_trajectory', FollowJointTrajectoryAction,
             self.do_follow_joint_trajectory, False)
         # services
         self.torque_srv = rospy.Service('change_torque', ChangeTorque, self.do_change_torque)
-
 
     def __init_from_config(self):
         """Reads the configuration file and sets up the controller."""
@@ -386,7 +364,7 @@ class DynamixelController():
             bus.start_sync()
         # start publishers
         self.pub_stat_timer = rospy.Timer(rospy.Duration(2.0), self.publish_communication_statistics)
-        self.pub_pve_timer = rospy.Timer(rospy.Duration(1/50.0), self.publish_joint_states)
+        self.pub_pve_timer = rospy.Timer(rospy.Duration(1/20.0), self.publish_joint_states)
         self.pub_temp_timer = rospy.Timer(rospy.Duration(2.0), self.publish_temperature)
         self.pub_volt_timer = rospy.Timer(rospy.Duration(2.0), self.publish_voltage)
         # start servers
@@ -439,10 +417,9 @@ class DynamixelController():
         self.pub_pve.publish(msg)
 
     def publish_temperature(self, event):
-        msg = Temperature()
-        time = rospy.Time.now()
-        msg.header.stamp = time
         for device_name, device in self.devices.items():
+            msg = Temperature()
+            msg.header.stamp = rospy.Time.now()
             msg.header.frame_id = device_name
             msg.temperature = device.temperature
             self.pub_temp.publish(msg)
@@ -451,10 +428,9 @@ class DynamixelController():
         MAX_VOLTAGE = 3 * 4.2 - 0.1     # voltage for 100% charge battery
         MIN_VOLTAGE = 3 * 3.0 - 0.1     # voltage for 0% charge battery
         RANGE_VOLTAGE = MAX_VOLTAGE - MIN_VOLTAGE
-        msg = BatteryState()
-        time = rospy.Time.now()
-        msg.header.stamp = time
         for device_name, device in self.devices.items():
+            msg = BatteryState()
+            msg.header.stamp = rospy.Time.now()
             msg.header.frame_id = device_name
             msg.voltage = device.voltage / 10.0
             msg.percentage = (msg.voltage - MIN_VOLTAGE) / RANGE_VOLTAGE * 100.0
@@ -462,25 +438,22 @@ class DynamixelController():
 
     def do_change_torque(self, request):
         """Call back for ChangeTorque server.
-        Toggles torque for the indicated joints as long as they are part
-        of the current controller. It will return the joints processed (the
-        ones that are not part of the current controller will be excluded)
-        and the result of the transaction. It will also mark every joint
+        Toggles torque for the indicated joints. It will return the joints 
+        processed and the result of the transaction. It will also mark every joint
         with the state of the torque in the ``torque_active`` dictionary key.
         """
-        joints = []
-        for joint in request.joints:
-            if joint not in joints:
-                joints.append(joint)
+        # remove any duplicates
+        joints = set(request.joints)
         for group in request.groups:
             if group in self.groups:
-                for joint in self.groups[group]:
-                    if joint not in joints:
-                        joints.append(joint)
+                joints.update(self.groups[group])
         results = []
         if joints:
-            results = self.torque_change(devices=joints, state=request.state)
-        return ChangeTorqueResponse(joints, results)
+            joints_list = list(joints)
+            for joint_name in joints_list:
+                res = self.devices[joint_name].torque_change(request.state)
+                results.append(res)
+        return ChangeTorqueResponse(joints_list, results)
 
     def do_follow_joint_trajectory(self, request):
         """Call-back for follow_joint_trajectory server."""
@@ -527,7 +500,7 @@ class DynamixelController():
 
 if __name__ == '__main__':
 
-    rospy.init_node('dynamixel_controller')
+    rospy.init_node('dynamixel_controller', log_level=rospy.INFO)
     controller = DynamixelController()
     controller.start()
 
