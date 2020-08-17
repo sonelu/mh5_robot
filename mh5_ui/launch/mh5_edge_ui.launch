@@ -1,0 +1,7 @@
+<?xml version="1.0" ?>
+<launch>        
+    <!-- UI -->
+    <node pkg="mh5_robot" type="mh5_ui.py" name="ui" output="screen">
+        <param name="rate" value="10" />
+    </node>
+</launch>

@@ -2,12 +2,16 @@
 
 import statistics
 import subprocess
+import time
 
 import rospy
 from sensor_msgs.msg import BatteryState, JointState, Temperature
 from diagnostic_msgs.msg import DiagnosticArray, DiagnosticStatus, KeyValue
 
-from snack import Grid, GridForm, Label, Listbox, Scale, SnackScreen, Textbox
+from mh5_robot.srv import ChangeTorque, ChangeTorqueResponse
+
+from snack import Grid, GridForm, Label, Listbox, Scale, SnackScreen, \
+                  Textbox, ButtonChoiceWindow
 
 
 class MainUI():
@@ -237,16 +241,28 @@ class RobotStatusView(View):
 
     def __init__(self, screen, timer, title='Robot Status'):
         super().__init__(screen, timer, title)
+        self.batt_last_change = None
+        self.batt_last_change_value = None
+        self.batt_last_value = None
+        self.batt_last_estimate = None
+        self.on_batt_str = '00:00'
+        self.rem_batt_str = 'N/A'
 
     def create_content(self):
         grid = Grid(3,19)
         w = [16, 6, 14]         # widths for columns
         row = 0                 # current row
         # Voltage
-        grid.setField(Label('Voltage'), 0, row)
-        row += 1
+        # grid.setField(Label('Voltage'), 0, row)
+        # row += 1
         self.battery = NameValueScale('Battery', 'V', grid, row, w, 9.0, 12.6)
         self.battery.update_value(12.2)
+        row += 1
+        self.on_battery = NameStatValue('On battery for', '', grid, row, w)
+        self.on_battery.update_value(self.on_batt_str)
+        row += 1
+        self.rem_battery = NameStatValue('Batt remaining', '', grid, row, w)
+        self.rem_battery.update_value(self.rem_batt_str)
         row += 1
         self.rpi5v = NameStatValue('5V rail', 'V', grid, row, w)
         self.rpi5v.update_value('5.0')
@@ -256,8 +272,8 @@ class RobotStatusView(View):
         row += 1
         grid.setField(Label(''), 0, row)
         # Temperature
-        row += 1
-        grid.setField(Label('Temperature'), 0, row)
+        # row += 1
+        # grid.setField(Label('Temperature'), 0, row)
         row += 1
         self.temp = NameValueScale('RPi temperature', '°', grid, row, w, 25.0, 85.0)
         self.temp.update_value(45.0)
@@ -267,8 +283,14 @@ class RobotStatusView(View):
         row += 1
         grid.setField(Label(''), 0, row)
         # CPU
+        # row += 1
+        # grid.setField(Label('CPU'), 0, row)
         row += 1
-        grid.setField(Label('CPU'), 0, row)
+        self.cpu_speed = NameValueScale('CPU Speed', 'G', grid, row, w, 0.6, 1.5)
+        self.cpu_speed.update_value(1.2)
+        row += 1
+        self.cpu_gov = NameStatValue('CPU Governor', '', grid, row, w)
+        self.cpu_gov.update_value('', '')  
         row += 1
         self.cpu_1m = NameValueScale('Load [1m]', '', grid, row, w, 0.0, 4.0)
         self.cpu_1m.update_value(2.5)
@@ -286,8 +308,8 @@ class RobotStatusView(View):
         row += 1
         grid.setField(Label(''), 0, row)
         # WiFi
-        row += 1
-        grid.setField(Label('Wi-Fi'), 0, row)
+        # row += 1
+        # grid.setField(Label('Wi-Fi'), 0, row)
         row += 1
         # get the interface name from AP config
         ap_config = self.shell_cmd('cat /etc/hostapd/hostapd.conf | grep interface')
@@ -336,6 +358,39 @@ class RobotStatusView(View):
         volt = self.shell_cmd('cat /sys/class/i2c-dev/i2c-1/device/1-0048/in6_input')
         value = int(volt)/250.0 if volt else 0
         self.battery.update_value(value)
+        # estimates
+        # 
+        if self.batt_last_change_value is None:
+            self.batt_last_change_value = value
+            self.batt_last_estimate = time.time()
+            self.batt_last_change = time.time()
+        #
+        if self.batt_last_value is None:
+            self.batt_last_value = value
+
+        now = time.time()
+        if value >= self.batt_last_value + 0.5:
+            # battery changed
+            self.batt_last_change = now
+            self.batt_last_estimate = now
+            self.batt_last_change_value = value
+            self.on_batt_str = '00:00'
+            self.rem_batt_str = 'N/A'
+        if now > self.batt_last_estimate + 60:
+            # update battery status every 60 seconds
+            self.batt_last_estimate = now
+            on_batt = now - self.batt_last_change
+            self.on_batt_str = time.strftime("%H:%M", time.gmtime(on_batt))
+            v_used = self.batt_last_change_value - value
+            if v_used > 0.1:
+                v_rem = max(value - 9.0, 0)
+                t_rem = v_rem * on_batt / v_used
+                self.rem_batt_str = time.strftime("%H:%M", time.gmtime(t_rem))
+            else:
+                self.rem_batt_str = 'N/A'
+        self.on_battery.update_value(self.on_batt_str)
+        self.rem_battery.update_value(self.rem_batt_str)
+        self.batt_last_value = value
         # temperature
         temp_str = self.shell_cmd('cat /sys/class/thermal/thermal_zone0/temp')
         self.temp.update_value(int(temp_str)/1000.0)
@@ -345,6 +400,10 @@ class RobotStatusView(View):
         else:
             self.fan.update_value('Off')
         # CPU
+        freq_str = self.shell_cmd('sudo cat /sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_cur_freq')
+        self.cpu_speed.update_value(float(freq_str)/1000000.0)
+        gov = self.shell_cmd('cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor')
+        self.cpu_gov.update_value('', gov)
         load_str = self.shell_cmd('cat /proc/loadavg').split()
         self.cpu_1m.update_value(float(load_str[0]))
         self.cpu_5m.update_value(float(load_str[1]))
@@ -374,6 +433,7 @@ class CommStatusView(View):
     def __init__(self, screen, timer, title='Comm Status'):
         super().__init__(screen, timer, title)
         self.stats = {}
+        self.mode = 't'
 
     def comms_call_back(self, msg):
         for status in msg.status:
@@ -384,8 +444,17 @@ class CommStatusView(View):
                 if value.key == 'cum_error_rate_perc':
                     perc = float(value.value)
                 if value.key == 'cum_packets':
-                    packs = int(int(value.value)/1000)
-            self.stats[name] = {'perc': perc, 'packs': packs}
+                    packs = int(value.value)/1000
+                if value.key == 'packets':
+                    last_packs = int(value.value)
+                if value.key == 'errors':
+                    last_errors = int(value.value)
+            self.stats[name] = {
+                'perc': perc,
+                'packs': packs,
+                'last_packs': last_packs,
+                'last_errors': last_errors
+            }
 
     def create_content(self):
         lb = Listbox(height=18, width=36)
@@ -396,11 +465,28 @@ class CommStatusView(View):
         return lb
 
     def update_content(self):
-        for index, name in enumerate(self.stats):
-            stats = self.stats[name]
-            packs = stats['packs']
-            perc = stats['perc']
-            self.content.replace(f'{name:23s} {packs:6d} {perc:4.1f}%', index + 1)
+        if self.mode == 't':
+            self.content.replace('Name                  Packs[k] %Err ', 0)
+            for index, name in enumerate(self.stats):
+                stats = self.stats[name]
+                packs = stats['packs']
+                perc = stats['perc']
+                self.content.replace(f'{name[:22]:22s} {packs:7.1f} {perc:4.1f}%', index + 1)
+        else:
+            self.content.replace('Name                     Packs Errs', 0)
+            for index, name in enumerate(self.stats):
+                stats = self.stats[name]
+                packs = stats['last_packs']
+                errors = stats['last_errors']
+                self.content.replace(f'{name[:22]:22s} {packs:7d} {errors:4d}', index + 1)
+
+    @property
+    def hotkeys(self):
+        return ['t', 'l']
+
+    def process_hotkey(self, key):
+        if key in self.hotkeys:
+            self.mode = key
 
     def finish(self):
         self.comm_subsr.unregister()
@@ -413,6 +499,7 @@ class Menu(View):
         self.navigation = []
         self.current = 'main'
         self.redraw = False
+        self.change_torque = rospy.ServiceProxy('change_torque', ChangeTorque)
         self.menus = {
             'main': [
                 ('System', self.navigate, ('system',)),
@@ -424,8 +511,14 @@ class Menu(View):
                 ('Shutdown robot', self.shutdown_robot, ())
             ],
             'robot': [
-                ('Torque enable', self.torque_enable, ()),
-                ('Torque disable', self.torque_disable, ())
+                ('Torque enable', self.navigate, ('torque_enable',)),
+                ('Torque disable', self.navigate, ('torque_disable',))
+            ],
+            'torque_enable': [
+                ('Torque enable head', self.do_change_torque, (True, 'head'))
+            ],
+            'torque_disable': [
+                ('Torque disable head', self.do_change_torque, (False, 'head'))
             ],
             'actions': [
                 ('Stand up', self.action_stand_up, ()),
@@ -460,7 +553,8 @@ class Menu(View):
         if key == 'ESC':
             if self.navigation:
                 menu = self.navigation.pop()
-                self.navigate(menu)
+                self.current = menu
+                self.redraw = True
             return None
 
     def navigate(self, menu):
@@ -486,6 +580,22 @@ class Menu(View):
     def action_sit_down(self):
         pass
 
+    def do_change_torque(self, state, group):
+        result = self.change_torque(state, [], [group])
+        _ = ButtonChoiceWindow(
+            screen=self.screen,
+            title='Result',
+            text=f'Result of request:\n{result}',
+            width=30,
+            buttons=['Ok']
+        )
+
+    def finish(self):
+        # reset the navigation for next time
+        self.navigation = []
+        self.current = 'main'
+
+
 if __name__ == '__main__':
 
     rospy.init_node('mh5_edge_ui')
@@ -495,4 +605,5 @@ if __name__ == '__main__':
     ui.add_view(JointView(ui.screen, 100, 'Joint Status'), 'j')
     ui.add_view(CommStatusView(ui.screen, 100, 'Comm Status'), 'c')
     ui.add_view(Menu(ui.screen, 'MH5 Main Menu'), 'm')
+    ui.screen.pushHelpLine('[s]tatus [j]oints [c]omms [m]enu')
     ui.run()

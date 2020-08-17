@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>mh5_robot</name>
+  <version>0.0.0</version>
+  <description>
+    ROS packages for the mh5_robot (meta package)
+  </description>
+  <license>Apache 2.0</license>
+  <maintainer email="alex.sonea@gmail.com">sonel</maintainer>
+  <buildtool_depend>catkin</buildtool_depend>
+  <exec_depend>mh5_controller</exec_depend>
+  <exec_depend>mh5_ui</exec_depend>
+  <export><metapackage/></export>
+</package>
