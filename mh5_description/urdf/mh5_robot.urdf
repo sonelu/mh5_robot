@@ -2,10 +2,168 @@
 <robot name="MH5 Robot">
     <link name="base_link">
         <visual>
-            <origin rpy="0.0 0 0" xyz="0 0 0"/>
+            <origin rpy="0.0 0 1.5708" xyz="0 0 0"/>
             <geometry>
                 <mesh filename="package://mh5_description/meshes/chest.stl"/>
             </geometry>
+            <material name="ivory">
+                <color rgba="1 1 0.94 1"/>
+            </material>
         </visual>
     </link>
+
+    <link name="shoulder_left">
+        <visual>
+            <origin rpy="0.0 0 0" xyz="0 0 0"/>
+            <geometry>
+                <mesh filename="package://mh5_description/meshes/xl430_no_idle.stl"/>
+            </geometry>
+            <material name="blackish">
+                <color rgba="0.1 0.1 0.1 1"/>
+            </material>
+        </visual>
+    </link>
+
+    <joint name="shoulder_left_fixed" type="fixed">
+        <parent link="base_link"/>
+        <child link="shoulder_left"/>
+        <origin xyz="-0.003 0.048 0.09175" rpy="1.5708 0 3.1416"/>
+    </joint>
+
+    <link name="shoulder_right">
+        <visual>
+            <origin rpy="0.0 0 0" xyz="0 0 0"/>
+            <geometry>
+                <mesh filename="package://mh5_description/meshes/xl430_no_idle.stl"/>
+            </geometry>
+            <material name="blackish"/>
+        </visual>
+    </link>
+
+    <joint name="shoulder_right_fixed" type="fixed">
+        <parent link="base_link"/>
+        <child link="shoulder_right"/>
+        <origin xyz="-0.003 -0.048 0.09175" rpy="1.5708 0 0"/>
+    </joint>
+
+    <link name="hip_left">
+        <visual>
+            <origin rpy="0.0 0 0" xyz="0 0 0"/>
+            <geometry>
+                <mesh filename="package://mh5_description/meshes/xl430_no_idle.stl"/>
+            </geometry>
+            <material name="blackish"/>
+        </visual>
+    </link>
+
+    <joint name="hip_left_fixed" type="fixed">
+        <parent link="base_link"/>
+        <child link="hip_left"/>
+        <origin xyz="-0.0105 0.04575 -0.017" rpy="0 3.1416 1.5708"/>
+    </joint>
+
+    <link name="hip_right">
+        <visual>
+            <origin rpy="0.0 0 0" xyz="0 0 0"/>
+            <geometry>
+                <mesh filename="package://mh5_description/meshes/xl430_no_idle.stl"/>
+            </geometry>
+            <material name="blackish"/>
+        </visual>
+    </link>
+
+    <joint name="hip_right_fixed" type="fixed">
+        <parent link="base_link"/>
+        <child link="hip_right"/>
+        <origin xyz="-0.0105 -0.04575 -0.017" rpy="0 3.1416 1.5708"/>
+    </joint>
+
+    <link name="shoulder_left_frame">
+        <visual>
+            <origin rpy="0.0 0 0" xyz="0 -0.016 -0.027"/>
+            <geometry>
+                <mesh filename="package://mh5_description/meshes/frame01.stl"/>
+            </geometry>
+            <material name="ivory"/>
+        </visual>
+    </link>
+
+    <joint name="l_sho_p" type="revolute">
+        <axis xyz="0 0 1"/>
+        <parent link="shoulder_left"/>
+        <child link="shoulder_left_frame"/>
+        <origin xyz="0 0 0.019" rpy="0 3.1416 0"/>
+        <limit lower="-3.1416" upper="3.1416" effort="1000" velocity="100"/>
+    </joint>
+
+    <link name="shoulder_right_frame">
+        <visual>
+            <origin rpy="0.0 0 -3.1416" xyz="0 0.016 -0.027"/>
+            <geometry>
+                <mesh filename="package://mh5_description/meshes/frame01.stl"/>
+            </geometry>
+            <material name="ivory"/>
+        </visual>
+    </link>
+
+    <joint name="r_sho_p" type="revolute">
+        <axis xyz="0 0 -1"/>
+        <parent link="shoulder_right"/>
+        <child link="shoulder_right_frame"/>
+        <origin xyz="0 0 0.019" rpy="0 3.1416 3.1416"/>
+        <limit lower="-3.1416" upper="3.1416" effort="1000" velocity="100"/>
+    </joint>
+
+    <link name="arm_left">
+        <visual>
+            <origin rpy="0 0 0" xyz="0 0 0"/>
+            <geometry>
+                <mesh filename="package://mh5_description/meshes/xl430_with_idle.stl"/>
+            </geometry>
+            <material name="blackish"/>
+        </visual>
+    </link>
+
+    <joint name="l_sho_r" type="revolute">
+        <axis xyz="0 0 1"/>
+        <parent link="shoulder_left_frame"/>
+        <child link="arm_left"/>
+        <origin xyz="0 -0.016 -0.027" rpy="0 1.5707 0"/>
+        <limit lower="-3.1416" upper="3.1416" effort="1000" velocity="100"/>
+    </joint>
+
+    <link name="arm_left_fixed">
+        <visual>
+            <origin rpy="0 0 0" xyz="0 0 0"/>
+            <geometry>
+                <mesh filename="package://mh5_description/meshes/frame03.stl"/>
+            </geometry>
+            <material name="ivory"/>
+        </visual>
+    </link>
+
+    <joint name="arm_left_fixed" type="fixed">
+        <parent link="arm_left"/>
+        <child link="arm_left_fixed"/>
+        <origin xyz="0 -0.03675 0" rpy="0 1.5708 0"/>
+    </joint>
+
+    <link name="elbow">
+        <visual>
+            <origin rpy="0 0 0" xyz="0 0.012 0"/>
+            <geometry>
+                <mesh filename="package://mh5_description/meshes/2xl430_1_idle.stl"/>
+            </geometry>
+            <material name="blackish"/>
+        </visual>
+    </link>
+
+    <joint name="l_elb_y" type="revolute">
+        <axis xyz="1 0 0"/>
+        <parent link="arm_left_fixed"/>
+        <child link="elbow"/>
+        <origin xyz="0 -0.0213 0" rpy="0 0 1.5708"/>
+        <limit lower="-3.1416" upper="3.1416" effort="1000" velocity="100"/>
+    </joint>
+
 </robot>
