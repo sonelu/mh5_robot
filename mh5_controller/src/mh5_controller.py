@@ -205,7 +205,7 @@ class DynamixelDevice():
         self.torque_active = False
         self.temperature = 0
         self.voltage = 0
-    
+
     def write(self, reg_num, reg_len, value):
         """Writes a register in a dynamixel. Should only be used for
         initialization purposes."""
@@ -297,7 +297,7 @@ class DynamixelController():
         self.execs = 0
         # publishers
         self.pub_stat = rospy.Publisher('communication_statistics', DiagnosticArray, queue_size=1)
-        self.pub_pve = rospy.Publisher('joint_state', JointState, queue_size=1)
+        self.pub_pve = rospy.Publisher('joint_states', JointState, queue_size=1)
         self.pub_temp = rospy.Publisher('temperature', Temperature, queue_size=25)
         self.pub_volt = rospy.Publisher('voltage', BatteryState, queue_size=25)
         # follow joint trajectory action server
@@ -405,7 +405,7 @@ class DynamixelController():
             if raw_vel > 1023:
                 raw_vel = raw_vel - 4294967296
             rad_vel = raw_vel * 0.023980823922402
-            msg.velocity.append(rad_vel)       
+            msg.velocity.append(rad_vel)
             # aprox effort in N*m; factor = 1/1000 * 1.4 (stall torque)
             # _very_ aproximate!
             raw_eff = device.current.eff
@@ -438,7 +438,7 @@ class DynamixelController():
 
     def do_change_torque(self, request):
         """Call back for ChangeTorque server.
-        Toggles torque for the indicated joints. It will return the joints 
+        Toggles torque for the indicated joints. It will return the joints
         processed and the result of the transaction. It will also mark every joint
         with the state of the torque in the ``torque_active`` dictionary key.
         """

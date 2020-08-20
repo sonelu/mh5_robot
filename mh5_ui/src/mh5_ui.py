@@ -15,7 +15,7 @@ from snack import Grid, GridForm, Label, Listbox, Scale, SnackScreen, \
 
 
 class MainUI():
-    
+
     def __init__(self):
         # setup the graphics
         self.screen = SnackScreen()
@@ -137,7 +137,7 @@ class JointView(View):
         self.mode = 'r'         # radians
 
     def create_content(self):
-        self.js_subsr = rospy.Subscriber('joint_state', JointState, self.joint_values_call_back)
+        self.js_subsr = rospy.Subscriber('joint_states', JointState, self.joint_values_call_back)
         self.jt_subsr = rospy.Subscriber('temperature', Temperature, self.joint_temperature_call_back)
         self.jv_subsr = rospy.Subscriber('voltage', BatteryState, self.joint_voltage_call_back)
 
@@ -290,7 +290,7 @@ class RobotStatusView(View):
         self.cpu_speed.update_value(1.2)
         row += 1
         self.cpu_gov = NameStatValue('CPU Governor', '', grid, row, w)
-        self.cpu_gov.update_value('', '')  
+        self.cpu_gov.update_value('', '')
         row += 1
         self.cpu_1m = NameValueScale('Load [1m]', '', grid, row, w, 0.0, 4.0)
         self.cpu_1m.update_value(2.5)
@@ -359,7 +359,7 @@ class RobotStatusView(View):
         value = int(volt)/250.0 if volt else 0
         self.battery.update_value(value)
         # estimates
-        # 
+        #
         if self.batt_last_change_value is None:
             self.batt_last_change_value = value
             self.batt_last_estimate = time.time()
@@ -407,7 +407,7 @@ class RobotStatusView(View):
         load_str = self.shell_cmd('cat /proc/loadavg').split()
         self.cpu_1m.update_value(float(load_str[0]))
         self.cpu_5m.update_value(float(load_str[1]))
-        self.cpu_15m.update_value(float(load_str[2]))        
+        self.cpu_15m.update_value(float(load_str[2]))
         mem_str = self.shell_cmd('cat /proc/meminfo | grep MemFree')
         mem = int(mem_str.split()[1]) / 1000000.0
         self.cpu_mem.update_value(self.max_mem - mem)

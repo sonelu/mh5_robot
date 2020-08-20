@@ -2,7 +2,7 @@
 <launch>
 
   <arg name="model" default="$(find mh5_description)/urdf/mh5_robot.xacro"/>
-  <arg name="gui" default="true" />
+  <arg name="gui" default="false" />
   <arg name="rvizconfig" default="$(find mh5_description)/rviz/urdf.rviz" />
 
   <param name="robot_description" command="$(find xacro)/xacro $(arg model)" />
