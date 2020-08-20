@@ -9,8 +9,8 @@
         </xacro:if>
         <xacro:if value="${short_side == 'r'}">
             <xacro:property name="factor" value = "-1.0"/>
-        </xacro:if>        
-        
+        </xacro:if>
+
         <link name="${side}_shoulder_servo">
             <visual>
                 <origin rpy="0 0 0" xyz="0 0 0"/>

@@ -245,8 +245,8 @@ class RobotStatusView(View):
         self.batt_last_change_value = None
         self.batt_last_value = None
         self.batt_last_estimate = None
-        self.on_batt_str = '00:00'
-        self.rem_batt_str = 'N/A'
+        self.on_batt_str = '0:00'
+        self.rem_batt_str = 'Calc'
 
     def create_content(self):
         grid = Grid(3,19)
@@ -374,20 +374,20 @@ class RobotStatusView(View):
             self.batt_last_change = now
             self.batt_last_estimate = now
             self.batt_last_change_value = value
-            self.on_batt_str = '00:00'
-            self.rem_batt_str = 'N/A'
+            self.on_batt_str = '0:00'
+            self.rem_batt_str = 'Calc'
         if now > self.batt_last_estimate + 60:
             # update battery status every 60 seconds
             self.batt_last_estimate = now
             on_batt = now - self.batt_last_change
-            self.on_batt_str = time.strftime("%H:%M", time.gmtime(on_batt))
+            self.on_batt_str = time.strftime("%-H:%M", time.gmtime(on_batt))
             v_used = self.batt_last_change_value - value
             if v_used > 0.1:
                 v_rem = max(value - 9.0, 0)
                 t_rem = v_rem * on_batt / v_used
-                self.rem_batt_str = time.strftime("%H:%M", time.gmtime(t_rem))
+                self.rem_batt_str = time.strftime("%-H:%M", time.gmtime(t_rem))
             else:
-                self.rem_batt_str = 'N/A'
+                self.rem_batt_str = 'Calc'
         self.on_battery.update_value(self.on_batt_str)
         self.rem_battery.update_value(self.rem_batt_str)
         self.batt_last_value = value
