@@ -24,7 +24,7 @@ buses:
     write_pve: 1.0
     read_tv: 100.0
     devices:
-      head_p: 
+      head_p:
         dev_id: 51
         inits: [common, time-inv]
       head_y:
@@ -66,19 +66,19 @@ buses:
     devices:
       l_ank_r:
         dev_id: 11
-        inits: [common, time-inv]
+        inits: [common, time-dir]
       l_ank_p:
         dev_id: 12
-        inits: [common, time-dir]
+        inits: [common, time-inv]
       l_kne_p:
         dev_id: 13
-        inits: [common, time-inv]
+        inits: [common, time-dir]
       l_hip_r:
         dev_id: 14
-        inits: [common, time-inv]
+        inits: [common, time-dir]
       l_hip_p:
         dev_id: 15
-        inits: [common, time-dir]
+        inits: [common, time-inv]
       l_hip_y:
         dev_id: 16
         inits: [common, time-inv]
