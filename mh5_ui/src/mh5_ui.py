@@ -1,14 +1,13 @@
 #!/usr/bin/env python
 
-import statistics
 import subprocess
 import time
 
 import rospy
 from sensor_msgs.msg import BatteryState, JointState, Temperature
-from diagnostic_msgs.msg import DiagnosticArray, DiagnosticStatus, KeyValue
+from diagnostic_msgs.msg import DiagnosticArray
 
-from mh5_robot.srv import ChangeTorque, ChangeTorqueResponse
+from mh5_robot.srv import ChangeTorque
 
 from snack import Grid, GridForm, Label, Listbox, Scale, SnackScreen, \
                   Textbox, ButtonChoiceWindow
@@ -219,7 +218,8 @@ class NameValueScale():
 
     def update_value(self, value):
         self.value.setText(f'{value:4.1f}{self.unit}')
-        self.scale.set(int((value -self.min_val)*100))
+        self.scale.set(int((value - self.min_val) * 100))
+
 
 class NameStatValue():
 
@@ -249,7 +249,7 @@ class RobotStatusView(View):
         self.rem_batt_str = 'Calc'
 
     def create_content(self):
-        grid = Grid(3,19)
+        grid = Grid(3, 19)
         w = [16, 6, 14]         # widths for columns
         row = 0                 # current row
         # Voltage
@@ -333,8 +333,8 @@ class RobotStatusView(View):
         return grid
 
     def shell_cmd(self, command):
-        comm= subprocess.run(command, shell=True, stdout=subprocess.PIPE,
-            encoding='utf-8')
+        comm = subprocess.run(command, shell=True, stdout=subprocess.PIPE,
+                              encoding='utf-8')
         if comm.returncode == 0:
             return comm.stdout.strip()
         else:
@@ -459,7 +459,7 @@ class CommStatusView(View):
     def create_content(self):
         lb = Listbox(height=18, width=36)
         lb.append('Name                  Packs[k] %Err ', 0)
-        for pos in range(1,18):
+        for pos in range(1, 18):
             lb.append('', pos)
         self.comm_subsr = rospy.Subscriber('communication_statistics', DiagnosticArray, self.comms_call_back)
         return lb
@@ -582,7 +582,7 @@ class Menu(View):
 
     def do_change_torque(self, state, group):
         result = self.change_torque(state, [], [group])
-        _ = ButtonChoiceWindow(
+        ButtonChoiceWindow(
             screen=self.screen,
             title='Result',
             text=f'Result of request:\n{result}',

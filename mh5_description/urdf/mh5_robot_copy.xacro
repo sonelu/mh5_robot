@@ -1,9 +1,6 @@
 <?xml version="1.0" ?>
 <robot xmlns:xacro="http://ros.org/wiki/xacro" name="mh5_robot">
 
-    <xacro:include filename="$(find mh5_description)/urdf/mh5_arm.xacro"/>
-    <xacro:include filename="$(find mh5_description)/urdf/mh5_leg.xacro"/>
-    <xacro:include filename="$(find mh5_description)/urdf/mh5_head.xacro"/>
 
 
     <xacro:macro name="material_ivory">
@@ -34,6 +31,11 @@
                 <mesh filename="package://mh5_description/meshes/chest.stl"/>
             </geometry>
         </collision>
+        <inertial>
+            <mass value="0.125444"/>
+            <inertia ixx="0.000328549" iyy="0.00043996" izz="0.000219472"
+                     ixy="0"           ixz="0"          iyz="0.000004439" />
+        </inertial>
     </link>
 
     <joint name="chest_fixed" type="fixed">
@@ -52,6 +54,17 @@
                 <color rgba="0.2 0.2 0.9 1"/>
             </material>
         </visual>
+        <collision>
+            <origin rpy="${-pi/2} 0 ${-pi/2}" xyz="0 0 0"/>
+            <geometry>
+                <mesh filename="package://mh5_description/meshes/screen.stl"/>
+            </geometry>
+        </collision>
+        <inertial>
+            <mass value="0.0176"/>
+            <inertia ixx="0.000004545" iyy="0.000006293" izz="0.00000182"
+                     ixy="0"           ixz="0"          iyz="0" />
+        </inertial>
     </link>
 
     <joint name="screen_fixed" type="fixed">
@@ -59,11 +72,5 @@
         <child link="screen"/>
         <origin xyz="0.02935 0 0.05426" rpy="0 0 0"/>
     </joint>
-
-    <xacro:mh5_head parent="chest"/>
-    <xacro:mh5_arm side="left" parent="chest"/>
-    <xacro:mh5_arm side="right" parent="chest"/>
-    <xacro:mh5_leg side="left" parent="chest"/>
-    <xacro:mh5_leg side="right" parent="chest"/>
 
 </robot>
