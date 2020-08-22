@@ -5,7 +5,7 @@ import dynamixel_sdk as dyn
 from serial import rs485
 
 from device import DynamixelDevice
-from sync import PVEReader, TVReader
+from sync import PVEReader, TVReader, PVAWriter
 
 
 class DynamixelBus():
@@ -36,6 +36,9 @@ class DynamixelBus():
         rate = self.kwargs.get('read_tv', 100.0)
         rospy.loginfo(f'Setting up TV reader for {self.name} at {self.sync_rate/rate:.1f}Hz')
         self.tv_reader = TVReader(self, rate)
+        rate = self.kwargs.get('write_pva', 1.0)
+        rospy.loginfo(f'Setting up PVA writer for {self.name} at {self.sync_rate/rate:0.1f}Hz')
+        self.pva_writer = PVAWriter(self, rate)
 
     def start_sync(self):
         rospy.loginfo(f'Starting Sync loop for {self.name} at {self.sync_rate:.1f}Hz')
@@ -44,6 +47,7 @@ class DynamixelBus():
     def run(self, event=None):
         self.pve_reader.run(event)
         self.tv_reader.run(event)
+        self.pva_writer.run(event)
 
     def close(self):
         rospy.loginfo(f'Stopping SyncLoop for {self.name}')

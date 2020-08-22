@@ -19,9 +19,10 @@ buses:
   upper_body:
     port: '/dev/ttySC0'
     baud_rate: 1000000
+    rate: 50.0
     # processing every:
-    read_pve: 1.0
-    write_pve: 1.0
+    read_pve: 5.0
+    write_pva: 1.0
     read_tv: 100.0
     devices:
       head_p:
@@ -59,9 +60,10 @@ buses:
   lower_body:
     port: '/dev/ttySC1'
     baud_rate: 1000000
+    rate: 50.0
     # processing every:
-    read_pve: 1.0
-    write_pve: 1.0
+    read_pve: 5.0
+    write_pva: 1.0
     read_tv: 100.0
     devices:
       l_ank_r:

@@ -3,7 +3,11 @@
     <!-- Controllers -->
     <node pkg="mh5_controller" type="mh5_controller.py" name="mh5_controller">
         <param name="config_file" value="$(find mh5_controller)/config/mh5.yml" />
-	    <param name="rate" value="50" />
+	    <param name="rate" value="100" />
+        <param name="pub_stats_rate" value="0.5"/>
+        <param name="pub_pve_rate" value="20"/>
+        <param name="pub_temp_rate" value="0.5"/>
+        <param name="pub_volt_rate" value="0.5"/>
     </node>
     <!-- UI -->
     <!-- Warning: do not remove outpput="screen". It is needed so that the 

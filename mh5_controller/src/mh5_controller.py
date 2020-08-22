@@ -8,11 +8,13 @@ from sensor_msgs.msg import JointState
 from sensor_msgs.msg import Temperature, BatteryState
 from control_msgs.msg import FollowJointTrajectoryAction, \
                              FollowJointTrajectoryResult, \
-                             FollowJointTrajectoryActionGoal
+                             FollowJointTrajectoryFeedback, \
+                             FollowJointTrajectoryGoal
 from diagnostic_msgs.msg import DiagnosticArray
 
 from mh5_robot.srv import ChangeTorque, ChangeTorqueResponse
 from bus import DynamixelBus
+from device import PVE
 
 
 class DynamixelController():
@@ -94,10 +96,18 @@ class DynamixelController():
         for bus in self.buses.values():
             bus.start_sync()
         # start publishers
-        self.pub_stat_timer = rospy.Timer(rospy.Duration(2.0), self.publish_communication_statistics)
-        self.pub_pve_timer = rospy.Timer(rospy.Duration(1/20.0), self.publish_joint_states)
-        self.pub_temp_timer = rospy.Timer(rospy.Duration(2.0), self.publish_temperature)
-        self.pub_volt_timer = rospy.Timer(rospy.Duration(2.0), self.publish_voltage)
+        rate = self.get_param('~pub_stats_rate', 0.5)
+        rospy.loginfo(f'Scheduling communication_statistics publisher at {rate:.1f}Hz')
+        self.pub_stat_timer = rospy.Timer(rospy.Duration(1.0/rate), self.publish_communication_statistics)
+        rate = self.get_param('~pub_pve_rate', 0.5)
+        rospy.loginfo(f'Scheduling joint_states publisher at {rate:.1f}Hz')
+        self.pub_pve_timer = rospy.Timer(rospy.Duration(1.0/rate), self.publish_joint_states)
+        rate = self.get_param('~pub_temp_rate', 0.5)
+        rospy.loginfo(f'Scheduling temperature publisher at {rate:.1f}Hz')
+        self.pub_temp_timer = rospy.Timer(rospy.Duration(1.0/rate), self.publish_temperature)
+        rate = self.get_param('~pub_volt_rate', 0.5)
+        rospy.loginfo(f'Scheduling voltage publisher at {rate:.1f}Hz')
+        self.pub_volt_timer = rospy.Timer(rospy.Duration(1.0/rate), self.publish_voltage)
         # start servers
 
         # start action servers
@@ -120,6 +130,7 @@ class DynamixelController():
         for bus in self.buses.values():
             msg.status.append(bus.pve_reader.stats_as_msg())
             msg.status.append(bus.tv_reader.stats_as_msg())
+            msg.status.append(bus.pva_writer.stats_as_msg())
         self.pub_stat.publish(msg)
 
     def publish_joint_states(self, event):
@@ -195,26 +206,51 @@ class DynamixelController():
         #     return
         # torque active, execute the request
         # extract the information from the request
-        trajectory = request.goal.trajectory
+        trajectory = request.trajectory
+        # check joints are known
+        joints = [joint for joint in trajectory.joint_names if joint not in self.devices]
+        if joints:
+            result = FollowJointTrajectoryResult(
+                FollowJointTrajectoryResult.INVALID_JOINTS,
+                f'unknown joints: {joints}')
+            self.fjt_server.set_aborted(result)
+            return
+        # check joints are with torque on
+        joints = [joint for joint in trajectory.joint_names if not self.devices[joint].torque_active]
+        if joints:
+            result = FollowJointTrajectoryResult(
+                FollowJointTrajectoryResult.INVALID_JOINTS,
+                f'joints not active: {joints}')
+            self.fjt_server.set_aborted(result)
+            return
+        
         last_time = 0.0         # keeps track of the time in request
-        for point in trajectory.points:
-            frame_time = point.time_from_start.to_sec()
+        for pose in trajectory.points:
+            frame_time = pose.time_from_start.to_sec()
             frame_duration = frame_time - last_time
             for index, joint_name in enumerate(trajectory.joint_names):
-                if joint_name in self.devices:
-                    rad_pos = point.positions[index]
-                    # convert to 0-4095
-                    raw_pos = rad_pos / 0.001534355386369 + 2047
-                    # for velocity we use the profile_velocity setup in time based profile
-                    raw_vel = frame_duration * 1000      # dynamixel is in us
-                    raw_acc = raw_vel / 4.0
-                    self.devices[joint_name]['goal'] = {'position': raw_pos,
-                                                        'velocity': raw_vel,
-                                                        'acceleration': raw_acc}
+                device = self.devices[joint_name]
+                rad_pos = pose.positions[index]
+                # convert to 0-4095
+                raw_pos = rad_pos / 0.001534355386369 + 2047
+                # for velocity we use the profile_velocity
+                cur_pos = device.current.pos
+                raw_vel = abs(raw_pos - cur_pos) / 7.8165333 / frame_duration
+                raw_acc = raw_vel / 4.0
+                device.goal = PVE(int(raw_pos), int(raw_vel), int(raw_acc))
                 # wait for the
-                rospy.sleep(frame_duration)
-                last_time = frame_time
-        result = FollowJointTrajectoryResult(0, 'reached that goal')
+            last_time = frame_time
+            # need to adjust the duration here to be more acurate
+            rospy.sleep(frame_duration)
+            # feedback
+            feedback = FollowJointTrajectoryFeedback()
+            feedback.joint_names = trajectory.joint_names
+            feedback.desired = pose
+            feedback.actual.positions = [(self.devices[device].current.pos - 2047) * 0.001534355386369 for device in trajectory.joint_names]
+            # feedback.error.positions = feedback.desired.positions - feedback.actual.positions
+            self.fjt_server.publish_feedback(feedback)
+        result = FollowJointTrajectoryResult(
+            FollowJointTrajectoryResult.SUCCESSFUL, 'reached that goal')
         self.fjt_server.set_succeeded(result)
 
     def finish(self):
