@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import yaml
 import rospy
@@ -12,7 +12,7 @@ from control_msgs.msg import FollowJointTrajectoryAction, \
                              FollowJointTrajectoryGoal
 from diagnostic_msgs.msg import DiagnosticArray
 
-from mh5_robot.srv import ChangeTorque, ChangeTorqueResponse
+from mh5_controller.srv import ChangeTorque, ChangeTorqueResponse
 from bus import DynamixelBus
 from device import PVE
 

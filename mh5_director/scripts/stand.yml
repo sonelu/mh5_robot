@@ -1,0 +1,34 @@
+units: 'deg'
+
+joint_names: [
+  'head_p', 'head_y',
+  'l_sho_p', 'l_sho_r', 'l_elb_y', 'l_elb_p',
+  'r_sho_p', 'r_sho_r', 'r_elb_y', 'r_elb_p',
+  'l_hip_y', 'l_hip_p', 'l_hip_r', 'l_kne_p', 'l_ank_p', 'l_ank_r',
+  'r_hip_y', 'r_hip_p', 'r_hip_r', 'r_kne_p', 'r_ank_p', 'r_ank_r',
+]
+
+poses:
+  pose_prepare: [
+    0, 0,
+    0, 0, 0, 0,
+    0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0
+  ]
+
+  pose_stand: [
+    0, 0,
+    -25.0, 0, 0, 0,
+    -25.0, 0, 0, 0,
+    0, 20, 0, 40, 20, 0,
+    0, 20, 0, 40, 20, 0
+  ]
+
+scenes:
+  scene_stand:
+  - ['pose_prepare', 2.0]
+  - ['pose_stand', 2.0]
+
+script:
+  - 'scene_stand'

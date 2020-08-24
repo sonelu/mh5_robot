@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import subprocess
 import time
@@ -7,7 +7,7 @@ import rospy
 from sensor_msgs.msg import BatteryState, JointState, Temperature
 from diagnostic_msgs.msg import DiagnosticArray
 
-from mh5_robot.srv import ChangeTorque
+from mh5_controller.srv import ChangeTorque
 
 from snack import Grid, GridForm, Label, Listbox, Scale, SnackScreen, \
                   Textbox, ButtonChoiceWindow
@@ -531,10 +531,24 @@ class Menu(View):
                 ('Torque disable', self.navigate, ('torque_disable',))
             ],
             'torque_enable': [
-                ('Torque enable head', self.do_change_torque, (True, 'head'))
+                ('Torque enable head', self.do_change_torque, (True, 'head')),
+                ('Torque enable left arm', self.do_change_torque, (True, 'left_arm')),
+                ('Torque enable right arm', self.do_change_torque, (True, 'right_arm')),
+                ('Torque enable arms', self.do_change_torque, (True, 'arms')),
+                ('Torque enable left leg', self.do_change_torque, (True, 'left_leg')),
+                ('Torque enable right leg', self.do_change_torque, (True, 'right_leg')),
+                ('Torque enable legs', self.do_change_torque, (True, 'legs')),
+                ('Torque enable all', self.do_change_torque, (True, 'all'))
             ],
             'torque_disable': [
-                ('Torque disable head', self.do_change_torque, (False, 'head'))
+                ('Torque disable head', self.do_change_torque, (False, 'head')),
+                ('Torque disable left arm', self.do_change_torque, (False, 'left_arm')),
+                ('Torque disable right arm', self.do_change_torque, (False, 'right_arm')),
+                ('Torque disable arms', self.do_change_torque, (False, 'arms')),
+                ('Torque disable left leg', self.do_change_torque, (False, 'left_leg')),
+                ('Torque disable right leg', self.do_change_torque, (False, 'right_leg')),
+                ('Torque disable legs', self.do_change_torque, (False, 'legs')),
+                ('Torque disable all', self.do_change_torque, (False, 'all'))
             ],
             'actions': [
                 ('Stand up', self.action_stand_up, ()),
@@ -598,12 +612,17 @@ class Menu(View):
 
     def do_change_torque(self, state, group):
         result = self.change_torque(state, [], [group])
+        not_ok = [joint_name for joint_name, error in zip(result.joints, result.results) if error != 0]
+        if not_ok:
+            text = f'Error: {not_ok}'
+        else:
+            text= 'All OK'
         ButtonChoiceWindow(
             screen=self.screen,
             title='Result',
-            text=f'Result of request:\n{result}',
+            text=text,
             width=30,
-            buttons=['Ok']
+            buttons=['Dismiss']
         )
 
     def finish(self):
