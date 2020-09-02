@@ -1,0 +1,62 @@
+<?xml version="1.0" ?>
+<robot xmlns:xacro="http://ros.org/wiki/xacro" name="mh5_robot">
+
+    <xacro:include filename="$(find mh5_description)/urdf/mh5_arm.xacro"/>
+    <xacro:include filename="$(find mh5_description)/urdf/mh5_leg.xacro"/>
+    <xacro:include filename="$(find mh5_description)/urdf/mh5_head_revB.xacro"/>
+
+    <xacro:macro name="material_ivory">
+        <material name="ivory">
+            <color rgba="1 1 0.94 1"/>
+        </material>
+    </xacro:macro>
+
+    <xacro:macro name="material_black">
+        <material name="black">
+            <color rgba="0.1 0.1 0.1 1"/>
+        </material>
+    </xacro:macro>
+
+    <link name="base_link"/>
+
+    <link name="chest">
+        <visual>
+            <origin rpy="0 0 0" xyz="0 0 0"/>
+            <geometry>
+                <mesh filename="package://mh5_description/meshes/chest_revB.stl"/>
+            </geometry>
+            <xacro:material_ivory/>
+        </visual>
+        <collision>
+            <origin rpy="0 0 0" xyz="0 0 0"/>
+            <geometry>
+                <mesh filename="package://mh5_description/meshes/chest_revB.stl"/>
+            </geometry>
+        </collision>
+        <inertial>
+            <mass value="0.134362"/>
+            <inertia
+                ixx="0.000338546"
+                iyy="0.000393872"
+                izz="0.000180759"
+                ixy="0"
+                ixz="0"
+                iyz="-0.000011005" />
+        </inertial>
+    </link>
+
+    <joint name="chest_fixed" type="fixed">
+        <parent link="base_link"/>
+        <child link="chest"/>
+        <origin xyz="0 0 0.202" rpy="0 0 0"/>
+    </joint>
+
+    <xacro:mh5_head parent="chest"/>
+
+    <gazebo>
+        <plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so">
+            <robotNamespace>/</robotNamespace>
+        </plugin>
+    </gazebo>
+
+</robot>

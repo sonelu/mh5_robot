@@ -1,0 +1,5 @@
+upper_controller:
+  type: "position_controllers/JointTrajectoryController"
+  joints:
+    - head_p
+    - head_y
