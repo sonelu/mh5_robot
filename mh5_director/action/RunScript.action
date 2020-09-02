@@ -1,0 +1,8 @@
+string script_name
+---
+string result
+duration execution_time
+---
+string executed
+duration elapsed_time
+duration raminaing_time

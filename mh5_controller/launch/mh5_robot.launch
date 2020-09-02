@@ -1,7 +1,7 @@
 <?xml version="1.0" ?>
 <launch>        
     <!-- Controllers -->
-    <node pkg="mh5_controller" type="mh5_controller.py" name="mh5_controller">
+    <node pkg="mh5_controller" type="controller.py" name="mh5_controller">
         <param name="config_file" value="$(find mh5_controller)/config/mh5.yml" />
 	    <param name="rate" value="100" />
         <param name="pub_stats_rate" value="0.5"/>
@@ -9,10 +9,14 @@
         <param name="pub_temp_rate" value="0.5"/>
         <param name="pub_volt_rate" value="0.5"/>
     </node>
+    <!-- Support -->
+    <node pkg="mh5_director" type="director.py" name="mh5_director">
+        <param name="script_directory" value="(find mh5_director)/scripts"/>
+    </node>
     <!-- UI -->
     <!-- Warning: do not remove outpput="screen". It is needed so that the 
          UI is shown on the TTY -->
-    <node pkg="mh5_ui" type="mh5_ui.py" name="ui" output="screen">
+    <node pkg="mh5_ui" type="mh5_ui.py" name="mh5_ui" output="screen">
         <param name="rate" value="10" />
     </node>
 </launch>
