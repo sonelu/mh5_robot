@@ -49,6 +49,12 @@ class DynamixelDevice():
         """Changes torque for the given devices. It is the responsiblity of
         the caller to make sure that the devices are existing in the controller's
         devices."""
+        if state:
+            # if we turn on the torque we set the goal to be the
+            # current possition and some default profile to avoid
+            # the servo from going sudenly to 0 when the SyncWrite starts
+            # replicating the goal
+            self.goal = PVE(self.current.pos, 50, 25)
         res = self.write(reg_num=64, reg_len=1, value=int(state))
         if res == 0:
             self.torque_active = state

@@ -174,3 +174,41 @@ class TVReader(Sync):
             else:
                 device.temperature = self.gsr.getData(dev_id, 146, 1)
                 device.voltage = self.gsr.getData(dev_id, 144, 2)
+
+class PVAWriter(Sync):
+    """A SyncWrite communication that writes postition, velocity profile and 
+    acceleration profile of Dynamnixel registers.
+    """
+    def __init__(self, bus, run_every):
+        super().__init__(name=f'{bus.name}_pva_writer',
+                         bus=bus,
+                         devices=bus.devices,
+                         run_every=run_every)
+        self.gsw = dyn.GroupSyncWrite(bus.dyn_port, bus.dyn_ph, 108, 12)
+
+    def communicate(self):
+        # we only process the devices that have torque active
+        self.gsw.clearParam()
+        has_devices = False
+        for device in self.devices.values():
+            if device.torque_active:
+                data = device.goal.eff.to_bytes(4, byteorder='little') + \
+                       device.goal.vel.to_bytes(4, byteorder='little') + \
+                       device.goal.pos.to_bytes(4, byteorder='little')
+                result = self.gsw.addParam(device.dev_id, data)
+                if not result:
+                    rospy.loginfo(f'{self.name}: Failed to setup SyncWrite for device {device.dev_id}')
+                has_devices = True
+        # if no devices are active, skip the loop
+        if not has_devices:
+            return
+        # We will ignore the result of the txRxPacket because it is a stacked
+        # result of multiple packet read and is not representative. We will
+        # instead use the information per device to keep track of statistics
+        with self.bus.lock:
+            result = self.gsw.txPacket()
+        self.packets += 1
+        if result != 0:
+            self.errors += 1
+            rospy.logdebug(f'{self.name}: Failed to transmit data ')
+            rospy.logdebug(f'cerr={self.gsw.ph.getTxRxResult(result)}')
