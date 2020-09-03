@@ -1,7 +1,7 @@
 <?xml version="1.0" ?>
 <robot xmlns:xacro="http://ros.org/wiki/xacro" name="mh5_robot">
 
-    <xacro:include filename="$(find mh5_description)/urdf/mh5_arm.xacro"/>
+    <xacro:include filename="$(find mh5_description)/urdf/mh5_arm_revB.xacro"/>
     <xacro:include filename="$(find mh5_description)/urdf/mh5_leg_revB.xacro"/>
     <xacro:include filename="$(find mh5_description)/urdf/mh5_head_revB.xacro"/>
 
@@ -54,6 +54,8 @@
     <xacro:mh5_head parent="chest" />
     <xacro:mh5_leg side="left" parent="chest" />
     <xacro:mh5_leg side="right" parent="chest" />
+    <xacro:mh5_arm side="left" parent="chest" />
+    <xacro:mh5_arm side="right" parent="chest" />    
 
     <gazebo>
         <plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so">
