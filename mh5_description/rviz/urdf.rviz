@@ -86,7 +86,17 @@ Visualization Manager:
           Show Axes: false
           Show Trail: false
           Value: true
+        left_ankle_servo:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
         left_camera:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        left_foot:
           Alpha: 1
           Show Axes: false
           Show Trail: false
@@ -96,7 +106,22 @@ Visualization Manager:
           Show Axes: false
           Show Trail: false
           Value: true
+        left_knee_servo:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
         left_thigh:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        left_tibia:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        right_ankle_servo:
           Alpha: 1
           Show Axes: false
           Show Trail: false
@@ -106,12 +131,27 @@ Visualization Manager:
           Show Axes: false
           Show Trail: false
           Value: true
+        right_foot:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
         right_hip_servo:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
+        right_knee_servo:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
         right_thigh:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        right_tibia:
           Alpha: 1
           Show Axes: false
           Show Trail: false
@@ -150,7 +190,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 0.27683907747268677
+      Distance: 0.8860445022583008
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -158,17 +198,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: -0.032118093222379684
-        Y: 0.036986950784921646
-        Z: 0.19003784656524658
+        X: -0.05358128994703293
+        Y: 0.014535576105117798
+        Z: 0.179833322763443
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.05539802461862564
+      Pitch: 0.03539802134037018
       Target Frame: <Fixed Frame>
-      Yaw: 5.663581371307373
+      Yaw: 6.073581218719482
     Saved: ~
 Window Geometry:
   Displays:

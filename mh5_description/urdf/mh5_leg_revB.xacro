@@ -13,12 +13,15 @@
             <xacro:property name="factor" value = "-1.0"/>
         </xacro:if>
 
+        <xacro:property name="effort" value="1.5"/>
+        <xacro:property name="velocity" value="${2*pi}"/>
+
         <joint name="${short_side}_hip_r" type="revolute">
             <parent link="${parent}"/>
             <child link="${side}_hip_servo"/>
             <axis xyz="${factor} 0 0"/>
             <origin xyz="0 ${factor*0.048} 0" rpy="0 0 0"/>
-            <limit lower="-${pi/4}" upper="${3*pi/4}" effort="1000" velocity="100"/>
+            <limit lower="-${pi/4}" upper="${3*pi/4}" effort="${effort}" velocity="${velocity}"/>
         </joint>
         <xacro:insert_transmission name="${short_side}_hip_r"/>
 
@@ -37,6 +40,7 @@
                 </geometry>
             </collision>
             <inertial>
+                <origin rpy="-${pi/2} 0 0" xyz="0 0 -0.012"/>
                 <mass value="0.098"/>
                 <inertia
                     ixx="0.000026983"
@@ -53,7 +57,7 @@
             <child link="${side}_thigh"/>
             <axis xyz="0 -1 0"/>
             <origin xyz="0 0 -0.024" rpy="0 0 0"/>
-            <limit lower="-${0.6*pi}" upper="${0.6*pi}" effort="1000" velocity="100"/>
+            <limit lower="-${0.6*pi}" upper="${0.6*pi}" effort="${effort}" velocity="${velocity}"/>
         </joint>
         <xacro:insert_transmission name="${short_side}_hip_p"/>
 
@@ -72,6 +76,7 @@
                 </geometry>
             </collision>
             <inertial>
+                <origin rpy="0 0 0" xyz="0 0 0"/>
                 <mass value="0.016"/>
                 <inertia
                     ixx="0.000008676"
@@ -88,7 +93,7 @@
             <child link="${side}_knee_servo"/>
             <axis xyz="0 1 0"/>
             <origin xyz="-0.024 0 -0.061" rpy="0 ${pi/2} 0"/>
-            <limit lower="0" upper="${1.2*pi}" effort="1000" velocity="100"/>
+            <limit lower="0" upper="${1.2*pi}" effort="${effort}" velocity="${velocity}"/>
         </joint>
         <xacro:insert_transmission name="${short_side}_kne_p"/>
 
@@ -101,12 +106,13 @@
                 <xacro:material_black/>
             </visual>
             <collision>
-                <origin rpy="-${pi/2} 0 0" xyz="0 0 -0.012"/>
+                <origin rpy="-${pi/2} 0 0" xyz="0 0 0.012"/>
                 <geometry>
                     <mesh filename="package://mh5_description/meshes/2xl430_1_idle.stl"/>
                 </geometry>
             </collision>
             <inertial>
+                <origin rpy="-${pi/2} 0 0" xyz="0 0 0.012"/>
                 <mass value="0.098"/>
                 <inertia
                     ixx="0.000026983"
@@ -123,7 +129,7 @@
             <child link="${side}_tibia"/>
             <axis xyz="0 0 ${factor}"/>
             <origin xyz="0.053 0 0.024" rpy="${pi/2} 0 -${pi/2}"/>
-            <limit lower="-${pi/4}" upper="${pi/4}" effort="1000" velocity="100"/>
+            <limit lower="-${pi/4}" upper="${pi/4}" effort="${effort}" velocity="${velocity}"/>
         </joint>
         <xacro:insert_transmission name="${short_side}_kne_y"/>
 
@@ -142,6 +148,7 @@
                 </geometry>
             </collision>
             <inertial>
+                <origin rpy="0 0 0" xyz="0 0 0"/>
                 <mass value="0.0077"/>
                 <inertia
                     ixx="0.000003238"
@@ -153,179 +160,112 @@
             </inertial>
         </link>
 
-        <!-- <link name="${side}_hipy_servo">
-            <visual>
-                <origin rpy="0 ${pi} ${pi/2}" xyz="0 0 0"/>
-                <geometry>
-                    <mesh filename="package://mh5_description/meshes/xl430_no_idle.stl"/>
-                </geometry>
-                <xacro:material_black/>
-            </visual>
-        </link>
-
-        <joint name="${side}_hipy_fixed" type="fixed">
-            <parent link="${parent}"/>
-            <child link="${side}_hipy_servo"/>
-            <origin xyz="-0.0105 ${factor*0.04575} -0.017" rpy="0 0 0"/>
-        </joint>
-
-        <link name="${side}_hip_frame">
-            <visual>
-                <origin rpy="0 0 ${factor*pi/2}" xyz="0 0 -0.045"/>
-                <geometry>
-                    <mesh filename="package://mh5_description/meshes/frame02.stl"/>
-                </geometry>
-                <material name="ivory"/>
-            </visual>
-        </link>
-
-        <joint name="${short_side}_hip_y" type="revolute">
-            <axis xyz="0 0 ${factor}"/>
-            <parent link="${side}_hipy_servo"/>
-            <child link="${side}_hip_frame"/>
+        <joint name="${short_side}_ank_p" type="revolute">
+            <parent link="${side}_tibia"/>
+            <child link="${side}_ankle_servo"/>
+            <axis xyz="-1 0 0"/>
             <origin xyz="0 0 0" rpy="0 0 0"/>
-            <limit lower="-3.1416" upper="3.1416" effort="1000" velocity="100"/>
+            <limit lower="-${pi/2}" upper="${0.64*pi}" effort="${effort}" velocity="${velocity}"/>
         </joint>
-
-        <link name="${side}_hip_servo">
-            <visual>
-                <origin rpy="${pi/2} 0 0" xyz="0 0 -0.012"/>
-                <geometry>
-                    <mesh filename="package://mh5_description/meshes/2xl430_2_idles.stl"/>
-                </geometry>
-                <material name="black"/>
-            </visual>
-        </link>
-
-        <joint name="${short_side}_hip_p" type="revolute">
-            <axis xyz="0 -1 0"/>
-            <parent link="${side}_hip_frame"/>
-            <child link="${side}_hip_servo"/>
-            <origin xyz="0 0 -0.045" rpy="0 0 0"/>
-            <limit lower="-3.1416" upper="3.1416" effort="1000" velocity="100"/>
-        </joint>
-
-        <link name="${side}_thigh_frame">
-            <visual>
-                <origin rpy="0 0 ${pi/2}" xyz="0 0 0"/>
-                <geometry>
-                    <mesh filename="package://mh5_description/meshes/thigh.stl"/>
-                </geometry>
-                <material name="ivory"/>
-            </visual>
-        </link>
-
-        <joint name="${short_side}_hip_r" type="revolute">
-            <axis xyz="${factor} 0 0"/>
-            <parent link="${side}_hip_servo"/>
-            <child link="${side}_thigh_frame"/>
-            <origin xyz="0 0 -0.024" rpy="0 0 0"/>
-            <limit lower="-3.1416" upper="3.1416" effort="1000" velocity="100"/>
-        </joint>
-
-        <link name="${side}_knee_servo">
-            <visual>
-                <origin rpy="${pi/2} 0 0" xyz="0 0 0"/>
-                <geometry>
-                    <mesh filename="package://mh5_description/meshes/xl430_with_idle.stl"/>
-                </geometry>
-                <material name="black"/>
-            </visual>
-        </link>
-
-        <joint name="${short_side}_kne_p" type="revolute">
-            <axis xyz="0 1 0"/>
-            <parent link="${side}_thigh_frame"/>
-            <child link="${side}_knee_servo"/>
-            <origin xyz="-0.0065 0 -0.049" rpy="0 0 0"/>
-            <limit lower="-3.1416" upper="3.1416" effort="1000" velocity="100"/>
-        </joint>
-
-        <link name="${side}_calf_frame">
-            <visual>
-                <origin rpy="0 0 ${pi/2}" xyz="0 0 0"/>
-                <geometry>
-                    <mesh filename="package://mh5_description/meshes/calf.stl"/>
-                </geometry>
-                <material name="ivory"/>
-            </visual>
-        </link>
-
-        <joint name="${side}_calf_fixed" type="fixed">
-            <parent link="${side}_knee_servo"/>
-            <child link="${side}_calf_frame"/>
-            <origin xyz="0 0 -0.032" rpy="0 0 0"/>
-        </joint>
+        <xacro:insert_transmission name="${short_side}_ank_p"/>
 
         <link name="${side}_ankle_servo">
             <visual>
-                <origin rpy="${pi/2} 0 0" xyz="0 0 -0.012"/>
+                <origin rpy="-${pi/2} 0 0" xyz="0 0 -0.012"/>
                 <geometry>
                     <mesh filename="package://mh5_description/meshes/2xl430_2_idles.stl"/>
                 </geometry>
-                <material name="black"/>
+                <xacro:material_black/>
             </visual>
-        </link>
-
-        <joint name="${short_side}_ank_p" type="revolute">
-            <axis xyz="0 -1 0"/>
-            <parent link="${side}_calf_frame"/>
-            <child link="${side}_ankle_servo"/>
-            <origin xyz="0 0 -0.03325" rpy="0 0 0"/>
-            <limit lower="-3.1416" upper="3.1416" effort="1000" velocity="100"/>
-        </joint>
-
-        <link name="${side}_foot">
-            <visual>
-                <origin rpy="0 0 ${pi/2}" xyz="0 0 0"/>
+            <collision>
+                <origin rpy="-${pi/2} 0 0" xyz="0 0 -0.012"/>
                 <geometry>
-                    <mesh filename="package://mh5_description/meshes/foot.stl"/>
+                    <mesh filename="package://mh5_description/meshes/2xl430_2_idles.stl"/>
                 </geometry>
-                <material name="ivory"/>
-            </visual>
+            </collision>
+            <inertial>
+                <origin rpy="-${pi/2} 0 0" xyz="0 0 -0.012"/>
+                <mass value="0.098"/>
+                <inertia
+                    ixx="0.000026983"
+                    iyy="0.000019139"
+                    izz="0.000026983"
+                    ixy="0"
+                    ixz="0.000000654"
+                    iyz="0.0" />
+            </inertial>
         </link>
 
         <joint name="${short_side}_ank_r" type="revolute">
-            <axis xyz="${factor} 0 0"/>
             <parent link="${side}_ankle_servo"/>
             <child link="${side}_foot"/>
-            <origin xyz="0 0 -0.024" rpy="0 0 0"/>
-            <limit lower="-3.1416" upper="3.1416" effort="1000" velocity="100"/>
+            <axis xyz="${factor} 0 0"/>
+            <origin xyz="0 0 -0.024" rpy="0 0 ${pi/2}"/>
+            <limit lower="-${pi/2}" upper="${pi/2}" effort="${effort}" velocity="${velocity}"/>
         </joint>
+        <xacro:insert_transmission name="${short_side}_ank_r"/>
 
-        <link name="${side}_hot_swap">
+        <link name="${side}_foot">
             <visual>
-                <origin rpy="0 0 ${-factor*pi/2}" xyz="0 0 0"/>
+                <origin rpy="0 0 0" xyz="0 0 0"/>
                 <geometry>
-                    <mesh filename="package://mh5_description/meshes/hot_swap.stl"/>
+                    <mesh filename="package://mh5_description/meshes/foot_${side}.stl"/>
                 </geometry>
-                <material name="ivory"/>
+                <xacro:material_ivory/>
             </visual>
-        </link>
-
-        <joint name="${side}_hs_fixed" type="fixed">
-            <parent link="${side}_foot"/>
-            <child link="${side}_hot_swap"/>
-            <origin xyz="-0.0335 0 -0.026" rpy="0 0 0"/>
-        </joint>
-
-        <link name="${side}_battery">
-            <visual>
-                <origin rpy="0 0 ${-pi/2}" xyz="0 0 0"/>
+            <collision>
+                <origin rpy="0 0 0" xyz="0 0 0"/>
                 <geometry>
-                    <mesh filename="package://mh5_description/meshes/battery.stl"/>
+                    <mesh filename="package://mh5_description/meshes/foot_${side}.stl"/>
                 </geometry>
-                <material name="blue">
-                    <color rgba="0.2 0.2 0.9 1"/>
-                </material>
-            </visual>
+            </collision>
+            <inertial>
+                <origin rpy="0 0 0" xyz="0 0 0"/>
+                <mass value="0.053"/>
+                <inertia
+                    ixx="0.000027287"
+                    iyy="0.000067414"
+                    izz="0.000083844"
+                    ixy="-0.000000277"
+                    ixz="0.000001204"
+                    iyz="0.0000000084" />
+            </inertial>
         </link>
 
         <joint name="${side}_battery_fixed" type="fixed">
             <parent link="${side}_foot"/>
             <child link="${side}_battery"/>
-            <origin xyz="0.009 0 -0.045" rpy="0 0 0"/>
-        </joint> -->
+            <origin xyz="0 0 -0.037" rpy="0 0 0"/>
+        </joint>
+
+        <link name="${side}_battery">
+            <visual>
+                <origin rpy="0 0 -${pi/2}" xyz="0.003 0 0"/>
+                <geometry>
+                    <mesh filename="package://mh5_description/meshes/battery.stl"/>
+                </geometry>
+                <material name="blue">
+                    <color rgba="0.2 0.2 1.0 1"/>
+                </material>
+            </visual>
+            <collision>
+                <origin rpy="0 0 -${pi/2}" xyz="0 0 0"/>
+                <geometry>
+                    <mesh filename="package://mh5_description/meshes/battery.stl"/>
+                </geometry>
+            </collision>
+            <inertial>
+                <origin rpy="0 0 -${pi/2}" xyz="0 0 0"/>
+                <mass value="0.155"/>
+                <inertia
+                    ixx="0.000144254"
+                    iyy="0.000034376"
+                    izz="0.000173658"
+                    ixy="0"
+                    ixz="0"
+                    iyz="0" />
+            </inertial>
+        </link>
 
     </xacro:macro>
 
