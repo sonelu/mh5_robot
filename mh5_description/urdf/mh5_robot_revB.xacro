@@ -2,7 +2,7 @@
 <robot xmlns:xacro="http://ros.org/wiki/xacro" name="mh5_robot">
 
     <xacro:include filename="$(find mh5_description)/urdf/mh5_arm.xacro"/>
-    <xacro:include filename="$(find mh5_description)/urdf/mh5_leg.xacro"/>
+    <xacro:include filename="$(find mh5_description)/urdf/mh5_leg_revB.xacro"/>
     <xacro:include filename="$(find mh5_description)/urdf/mh5_head_revB.xacro"/>
 
     <xacro:macro name="material_ivory">
@@ -51,7 +51,9 @@
         <origin xyz="0 0 0.202" rpy="0 0 0"/>
     </joint>
 
-    <xacro:mh5_head parent="chest"/>
+    <xacro:mh5_head parent="chest" />
+    <xacro:mh5_leg side="left" parent="chest" />
+    <xacro:mh5_leg side="right" parent="chest" />
 
     <gazebo>
         <plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so">
