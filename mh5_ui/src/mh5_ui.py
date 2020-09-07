@@ -4,10 +4,13 @@ import subprocess
 import time
 
 import rospy
+import actionlib
+
 from sensor_msgs.msg import BatteryState, JointState, Temperature
 from diagnostic_msgs.msg import DiagnosticArray
 
 from mh5_controller.srv import ChangeTorque
+from mh5_director.msg import RunScriptAction, RunScriptGoal, RunScriptFeedback
 
 from snack import Grid, GridForm, Label, Listbox, Scale, SnackScreen, \
                   Textbox, ButtonChoiceWindow
@@ -129,9 +132,9 @@ class JointView(View):
         self.joint_names = [
             'head_p', 'head_y',
             'r_sho_p', 'r_sho_r', 'r_elb_y', 'r_elb_p',
-            'r_hip_y', 'r_hip_p', 'r_hip_r', 'r_kne_p', 'r_ank_p', 'r_ank_r',
+            'r_hip_r', 'r_hip_p', 'r_kne_p', 'r_kne_y', 'r_ank_p', 'r_ank_r',
             'l_sho_p', 'l_sho_r', 'l_elb_y', 'l_elb_p',
-            'l_hip_y', 'l_hip_p', 'l_hip_r', 'l_kne_p', 'l_ank_p', 'l_ank_r']
+            'l_hip_r', 'l_hip_p', 'l_kne_p', 'l_kne_y', 'l_ank_p', 'l_ank_r']
         self.joint_values = {}
         self.mode = 'r'         # radians
 
@@ -516,6 +519,7 @@ class Menu(View):
         self.current = 'main'
         self.redraw = False
         self.change_torque = rospy.ServiceProxy('change_torque', ChangeTorque)
+        self.director = actionlib.SimpleActionClient('director', RunScriptAction)
         self.menus = {
             'main': [
                 ('System', self.navigate, ('system',)),
@@ -551,7 +555,7 @@ class Menu(View):
                 ('Torque disable all', self.do_change_torque, (False, 'all'))
             ],
             'actions': [
-                ('Stand up', self.action_stand_up, ()),
+                ('Stand up', self.action, ('stand')),
                 ('Sit down', self.action_sit_down, ())
             ]
         }
@@ -604,8 +608,17 @@ class Menu(View):
     def torque_disable(self):
         pass
 
-    def action_stand_up(self):
-        pass
+    def action(self, script):
+
+        def feedback_cb(feedback):
+            pass
+
+        command = RunScriptGoal(script)
+        
+        self.director.send_goal(command, feedback_cb=feedback_cb)
+
+        client.wait_for_result()
+
 
     def action_sit_down(self):
         pass
