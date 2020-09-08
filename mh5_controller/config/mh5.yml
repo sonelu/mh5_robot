@@ -2,6 +2,7 @@ inits:
   common:
     9: [1, 0]      # return delay time
     11: [1, 3]     # operating mode
+    20: [4, 0]     # homing offsets reset
     24: [4, 10]    # moving threshold
     31: [1, 75]    # temperature limit
     32: [2, 140]   # max voltage
@@ -14,9 +15,6 @@ inits:
 
   vel-inv:
     10: [1, 1]     # velocity profile, inverse rotation
-
-  knee-offset:
-    20: [4, -1024]   # homing offset 90 deg offset for knees
 
 buses:
   upper_body:
@@ -80,7 +78,8 @@ buses:
         inits: [common, vel-inv]
       l_kne_p:
         dev_id: 14
-        inits: [common, vel-inv, knee-offset]
+        inits: [common, vel-inv]
+        offset: 1024
       l_hip_p:
         dev_id: 15
         inits: [common, vel-inv]
@@ -98,7 +97,8 @@ buses:
         inits: [common, vel-dir]
       r_kne_p:
         dev_id: 24
-        inits: [common, vel-inv, knee-offset]
+        inits: [common, vel-inv]
+        offset: 1024
       r_hip_p:
         dev_id: 25
         inits: [common, vel-inv]

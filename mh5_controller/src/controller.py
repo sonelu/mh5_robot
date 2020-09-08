@@ -139,7 +139,7 @@ class DynamixelController():
         for device_name, device in self.devices.items():
             msg.name.append(device_name)
             # position in radians; factor = 2 * pi / 4095
-            raw_pos = device.current.pos
+            raw_pos = device.current.pos + device.offset
             rad_pos = (raw_pos - 2047) * 0.001534355386369
             msg.position.append(rad_pos)
             # angular velocity in rad /s; factor = 2 * pi * 0.229 / 60
@@ -232,7 +232,7 @@ class DynamixelController():
                 device = self.devices[joint_name]
                 rad_pos = pose.positions[index]
                 # convert to 0-4095
-                raw_pos = rad_pos / 0.001534355386369 + 2047
+                raw_pos = rad_pos / 0.001534355386369 + 2047 - device.offset
                 # for velocity we use the profile_velocity
                 cur_pos = device.current.pos
                 raw_vel = abs(raw_pos - cur_pos) / 7.8165333 / frame_duration

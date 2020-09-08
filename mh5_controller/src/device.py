@@ -19,6 +19,7 @@ class DynamixelDevice():
         self.torque_active = False
         self.temperature = 0
         self.voltage = 0
+        self.offset = kwargs.get('offset', 0)
 
     def write(self, reg_num, reg_len, value):
         """Writes a register in a dynamixel. Should only be used for
