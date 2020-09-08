@@ -13,6 +13,8 @@ from control_msgs.msg import FollowJointTrajectoryAction, \
 from diagnostic_msgs.msg import DiagnosticArray
 
 from mh5_controller.srv import ChangeTorque, ChangeTorqueResponse
+from mh5_controller.srv import DynamixelCommand, DynamixelCommandResponse
+
 from bus import DynamixelBus
 from device import PVE
 
@@ -39,6 +41,7 @@ class DynamixelController():
             self.do_follow_joint_trajectory, False)
         # services
         self.torque_srv = rospy.Service('change_torque', ChangeTorque, self.do_change_torque)
+        self.dxl_srv = rospy.Service('dynamixel_command', DynamixelCommand, self.do_dyamixel_command)
 
     def __init_from_config(self):
         """Reads the configuration file and sets up the controller."""
@@ -196,6 +199,27 @@ class DynamixelController():
                 res = self.devices[joint_name].torque_change(request.state)
                 results.append(res)
         return ChangeTorqueResponse(joints_list, results)
+
+    def do_dyamixel_command(self, request):
+        """Call back for DynamixelCommand server.
+        Supports direct commands to dynamixel devices.
+        """
+        # remove any duplicates
+        joints = set(request.joints)
+        for group in request.groups:
+            if group in self.groups:
+                joints.update(self.groups[group])
+        joints_list = list(joints)
+        results = []
+        print(joints_list)
+        if not joints_list:
+            return DynamixelCommandResponse('No joints provided', [], [])
+        if request.command == 'reboot':
+            for joint_name in joints_list:
+                if joint_name in self.devices:
+                    res = self.devices[joint_name].reboot()
+                    results.append(res)
+            return DynamixelCommandResponse('Reboot executed', joints_list, results)
 
     def do_follow_joint_trajectory(self, request):
         """Call-back for follow_joint_trajectory server."""

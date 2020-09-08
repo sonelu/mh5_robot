@@ -60,3 +60,9 @@ class DynamixelDevice():
         if res == 0:
             self.torque_active = state
         return res
+
+    def reboot(self):
+        """Reboots the device invoking the REBOOT command."""
+        with self.bus.lock:
+            res, _ = self.bus.dyn_ph.reboot(self.bus.dyn_port, self.dev_id)
+        return res

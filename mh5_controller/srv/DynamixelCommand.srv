@@ -1,0 +1,8 @@
+string command
+string[] joints
+string[] groups
+int16[] values
+---
+string message
+string[] joints
+int16[] results
