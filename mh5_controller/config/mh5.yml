@@ -16,6 +16,11 @@ inits:
   vel-inv:
     10: [1, 1]     # velocity profile, inverse rotation
 
+  pid-legs:
+    80: [2, 4000]  # position D gain
+    82: [2, 0 ]    # position I gain
+    84: [2, 1080]  # position P gain
+
 buses:
   upper_body:
     port: '/dev/ttySC0'
@@ -69,42 +74,42 @@ buses:
     devices:
       l_ank_r:
         dev_id: 11
-        inits: [common, vel-dir]
+        inits: [common, vel-dir, pid-legs]
       l_ank_p:
         dev_id: 12
-        inits: [common, vel-inv]
+        inits: [common, vel-inv, pid-legs]
       l_kne_y:
         dev_id: 13
-        inits: [common, vel-inv]
+        inits: [common, vel-inv, pid-legs]
       l_kne_p:
         dev_id: 14
-        inits: [common, vel-inv]
+        inits: [common, vel-inv, pid-legs]
         offset: 1024
       l_hip_p:
         dev_id: 15
-        inits: [common, vel-inv]
+        inits: [common, vel-inv, pid-legs]
       l_hip_r:
         dev_id: 16
-        inits: [common, vel-inv]
+        inits: [common, vel-inv, pid-legs]
       r_ank_r:
         dev_id: 21
-        inits: [common, vel-inv]
+        inits: [common, vel-inv, pid-legs]
       r_ank_p:
         dev_id: 22
-        inits: [common, vel-inv]
+        inits: [common, vel-inv, pid-legs]
       r_kne_y:
         dev_id: 23
-        inits: [common, vel-dir]
+        inits: [common, vel-dir, pid-legs]
       r_kne_p:
         dev_id: 24
-        inits: [common, vel-inv]
+        inits: [common, vel-inv, pid-legs]
         offset: 1024
       r_hip_p:
         dev_id: 25
-        inits: [common, vel-inv]
+        inits: [common, vel-inv, pid-legs]
       r_hip_r:
         dev_id: 26
-        inits: [common, vel-dir]
+        inits: [common, vel-dir, pid-legs]
 
 groups:
   head: [head_y, head_p]

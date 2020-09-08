@@ -27,8 +27,8 @@ poses:
 
 scenes:
   scene_stand:
-  - ['pose_prepare', 4.0]
-  - ['pose_stand', 2.0]
+  - ['pose_prepare', 3.0]
+  - ['pose_stand', 4.0]
 
 script:
   - 'scene_stand'

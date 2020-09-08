@@ -260,7 +260,8 @@ class DynamixelController():
                 # for velocity we use the profile_velocity
                 cur_pos = device.current.pos
                 raw_vel = abs(raw_pos - cur_pos) / 7.8165333 / frame_duration
-                raw_acc = raw_vel / 4.0
+                raw_acc = 0
+                # raw_acc = raw_vel / 4.0
                 device.goal = PVE(int(raw_pos), int(raw_vel), int(raw_acc))
                 # wait for the
             last_time = frame_time
