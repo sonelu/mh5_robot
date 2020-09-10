@@ -16,12 +16,8 @@ from trajectory_msgs.msg import JointTrajectoryPoint
 def do_run_script(goal):
     rospy.loginfo(f'goal received:\n{goal}')
     # load the script;
-    if rospy.has_param('~script_directory'):
-        path = rospy.get_param('~script_directory')
-    else:
-        path = os.path.join(rospkg.RosPack().get_path('mh5_director'), 'scripts')
     try:
-        with open(os.path.join(path, goal.script_name), 'r') as f:
+        with open(os.path.join(script_path, goal.script_name), 'r') as f:
             script_def = yaml.load(f, Loader=yaml.FullLoader)
         units = script_def.get('units', 'rad')
         if units == 'deg':
@@ -78,7 +74,12 @@ def feedback_follow_joint_trajectory(feedback):
 if __name__ == '__main__':
 
     rospy.init_node('mh5_director', log_level=rospy.INFO)
-    
+
+    if rospy.has_param('~script_directory'):
+        script_path = rospy.get_param('~script_directory')
+    else:
+        script_path = os.path.join(rospkg.RosPack().get_path('mh5_director'), 'scripts')
+    rospy.loginfo(f'Using path: {script_path}')
     # setup the client
     rospy.loginfo('Setting up the follow_joint_trajectory client...')
     client = actionlib.SimpleActionClient('follow_joint_trajectory', FollowJointTrajectoryAction)

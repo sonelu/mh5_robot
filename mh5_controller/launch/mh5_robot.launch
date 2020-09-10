@@ -11,7 +11,7 @@
     </node>
     <!-- Support -->
     <node pkg="mh5_director" type="director.py" name="mh5_director">
-        <param name="script_directory" value="(find mh5_director)/scripts"/>
+        <param name="script_directory" value="$(find mh5_director)/scripts"/>
     </node>
     <!-- UI -->
     <!-- Warning: do not remove outpput="screen". It is needed so that the 

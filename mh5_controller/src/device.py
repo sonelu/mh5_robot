@@ -19,6 +19,7 @@ class DynamixelDevice():
         self.torque_active = False
         self.temperature = 0
         self.voltage = 0
+        self.offset = kwargs.get('offset', 0)
 
     def write(self, reg_num, reg_len, value):
         """Writes a register in a dynamixel. Should only be used for
@@ -58,4 +59,10 @@ class DynamixelDevice():
         res = self.write(reg_num=64, reg_len=1, value=int(state))
         if res == 0:
             self.torque_active = state
+        return res
+
+    def reboot(self):
+        """Reboots the device invoking the REBOOT command."""
+        with self.bus.lock:
+            res, _ = self.bus.dyn_ph.reboot(self.bus.dyn_port, self.dev_id)
         return res
