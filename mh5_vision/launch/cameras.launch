@@ -1,0 +1,4 @@
+<launch>
+  <include file="$(find mh5_vision)/launch/left_camera.launch" />
+  <include file="$(find mh5_vision)/launch/right_camera.launch" />
+</launch>

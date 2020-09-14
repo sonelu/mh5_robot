@@ -1,0 +1,9 @@
+<launch>
+    <node name="right_camera" pkg="cv_camera" type="cv_camera_node">
+        <param name="device_id" value="0"/>
+        <param name="image_width" value="800"/>
+        <param name="image_height" value="600"/>
+        <param name="frame_id" value="right_camera"/>
+        <param name="rate" value="7.5"/>
+    </node>
+</launch>
