@@ -21,5 +21,6 @@ scenes:
   scene_sit:
   - ['pose_sit', 6.0]
 
-script:
+scripts:
+  sit:
   - 'scene_sit'

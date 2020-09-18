@@ -1,0 +1,55 @@
+units: 'deg'
+
+joints:
+  left_arm: ['l_sho_p', 'l_sho_r', 'l_elb_y', 'l_elb_p']
+  right_arm: ['r_sho_p', 'r_sho_r', 'r_elb_y', 'r_elb_p']
+
+poses:
+  raise:
+    positions: [90.0, 90.0, 0.0, 0.0]
+    # velocities: will be automatic
+    accelerations: [0, 0, 0, 0]
+
+  wave_out:
+    positions: [90.0, 90.0, 0.0, -45.0]
+    # velocities: will be automatic
+    accelerations: [0, 0, 0, 0]
+
+  wave_in:
+    positions: [90.0, 90.0, 0.0, 45.0]
+    # velocities: will be automatic
+    accelerations: [0, 0, 0, 0]
+
+  lower:
+    positions: [0.0, 0.0, 0.0, 0.0]
+    # velocities: will be automatic
+    accelerations: [0, 0, 0, 0]
+
+scenes:
+  raise_both:
+    joints: ['left_arm', 'right_arm']
+    poses: [
+      ['raise', 'raise']
+    ]
+    durations: [2.0]
+
+  wave_both:
+    joints: ['left_arm', 'right_arm']
+    poses: [
+      ['wave_out', 'wave_out'],
+      ['wave_in', 'wave_in']
+    ]
+    durations: [0.5, 0.5]
+
+  lower_both:
+    joints: ['left_arm', 'right_arm']
+    poses: [
+      ['lower', 'lower']
+    ]
+    durations: [2.0]
+
+scripts:
+  wave_both:
+  - {scene: 'raise_both'}
+  - {scene: 'wave_both', repeat: 3}
+  - {scene: 'lower_both'}
