@@ -17,9 +17,9 @@ inits:
     10: [1, 1]     # velocity profile, inverse rotation
 
   pid-legs:
-    80: [2, 4000]  # position D gain
+    80: [2, 2000]  # position D gain
     82: [2, 0 ]    # position I gain
-    84: [2, 1080]  # position P gain
+    84: [2, 1280]  # position P gain
 
 buses:
   upper_body:

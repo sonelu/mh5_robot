@@ -21,14 +21,14 @@ poses:
     0, 0,
     -25.0, 0, 0, 0,
     -25.0, 0, 0, 0,
-    0, 20, 40, 0, 20, 0,
-    0, 20, 40, 0, 20, 0
+    0, 30, 60, 0, 30, 0,
+    0, 30, 60, 0, 30, 0
   ]
 
 scenes:
   scene_stand:
   - ['pose_prepare', 3.0]
-  - ['pose_stand', 4.0]
+  - ['pose_stand', 2.0]
 
 script:
   - 'scene_stand'

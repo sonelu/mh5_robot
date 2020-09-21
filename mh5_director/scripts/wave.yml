@@ -1,55 +1,60 @@
 units: 'deg'
 
-joints:
-  left_arm: ['l_sho_p', 'l_sho_r', 'l_elb_y', 'l_elb_p']
-  right_arm: ['r_sho_p', 'r_sho_r', 'r_elb_y', 'r_elb_p']
+joint_names: [
+  'l_sho_p', 'l_sho_r', 'l_elb_y', 'l_elb_p',
+  'r_sho_p', 'r_sho_r', 'r_elb_y', 'r_elb_p'
+]
 
 poses:
-  raise:
-    positions: [90.0, 90.0, 0.0, 0.0]
-    # velocities: will be automatic
-    accelerations: [0, 0, 0, 0]
+  pose_prepare: [
+    -25.0, 0, 0, 0,
+    -25.0, 0, 0, 0
+  ]
+  
+  pose_raise1: [
+    180.0, 75.0, -90.0, 0.0,
+    180.0, 75.0, -90.0, 0.0
+  ]
 
-  wave_out:
-    positions: [90.0, 90.0, 0.0, -45.0]
-    # velocities: will be automatic
-    accelerations: [0, 0, 0, 0]
+  pose_raise2: [
+    90.0, 45.0, 0.0, 0.0,
+    90.0, 45.0, 0.0, 0.0
+  ]
 
-  wave_in:
-    positions: [90.0, 90.0, 0.0, 45.0]
-    # velocities: will be automatic
-    accelerations: [0, 0, 0, 0]
+  pose_raise3: [
+    180.0, 75.0, -90.0, 0.0,
+    180.0, 75.0, -90.0, 0.0
+  ]
 
-  lower:
-    positions: [0.0, 0.0, 0.0, 0.0]
-    # velocities: will be automatic
-    accelerations: [0, 0, 0, 0]
+  pose_wave_out: [
+    180.0, 90.0, -90.0, 0.0,
+    180.0, 90.0, -90.0, 0.0
+  ]
+
+  pose_wave_in: [
+    180.0, 60.0, -90.0, 0.0,
+    180.0, 60.0, -90.0, 0.0
+  ]
+
+  pose_lower: [
+    -25.0, 0.0, 0.0, 0.0,
+    -25.0, 0.0, 0.0, 0.0
+  ]
 
 scenes:
-  raise_both:
-    joints: ['left_arm', 'right_arm']
-    poses: [
-      ['raise', 'raise']
-    ]
-    durations: [2.0]
+  scene_raise:
+  - ['pose_raise1', 3.0]
 
-  wave_both:
-    joints: ['left_arm', 'right_arm']
-    poses: [
-      ['wave_out', 'wave_out'],
-      ['wave_in', 'wave_in']
-    ]
-    durations: [0.5, 0.5]
+  scene_wave_once:
+  - ['pose_wave_out', 0.75]
+  - ['pose_wave_in', 0.75]
 
-  lower_both:
-    joints: ['left_arm', 'right_arm']
-    poses: [
-      ['lower', 'lower']
-    ]
-    durations: [2.0]
+  scene_lower:
+  - ['pose_lower', 3.0]
 
-scripts:
-  wave_both:
-  - {scene: 'raise_both'}
-  - {scene: 'wave_both', repeat: 3}
-  - {scene: 'lower_both'}
+script:
+  - 'scene_raise'
+  - 'scene_wave_once'
+  - 'scene_wave_once'
+  - 'scene_wave_once'
+  - 'scene_lower'
