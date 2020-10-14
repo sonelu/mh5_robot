@@ -263,6 +263,7 @@ class DynamixelController():
                 raw_acc = 0
                 # raw_acc = raw_vel / 4.0
                 device.goal = PVE(int(raw_pos), int(raw_vel), int(raw_acc))
+                device.goal_changed = True
                 # wait for the
             last_time = frame_time
             # need to adjust the duration here to be more acurate

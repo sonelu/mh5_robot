@@ -16,6 +16,7 @@ class DynamixelDevice():
         self.inits = inits
         self.current = PVE(0, 0, 0)
         self.goal = PVE(0, 0, 0)
+        self.goal_changed = False
         self.torque_active = False
         self.temperature = 0
         self.voltage = 0

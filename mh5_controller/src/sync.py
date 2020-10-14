@@ -190,15 +190,18 @@ class PVAWriter(Sync):
         # we only process the devices that have torque active
         self.gsw.clearParam()
         has_devices = False
+        processed_devices = []
         for device in self.devices.values():
-            if device.torque_active:
+            if device.torque_active and device.goal_changed:
                 data = device.goal.eff.to_bytes(4, byteorder='little') + \
                        device.goal.vel.to_bytes(4, byteorder='little') + \
                        device.goal.pos.to_bytes(4, byteorder='little')
                 result = self.gsw.addParam(device.dev_id, data)
                 if not result:
                     rospy.loginfo(f'{self.name}: Failed to setup SyncWrite for device {device.dev_id}')
+                    continue
                 has_devices = True
+                processed_devices.append(device)
         # if no devices are active, skip the loop
         if not has_devices:
             return
@@ -212,3 +215,6 @@ class PVAWriter(Sync):
             self.errors += 1
             rospy.logdebug(f'{self.name}: Failed to transmit data ')
             rospy.logdebug(f'cerr={self.gsw.ph.getTxRxResult(result)}')
+        else:
+            for device in processed_devices:
+                device.goal_changed = False
