@@ -1,0 +1,18 @@
+<launch>
+  <arg name="image_width" default="640"/>
+  <arg name="image_height" default="480"/>
+  <arg name="frame_rate" default="30.0"/>
+
+  <include file="$(find mh5_vision)/launch/usb_cam_left.launch">
+    <arg name="image_width" value="$(arg image_width)"/>
+    <arg name="image_height" value="$(arg image_height)"/>
+    <arg name="frame_rate" value="$(arg frame_rate)"/>
+  </include>
+
+  <include file="$(find mh5_vision)/launch/usb_cam_right.launch">
+    <arg name="image_width" value="$(arg image_width)"/>
+    <arg name="image_height" value="$(arg image_height)"/>
+    <arg name="frame_rate" value="$(arg frame_rate)"/>
+  </include>
+
+</launch>
