@@ -3,6 +3,14 @@ upper_controller:
   joints:
     - head_p
     - head_y
+    - l_sho_p
+    - l_sho_r
+    - l_elb_y
+    - l_elb_p
+    - r_sho_p
+    - r_sho_r
+    - r_elb_y
+    - r_elb_p
 
 lower_controller:
   type: "position_controllers/JointTrajectoryController"
@@ -36,3 +44,11 @@ lower_controller:
     r_kne_y: {p: 2.0, i: 0.0, d: 0.0}
     r_ank_p: {p: 2.0, i: 0.0, d: 0.0}
     r_ank_r: {p: 2.0, i: 0.0, d: 0.0}
+    l_sho_p: {p: 2.0, i: 0.0, d: 0.0}
+    l_sho_r: {p: 2.0, i: 0.0, d: 0.0}
+    l_elb_y: {p: 2.0, i: 0.0, d: 0.0}
+    l_elb_p: {p: 2.0, i: 0.0, d: 0.0}
+    r_sho_p: {p: 2.0, i: 0.0, d: 0.0}
+    r_sho_r: {p: 2.0, i: 0.0, d: 0.0}
+    r_elb_y: {p: 2.0, i: 0.0, d: 0.0}
+    r_elb_p: {p: 2.0, i: 0.0, d: 0.0}

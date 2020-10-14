@@ -133,6 +133,23 @@
                 </geometry>
                 <material name="ivory"/>
             </visual>
+            <collision>
+                <origin rpy="0 0 0" xyz="0 0 0"/>
+                <geometry>
+                    <mesh filename="package://mh5_description/meshes/frame03_revB.stl"/>
+                </geometry>
+            </collision>
+            <inertial>
+                <origin rpy="0 0 0" xyz="0 0 0"/>
+                <mass value="0.0028"/>
+                <inertia
+                    ixx="0.000000349"
+                    iyy="0.000000241"
+                    izz="0.000000567"
+                    ixy="0"
+                    ixz="0"
+                    iyz="0" />
+            </inertial>
         </link>
 
         <joint name="${short_side}_elb_y" type="revolute">
