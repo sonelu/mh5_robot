@@ -11,7 +11,7 @@
             <xacro:property name="factor" value = "-1.0"/>
         </xacro:if>
 
-        <xacro:property name="effort" value="1.5"/>
+        <xacro:property name="effort" value="1.0"/>
         <xacro:property name="velocity" value="${2*pi}"/>
 
         <joint name="${side}_shoulder_fixed" type="fixed">
