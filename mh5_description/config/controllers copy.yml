@@ -1,0 +1,65 @@
+mh5_robot:
+  joint_state_controller:
+    type: joint_state_controller/JointStateController
+    publish_rate: 50
+
+  upper_controller:
+    type: "position_controllers/JointTrajectoryController"
+    joints:
+      - head_p
+      - head_y
+      - l_sho_p
+      - l_sho_r
+      - l_elb_y
+      - l_elb_p
+      - r_sho_p
+      - r_sho_r
+      - r_elb_y
+      - r_elb_p
+    state_publish_rate:  25            # Override default
+    action_monitor_rate: 30            # Override default
+    stop_trajectory_duration: 0        # Override default
+
+  lower_controller:
+    type: "position_controllers/JointTrajectoryController"
+    joints:
+      - l_hip_p
+      - l_hip_r
+      - l_kne_p
+      - l_kne_y
+      - l_ank_p
+      - l_ank_r
+      - r_hip_p
+      - r_hip_r
+      - r_kne_p
+      - r_kne_y
+      - r_ank_p
+      - r_ank_r
+    state_publish_rate:  25            # Override default
+    action_monitor_rate: 30            # Override default
+    stop_trajectory_duration: 0        # Override default
+
+  gazebo_ros_control:   
+    pid_gains:
+      head_p: {p: 2.0, i: 0.0, d: 0.0}
+      head_y: {p: 2.0, i: 0.0, d: 0.0}
+      l_hip_p: {p: 2.0, i: 0.0, d: 0.0}
+      l_hip_r: {p: 2.0, i: 0.0, d: 0.0}
+      l_kne_p: {p: 2.0, i: 0.0, d: 0.0}
+      l_kne_y: {p: 2.0, i: 0.0, d: 0.0}
+      l_ank_p: {p: 2.0, i: 0.0, d: 0.0}
+      l_ank_r: {p: 2.0, i: 0.0, d: 0.0}
+      r_hip_p: {p: 2.0, i: 0.0, d: 0.0}
+      r_hip_r: {p: 2.0, i: 0.0, d: 0.0}
+      r_kne_p: {p: 2.0, i: 0.0, d: 0.0}
+      r_kne_y: {p: 2.0, i: 0.0, d: 0.0}
+      r_ank_p: {p: 2.0, i: 0.0, d: 0.0}
+      r_ank_r: {p: 2.0, i: 0.0, d: 0.0}
+      l_sho_p: {p: 2.0, i: 0.0, d: 0.0}
+      l_sho_r: {p: 2.0, i: 0.0, d: 0.0}
+      l_elb_y: {p: 2.0, i: 0.0, d: 0.0}
+      l_elb_p: {p: 2.0, i: 0.0, d: 0.0}
+      r_sho_p: {p: 2.0, i: 0.0, d: 0.0}
+      r_sho_r: {p: 2.0, i: 0.0, d: 0.0}
+      r_elb_y: {p: 2.0, i: 0.0, d: 0.0}
+      r_elb_p: {p: 2.0, i: 0.0, d: 0.0}

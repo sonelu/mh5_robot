@@ -10,9 +10,14 @@
 
   <node name="spawn_urdf" pkg="gazebo_ros" type="spawn_model"
         args="-param robot_description -urdf -model mh5_robot" />
+-
+  <node name="controller_spawner" pkg="controller_manager" type="spawner" 
+      args="--namespace=/mh5_robot
+        joint_state_controller
+        upper_controller
+        lower_controller
+        " />
 
-  <node name="controller_spawner" pkg="controller_manager" type="spawner" args="upper_controller lower_controller" />
-
-  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"/>
+  <!-- <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"/> -->
 
 </launch>

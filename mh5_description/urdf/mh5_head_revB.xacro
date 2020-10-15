@@ -10,7 +10,7 @@
             <parent link="${parent}"/>
             <child link="head_servo"/>
             <origin xyz="-0.007076 0 ${0.191046+0.019}" rpy="0 0 0"/>
-            <limit lower="-${pi/2}" upper="${pi/2}" effort="1000" velocity="100"/>
+            <limit lower="-${pi/2}" upper="${pi/2}" effort="1.0" velocity="${2*pi}"/>
         </joint>
         <xacro:insert_transmission name="head_y"/>
 
@@ -46,7 +46,7 @@
             <parent link="head_servo"/>
             <child link="head_frame"/>
             <origin xyz="-0.024 0 0" rpy="0 0 0"/>
-            <limit lower="-${pi/12}" upper="${pi/4}" effort="1000" velocity="100"/>
+            <limit lower="-${pi/12}" upper="${pi/4}" effort="1.0" velocity="${2*pi}"/>
         </joint>
         <xacro:insert_transmission name="head_p"/>
 
