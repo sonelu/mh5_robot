@@ -14,10 +14,13 @@
   <node name="controller_spawner" pkg="controller_manager" type="spawner" 
       args="--namespace=/mh5_robot
         joint_state_controller
-        upper_controller
-        lower_controller
+        dynamixel_controller
         " />
 
   <!-- <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"/> -->
+
+  <node name="mh5_director" pkg="mh5_director" type="director.py">
+    <remap from="follow_joint_trajectory" to="mh5_robot/dynamixel_controller/follow_joint_trajectory"/>
+  </node>
 
 </launch>

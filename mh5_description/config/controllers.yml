@@ -3,7 +3,7 @@ mh5_robot:
     type: joint_state_controller/JointStateController
     publish_rate: 50
 
-  upper_controller:
+  dynamixel_controller:
     type: "position_controllers/JointTrajectoryController"
     joints:
       - head_p
@@ -16,10 +16,6 @@ mh5_robot:
       - r_sho_r
       - r_elb_y
       - r_elb_p
-
-  lower_controller:
-    type: "position_controllers/JointTrajectoryController"
-    joints:
       - l_hip_p
       - l_hip_r
       - l_kne_p
