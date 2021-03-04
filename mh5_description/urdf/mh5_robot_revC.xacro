@@ -1,9 +1,9 @@
 <?xml version="1.0" ?>
 <robot xmlns:xacro="http://ros.org/wiki/xacro" name="mh5_robot">
 
-    <xacro:include filename="$(find mh5_description)/urdf/mh5_arm_revB.xacro"/>
-    <xacro:include filename="$(find mh5_description)/urdf/mh5_leg_revB.xacro"/>
-    <xacro:include filename="$(find mh5_description)/urdf/mh5_head_revB.xacro"/>
+    <!-- <xacro:include filename="$(find mh5_description)/urdf/mh5_arm_revB.xacro"/> -->
+    <xacro:include filename="$(find mh5_description)/urdf/mh5_leg_revC.xacro"/>
+    <!-- <xacro:include filename="$(find mh5_description)/urdf/mh5_head_revB.xacro"/> -->
 
     <xacro:macro name="material_ivory">
         <material name="ivory">
@@ -23,25 +23,25 @@
         <visual>
             <origin rpy="0 0 0" xyz="0 0 0"/>
             <geometry>
-                <mesh filename="package://mh5_description/meshes/chest_revB.stl"/>
+                <mesh filename="package://mh5_description/meshes/chest_revC.stl"/>
             </geometry>
             <xacro:material_ivory/>
         </visual>
         <collision>
             <origin rpy="0 0 0" xyz="0 0 0"/>
             <geometry>
-                <mesh filename="package://mh5_description/meshes/chest_revB.stl"/>
+                <mesh filename="package://mh5_description/meshes/chest_revC.stl"/>
             </geometry>
         </collision>
         <inertial>
-            <mass value="0.134362"/>
+            <mass value="0.139810"/>
             <inertia
-                ixx="0.000338546"
-                iyy="0.000393872"
-                izz="0.000180759"
-                ixy="0"
-                ixz="0"
-                iyz="-0.000011005" />
+                ixx="0.000416293"
+                iyy="0.000348572"
+                izz="0.000198378"
+                ixy="0.000000012"
+                ixz="0.000012260"
+                iyz="0.000000017" />
         </inertial>
     </link>
 
@@ -51,11 +51,12 @@
         <origin xyz="0 0 0.200" rpy="0 0 0"/>
     </joint>
 
-    <xacro:mh5_head parent="chest" />
+    
+    <!-- <xacro:mh5_head parent="chest" /> -->
     <xacro:mh5_leg side="left" parent="chest" />
     <xacro:mh5_leg side="right" parent="chest" />
-    <xacro:mh5_arm side="left" parent="chest" />
-    <xacro:mh5_arm side="right" parent="chest" />
+    <!-- <xacro:mh5_arm side="left" parent="chest" /> -->
+    <!-- <xacro:mh5_arm side="right" parent="chest" /> -->
 
     <gazebo>
         <plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so">
