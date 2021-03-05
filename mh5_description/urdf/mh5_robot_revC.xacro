@@ -13,7 +13,7 @@
 
     <xacro:macro name="material_black">
         <material name="black">
-            <color rgba="0.1 0.1 0.1 1"/>
+            <color rgba="0.2 0.2 0.2 1"/>
         </material>
     </xacro:macro>
 
@@ -48,7 +48,7 @@
     <joint name="chest_fixed" type="fixed">
         <parent link="base_link"/>
         <child link="chest"/>
-        <origin xyz="0 0 0.200" rpy="0 0 0"/>
+        <origin xyz="0 0 0.203" rpy="0 0 0"/>
     </joint>
 
     
