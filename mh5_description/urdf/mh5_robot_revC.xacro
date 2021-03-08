@@ -3,7 +3,7 @@
 
     <xacro:include filename="$(find mh5_description)/urdf/mh5_arm_revC.xacro"/>
     <xacro:include filename="$(find mh5_description)/urdf/mh5_leg_revC.xacro"/>
-    <!-- <xacro:include filename="$(find mh5_description)/urdf/mh5_head_revB.xacro"/> -->
+    <xacro:include filename="$(find mh5_description)/urdf/mh5_head_revC.xacro"/>
 
     <xacro:macro name="material_ivory">
         <material name="ivory">
@@ -52,11 +52,11 @@
     </joint>
 
     
-    <!-- <xacro:mh5_head parent="chest" /> -->
     <xacro:mh5_leg side="left" parent="chest" />
     <xacro:mh5_leg side="right" parent="chest" />
     <xacro:mh5_arm side="left" parent="chest" />
     <xacro:mh5_arm side="right" parent="chest" />
+    <xacro:mh5_head parent="chest" />
 
     <gazebo>
         <plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so">
