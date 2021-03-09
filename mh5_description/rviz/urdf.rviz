@@ -24,6 +24,7 @@ Panels:
   - Class: rviz/Views
     Expanded:
       - /Current View1
+      - /Current View1/Focal Point1
     Name: Views
     Splitter Ratio: 0.5
   - Class: rviz/Time
@@ -54,7 +55,7 @@ Visualization Manager:
         Z: 0
       Plane: XY
       Plane Cell Count: 10
-      Reference Frame: <Fixed Frame>
+      Reference Frame: base_link
       Value: true
     - Alpha: 1
       Class: rviz/RobotModel
@@ -101,6 +102,11 @@ Visualization Manager:
           Show Trail: false
           Value: true
         left_battery:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        left_camera:
           Alpha: 1
           Show Axes: false
           Show Trail: false
@@ -176,6 +182,11 @@ Visualization Manager:
           Show Trail: false
           Value: true
         right_battery:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        right_camera:
           Alpha: 1
           Show Axes: false
           Show Trail: false
@@ -269,7 +280,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 0.7328033447265625
+      Distance: 0.6913615465164185
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -277,17 +288,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: 0
-        Y: 0
-        Z: 0
+        X: -0.0027665128000080585
+        Y: 0.0009576095035299659
+        Z: 0.015696007758378983
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.3103986382484436
+      Pitch: 0.15539869666099548
       Target Frame: chest
-      Yaw: 0.2853985130786896
+      Yaw: 0.24039678275585175
     Saved: ~
 Window Geometry:
   Displays:
