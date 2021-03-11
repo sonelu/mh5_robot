@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <launch>
 
-  <arg name="model" default="$(find mh5_description)/urdf/mh5_robot_revB.xacro"/>
+  <arg name="model" default="$(find mh5_description)/urdf/mh5_robot_revC.xacro"/>
   <rosparam file="$(find mh5_description)/config/controllers.yml" command="load" />
 
   <param name="robot_description" command="$(find xacro)/xacro $(arg model)" />
