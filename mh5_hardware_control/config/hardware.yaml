@@ -1,0 +1,13 @@
+robot_hardware:
+  - dynamixel0
+  - dynamixel1
+dynamixel0:
+  type: mh5_hardware_interface/MH5DynamixelInterface
+  joints:
+    - mr1_joint1
+    - mr1_joint2
+dynamixel1:
+  type: mh5_hardware_interface/MH5DynamixelInterface
+  joints:
+    - mr2_joint1
+    - mr2_joint2

@@ -1,3 +1,6 @@
 *.pyc
 src/.dynamixel_controller.py.swp
 src/action_client_test.py
+.DS_Store
+.gitignore
+.vscode/settings.json

@@ -1,0 +1,46 @@
+MH5:
+    dynamixel0:
+      hardware_interface:
+        joints:
+          - head_p
+          - head_y
+    dynamixel1:
+      hardware_interface:
+        joints:
+          - l_hip_r
+          - l_hip_p
+    controller:
+      dynamixel0_state:
+        type: joint_state_controller/JointStateController
+        publish_rate: 100
+      dynamixel1_state:
+        type: joint_state_controller/JointStateController
+        publish_rate: 100
+
+      combo_trajectory:
+        type: effort_controllers/JointTrajectoryController
+        joints:
+          - head_p
+          - head_y
+          - l_hip_r
+          - l_hip_p
+        gains:
+          head_p: {p: 30.0, i: 1, d: 0, i_clamp_min: -1, i_clamp_max: 1}
+          head_y: {p: 30.0, i: 1, d: 0, i_clamp_min: -1, i_clamp_max: 1}
+          l_hip_r: {p: 30.0, i: 1, d: 0, i_clamp_min: -1, i_clamp_max: 1}
+          l_hip_p: {p: 30.0, i: 1, d: 0, i_clamp_min: -1, i_clamp_max: 1}
+        velocity_ff:
+          head_p: 1.0
+          head_y: 1.0
+          l_hip_r: 1.0
+          l_hip_p: 1.0
+        constrains:
+          goal_time: 10.0
+          head_p:
+            goal: 0.5
+          head_y:
+            goal: 0.5
+          l_hip_r:
+            goal: 0.5
+          l_hip_p:
+            goal: 0.5
