@@ -5,6 +5,8 @@
 #include <pluginlib/class_list_macros.hpp>
 #include <ros/ros.h>
 
+#include <dynamixel_sdk/dynamixel_sdk.h>
+
 namespace mh5_hardware_interface
 {
 
@@ -20,6 +22,16 @@ public:
 protected:
     ros::NodeHandle nh_;
     
+    // communication
+    std::string port_;
+    int baudrate_;
+    bool rs485_;
+    float protocol_;
+
+    // dynamixel
+    dynamixel::PortHandler *portHandler_;
+    dynamixel::PacketHandler *packetHandler_;
+
     //interfaces
     hardware_interface::JointStateInterface joint_state_interface;
     hardware_interface::EffortJointInterface effort_joint_interface;

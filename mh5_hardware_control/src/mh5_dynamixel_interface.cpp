@@ -15,6 +15,41 @@ bool MH5DynamixelInterface::init(ros::NodeHandle& root_nh, ros::NodeHandle& robo
     //init base
     //robot = myrobot1cpp::initRobot();
 
+    // get the serial port configuration
+    if (!robot_hw_nh.getParam("port", port_)) {
+        ROS_ERROR("[%s] no 'port' specified", robot_hw_nh.getNamespace().c_str());
+        return false;
+    }
+    if (!robot_hw_nh.getParam("baudrate", baudrate_)) {
+        ROS_ERROR("[%s] no 'baudrate' specified", robot_hw_nh.getNamespace().c_str());
+        return false;
+    }
+    if (!robot_hw_nh.getParam("rs485", rs485_)) {
+        rs485_ = false;
+    }
+    if (!robot_hw_nh.getParam("protocol", protocol_)) {
+        ROS_ERROR("[%s] no 'protcol' specified", robot_hw_nh.getNamespace().c_str());
+        return false;
+    }
+
+    // // open the serial port
+    // portHandler_ = dynamixel::PortHandler::getPortHandler(port_.c_str());
+    // if (! portHandler_->openPort()) {
+    //     ROS_ERROR("[%s] failed to open port [%s]", robot_hw_nh.getNamespace().c_str(), port_.c_str());
+    //     return false;
+    // }
+    // ROS_INFO("[%s] successfully opened port [%s]", robot_hw_nh.getNamespace().c_str(), port_.c_str());
+
+    // if (!portHandler_->setBaudRate(baudrate_)) {
+    //     ROS_ERROR("[%s] failed to set baud rate [%i] on port [%s]", robot_hw_nh.getNamespace().c_str(), baudrate_, port_.c_str());
+    //     return false;
+    // }
+    // ROS_INFO("[%s] successfully set baud rate [%i] on port [%s]", robot_hw_nh.getNamespace().c_str(), baudrate_, port_.c_str());
+    
+    // if (rs485_) {
+
+    // }
+
     //get joint names and num of joint
     robot_hw_nh.getParam("joints", joint_name);
     num_joints = joint_name.size();

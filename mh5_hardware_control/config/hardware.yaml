@@ -4,10 +4,21 @@ robot_hardware:
 dynamixel0:
   type: mh5_hardware_interface/MH5DynamixelInterface
   joints:
-    - mr1_joint1
-    - mr1_joint2
+    - head_p
+    - head_y
+  port: /dev/ttySC0
+  baudrate: 2000000
+  protocol: 2.0
+  rs485: true
+  mr1_joint1:
+    id: 11
+    pid: [100, 0, 4000]
+    profile: [0, 0]
 dynamixel1:
   type: mh5_hardware_interface/MH5DynamixelInterface
+  port: /dev/ttySC1
+  baudrate: 2000000
+  protocol: 2.0
   joints:
-    - mr2_joint1
-    - mr2_joint2
+    - l_hip_r
+    - l_hip_p

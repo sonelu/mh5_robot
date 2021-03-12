@@ -5,11 +5,12 @@ find_package(catkin REQUIRED COMPONENTS
   controller_manager
   hardware_interface
   combined_robot_hw
+  dynamixel_sdk
 )
 
 catkin_package(
   INCLUDE_DIRS include
-  CATKIN_DEPENDS controller_manager hardware_interface combined_robot_hw
+  CATKIN_DEPENDS controller_manager hardware_interface combined_robot_hw dynamixel_sdk
 )
 
 include_directories(
