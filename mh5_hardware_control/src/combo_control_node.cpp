@@ -14,7 +14,7 @@ int main(int argc, char** argv){
 
     controller_manager::ControllerManager cm(&hw,nh);
 
-    ros::Rate rate(1000); // 200Hz update rate
+    ros::Rate rate(200); // 200Hz update rate
 
     ROS_INFO("combo_control started");
     while(ros::ok()){

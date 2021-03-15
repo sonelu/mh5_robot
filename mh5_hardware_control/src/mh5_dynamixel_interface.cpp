@@ -12,9 +12,43 @@ MH5DynamixelInterface::~MH5DynamixelInterface(){
 }
 
 bool MH5DynamixelInterface::init(ros::NodeHandle& root_nh, ros::NodeHandle& robot_hw_nh){
-    //init base
-    //robot = myrobot1cpp::initRobot();
+    
+    if (!initPort(robot_hw_nh))
+        return false;
 
+    
+    //get joint names and num of joint
+    robot_hw_nh.getParam("joints", joint_name);
+    num_joints = joint_name.size();
+
+    //resize vectors
+    joint_position_state.resize(num_joints);
+    joint_velocity_state.resize(num_joints);
+    joint_effort_state.resize(num_joints);
+    joint_effort_command.resize(num_joints);
+ 
+    //Register handles
+    for(int i=0; i<num_joints; i++){
+        //State
+        hardware_interface::JointStateHandle jointStateHandle(joint_name[i], &joint_position_state[i], &joint_velocity_state[i], &joint_effort_state[i]);
+        joint_state_interface.registerHandle(jointStateHandle);
+        
+
+        //Effort
+        hardware_interface::JointHandle jointEffortHandle(jointStateHandle, &joint_effort_command[i]);
+        effort_joint_interface.registerHandle(jointEffortHandle);
+    }
+
+    //Register interfaces
+    registerInterface(&joint_state_interface);
+    registerInterface(&effort_joint_interface);
+    
+    //return true for successful init or ComboRobotHW initialisation will fail
+    return true;
+}
+
+
+bool MH5DynamixelInterface::initPort(ros::NodeHandle& robot_hw_nh) {
     // get the serial port configuration
     if (!robot_hw_nh.getParam("port", port_)) {
         ROS_ERROR("[%s] no 'port' specified", robot_hw_nh.getNamespace().c_str());
@@ -50,35 +84,9 @@ bool MH5DynamixelInterface::init(ros::NodeHandle& root_nh, ros::NodeHandle& robo
 
     // }
 
-    //get joint names and num of joint
-    robot_hw_nh.getParam("joints", joint_name);
-    num_joints = joint_name.size();
-
-    //resize vectors
-    joint_position_state.resize(num_joints);
-    joint_velocity_state.resize(num_joints);
-    joint_effort_state.resize(num_joints);
-    joint_effort_command.resize(num_joints);
- 
-    //Register handles
-    for(int i=0; i<num_joints; i++){
-        //State
-        hardware_interface::JointStateHandle jointStateHandle(joint_name[i], &joint_position_state[i], &joint_velocity_state[i], &joint_effort_state[i]);
-        joint_state_interface.registerHandle(jointStateHandle);
-        
-
-        //Effort
-        hardware_interface::JointHandle jointEffortHandle(jointStateHandle, &joint_effort_command[i]);
-        effort_joint_interface.registerHandle(jointEffortHandle);
-    }
-
-    //Register interfaces
-    registerInterface(&joint_state_interface);
-    registerInterface(&effort_joint_interface);
-    
-    //return true for successful init or ComboRobotHW initialisation will fail
     return true;
 }
+
 
 void MH5DynamixelInterface::read(const ros::Time& time, const ros::Duration& period){
         for(int i=0;i < num_joints;i++){

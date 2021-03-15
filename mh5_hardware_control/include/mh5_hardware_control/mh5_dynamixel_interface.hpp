@@ -47,5 +47,8 @@ protected:
     //given setpoints
     std::vector<double> joint_effort_command;
 
+    //help methods
+    bool initPort(ros::NodeHandle & robot_hw_nh);
+
 };
 }

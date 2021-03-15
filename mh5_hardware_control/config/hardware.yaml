@@ -1,7 +1,7 @@
 robot_hardware:
-  - dynamixel0
-  - dynamixel1
-dynamixel0:
+  - upper_body
+  - lower_body
+upper_body:
   type: mh5_hardware_interface/MH5DynamixelInterface
   joints:
     - head_p
@@ -14,7 +14,7 @@ dynamixel0:
     id: 11
     pid: [100, 0, 4000]
     profile: [0, 0]
-dynamixel1:
+lower_body:
   type: mh5_hardware_interface/MH5DynamixelInterface
   port: /dev/ttySC1
   baudrate: 2000000
