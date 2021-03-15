@@ -200,7 +200,7 @@
                 <material name="ivory"/>
             </visual>
             <collision>
-                <origin rpy="0 0 0" xyz="0 0 0"/>
+                <origin rpy="0 0 0" xyz="0 0 -0.03925"/>
                 <geometry>
                     <mesh filename="package://mh5_description/meshes/lower_arm.stl"/>
                 </geometry>
