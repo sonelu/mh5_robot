@@ -6,12 +6,36 @@ upper_body:
   joints:
     - head_p
     - head_y
+    - l_sho_p
+    - l_sho_r
+    - l_elb_y
+    - l_elb_p
   port: /dev/ttySC0
   baudrate: 2000000
   protocol: 2.0
   rs485: true
-  mr1_joint1:
-    id: 11
+  head_p:
+    id: 51
+    pid: [100, 0, 4000]
+    profile: [0, 0]
+  head_y:
+    id: 52
+    pid: [100, 0, 4000]
+    profile: [0, 0]
+  l_sho_p:
+    id: 34
+    pid: [100, 0, 4000]
+    profile: [0, 0]
+  l_sho_r:
+    id: 33
+    pid: [100, 0, 4000]
+    profile: [0, 0]
+  l_elb_y:
+    id: 32
+    pid: [100, 0, 4000]
+    profile: [0, 0]
+  l_elb_p:
+    id: 31
     pid: [100, 0, 4000]
     profile: [0, 0]
 lower_body:
@@ -19,6 +43,15 @@ lower_body:
   port: /dev/ttySC1
   baudrate: 2000000
   protocol: 2.0
+  rs485: true
   joints:
     - l_hip_r
-    - l_hip_p
+    - r_hip_r
+  l_hip_r:
+    id: 16
+    pid: [100, 0, 4000]
+    profile: [0, 0]
+  r_hip_r:
+    id: 26
+    pid: [100, 0, 4000]
+    profile: [0, 0]

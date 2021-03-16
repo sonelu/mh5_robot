@@ -6,6 +6,7 @@
 #include <ros/ros.h>
 
 #include <dynamixel_sdk/dynamixel_sdk.h>
+#include "mh5_port_handler.hpp"
 
 namespace mh5_hardware_interface
 {
@@ -29,7 +30,7 @@ protected:
     float protocol_;
 
     // dynamixel
-    dynamixel::PortHandler *portHandler_;
+    mh5_port_handler::PortHandlerMH5 *portHandler_;
     dynamixel::PacketHandler *packetHandler_;
 
     //interfaces
@@ -38,6 +39,10 @@ protected:
 
     int num_joints;
     std::vector<std::string> joint_name;
+
+    //actual servos
+    std::vector<uint8_t> servo_ids;
+    std::vector<bool> servo_present;
 
     //actual states
     std::vector<double> joint_position_state;
@@ -49,6 +54,7 @@ protected:
 
     //help methods
     bool initPort(ros::NodeHandle & robot_hw_nh);
+    bool initServos(ros::NodeHandle & robot_hw_nh);
 
 };
 }
