@@ -1,6 +1,7 @@
 #include <iostream>
 #include <hardware_interface/joint_state_interface.h>
 #include <hardware_interface/joint_command_interface.h>
+#include <hardware_interface/posvel_command_interface.h>
 #include <hardware_interface/robot_hw.h>
 #include <pluginlib/class_list_macros.hpp>
 #include <ros/ros.h>
@@ -32,10 +33,11 @@ protected:
     // dynamixel
     mh5_port_handler::PortHandlerMH5 *portHandler_;
     dynamixel::PacketHandler *packetHandler_;
+    dynamixel::GroupSyncRead *syncRead_;
 
     //interfaces
     hardware_interface::JointStateInterface joint_state_interface;
-    hardware_interface::EffortJointInterface effort_joint_interface;
+    hardware_interface::PosVelJointInterface pos_vel_joint_interface;
 
     int num_joints;
     std::vector<std::string> joint_name;
@@ -49,12 +51,14 @@ protected:
     std::vector<double> joint_velocity_state;
     std::vector<double> joint_effort_state;
 
-    //given setpoints
-    std::vector<double> joint_effort_command;
+    //commands
+    std::vector<double> joint_position_command;
+    std::vector<double> joint_velocity_command;
 
     //help methods
-    bool initPort(ros::NodeHandle & robot_hw_nh);
-    bool initServos(ros::NodeHandle & robot_hw_nh);
+    bool initPort();
+    bool initServos();
+    bool setupDynamixelLoops();
 
 };
 }

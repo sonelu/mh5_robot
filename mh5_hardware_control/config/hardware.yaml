@@ -10,34 +10,35 @@ upper_body:
     - l_sho_r
     - l_elb_y
     - l_elb_p
+    - r_sho_p
+    - r_sho_r
+    - r_elb_y
+    - r_elb_p
   port: /dev/ttySC0
   baudrate: 2000000
   protocol: 2.0
   rs485: true
   head_p:
     id: 51
-    pid: [100, 0, 4000]
-    profile: [0, 0]
+    inverse: true
   head_y:
     id: 52
-    pid: [100, 0, 4000]
-    profile: [0, 0]
   l_sho_p:
     id: 34
-    pid: [100, 0, 4000]
-    profile: [0, 0]
   l_sho_r:
     id: 33
-    pid: [100, 0, 4000]
-    profile: [0, 0]
   l_elb_y:
     id: 32
-    pid: [100, 0, 4000]
-    profile: [0, 0]
   l_elb_p:
     id: 31
-    pid: [100, 0, 4000]
-    profile: [0, 0]
+  r_sho_p:
+    id: 44
+  r_sho_r:
+    id: 43
+  r_elb_y:
+    id: 42
+  r_elb_p:
+    id: 41
 lower_body:
   type: mh5_hardware_interface/MH5DynamixelInterface
   port: /dev/ttySC1
@@ -46,12 +47,38 @@ lower_body:
   rs485: true
   joints:
     - l_hip_r
+    - l_hip_p
+    - l_kne_p
+    - l_kne_y
+    - l_ank_p
+    - l_ank_r
     - r_hip_r
+    - r_hip_p
+    - r_kne_p
+    - r_kne_y
+    - r_ank_p
+    - r_ank_r
   l_hip_r:
     id: 16
-    pid: [100, 0, 4000]
-    profile: [0, 0]
+  l_hip_p:
+    id: 15
+  l_kne_p:
+    id: 14
+  l_kne_y:
+    id: 13
+  l_ank_p:
+    id: 12
+  l_ank_r:
+    id: 11
   r_hip_r:
     id: 26
-    pid: [100, 0, 4000]
-    profile: [0, 0]
+  r_hip_p:
+    id: 25
+  r_kne_p:
+    id: 24
+  r_kne_y:
+    id: 23
+  r_ank_p:
+    id: 22
+  r_ank_r:
+    id: 21
