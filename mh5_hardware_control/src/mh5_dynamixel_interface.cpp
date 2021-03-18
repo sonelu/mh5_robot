@@ -19,6 +19,12 @@ bool MH5DynamixelInterface::init(ros::NodeHandle& root_nh, ros::NodeHandle& robo
     if (!initPort())
         return false;
 
+    if (!initJoints())
+        return false;
+
+    if (!findServos())
+        return false;
+
     if (!initServos())
         return false;
 
@@ -43,7 +49,13 @@ bool MH5DynamixelInterface::init(ros::NodeHandle& root_nh, ros::NodeHandle& robo
     return true;
 }
 
-
+/**
+ * @brief Initializes the Dynamixel port
+ * 
+ * @return true if all went ok
+ * @return false if configuration information is missing or unable to open and
+ *               configure the port
+ */
 bool MH5DynamixelInterface::initPort() {
     // get the serial port configuration
     if (!nh_.getParam("port", port_)) {
@@ -89,12 +101,13 @@ bool MH5DynamixelInterface::initPort() {
     return true;
 }
 
-
-bool MH5DynamixelInterface::initServos() {
-
-    int dxl_comm_result = COMM_TX_FAIL;             // Communication result
-    uint8_t dxl_error = 0;                          // Dynamixel error
-    
+/**
+ * @brief Initializes the joint information and the associated structures.
+ * 
+ * @return true if al is ok
+ * @return false if something is missing (ex. no 'joints' paramter is defined)
+ */
+bool MH5DynamixelInterface::initJoints() {
     //get joint names and num of joint
     if (!nh_.getParam("joints", joint_name)) {
         ROS_ERROR("[%s] no 'joints' defined", nh_.getNamespace().c_str());
@@ -115,11 +128,22 @@ bool MH5DynamixelInterface::initServos() {
     joint_position_command.resize(num_joints);
     joint_velocity_command.resize(num_joints);
 
-    // read servo configuration
-    for (int i=0; i < num_joints; i++) {
-        
-        int servo_id;
+    return true;
+}
 
+/**
+ * @brief Reads the ID settings from parameter server and checks if the servo is
+ *        avaialable. Updates the `servo_ids` and `servo_present` vectors.
+ * 
+ * @return true always
+ */
+bool MH5DynamixelInterface::findServos()
+{
+    int servo_id;                                   // stores from param server
+
+    for (int i=0; i < num_joints; i++)
+    {
+        // read servo configuration
         if (!nh_.getParam(joint_name[i] + "/id", servo_id)) {
             ROS_ERROR("[%s] ID not found for joint %s; will be disabled",
                       nh_.getNamespace().c_str(),
@@ -129,34 +153,8 @@ bool MH5DynamixelInterface::initServos() {
         }
         
         servo_ids[i] = (uint8_t)servo_id;
-        bool servo_ok = false;
-        // ping the servo; will try 5 times in case random errors are appearing
-        for (int n=0; n < 5; n++) {
-            dxl_comm_result = packetHandler_->ping(portHandler_, servo_ids[i], &dxl_error);
-            if (dxl_comm_result != COMM_SUCCESS) {
-                ROS_ERROR("[%s] failed to communicate with joint %s [%d] (try %d/5): %s", 
-                        nh_.getNamespace().c_str(),
-                        joint_name[i].c_str(), servo_ids[i],
-                        n + 1,
-                        packetHandler_->getTxRxResult(dxl_comm_result));
-                continue;
-            }
-            if (dxl_error != 0) {
-                ROS_ERROR("[%s] error reported when communicating with joint %s [%d] (try %d/5): %s", 
-                        nh_.getNamespace().c_str(),
-                        joint_name[i].c_str(), servo_ids[i], 
-                        n + 1,
-                        packetHandler_->getRxPacketError(dxl_error));
-                continue;
-            }
-            ROS_INFO("[%s] joint %s [%d] detected", 
-                    nh_.getNamespace().c_str(),
-                    joint_name[i].c_str(),
-                    servo_ids[i]);
-            servo_ok = true;
-            break;
-        }
-        if (servo_ok) 
+
+        if (pingServo(i, 5)) 
             servo_present[i] = true;
         else {
             ROS_ERROR("[%s] joint %s [%d] will be disabled (failed to communicate 5 times)", 
@@ -166,6 +164,64 @@ bool MH5DynamixelInterface::initServos() {
         }
 
     }
+    return true;
+}
+
+
+/**
+ * @brief Pings the dyanmixel ID on the bus. Tries several times in case there
+ *        are communication problems.
+ * 
+ * @param index the index of the joint for which to ping the Dynamixel 
+ * @param num_tries how many tries to do in case there are no answers
+ * @return true if the Dynamixel has answered
+ * @return false if the Dynamixel failed to answer after `num_tries`
+ */
+bool MH5DynamixelInterface::pingServo(const int index, const int num_tries)
+{    
+    int dxl_comm_result = COMM_TX_FAIL;             // Communication result
+    uint8_t dxl_error = 0;                          // Dynamixel error
+    bool servo_ok = false;
+    
+    for (int n=0; n < num_tries; n++)
+    {
+        dxl_comm_result = packetHandler_->ping(portHandler_, servo_ids[index], &dxl_error);
+        
+        if (dxl_comm_result != COMM_SUCCESS) {
+            ROS_ERROR("[%s] failed to communicate with joint %s [%d] (try %d/%d): %s", 
+                      nh_.getNamespace().c_str(),
+                      joint_name[index].c_str(),
+                      servo_ids[index],
+                      n + 1,
+                      num_tries,
+                      packetHandler_->getTxRxResult(dxl_comm_result));
+            continue;
+        }
+        
+        if (dxl_error != 0) {
+            ROS_ERROR("[%s] error reported when communicating with joint %s [%d] (try %d/%d): %s", 
+                      nh_.getNamespace().c_str(),
+                      joint_name[index].c_str(),
+                      servo_ids[index], 
+                      n + 1,
+                      num_tries,
+                      packetHandler_->getRxPacketError(dxl_error));
+            continue;
+        }
+        
+        ROS_INFO("[%s] joint %s [%d] detected", 
+                 nh_.getNamespace().c_str(),
+                 joint_name[index].c_str(),
+                 servo_ids[index]);
+        servo_ok = true;
+        break;
+    }
+    return servo_ok;
+}
+
+
+bool MH5DynamixelInterface::initServos()
+{
     return true;
 }
 
@@ -193,7 +249,8 @@ bool MH5DynamixelInterface::setupDynamixelLoops() {
 }
 
 
-void MH5DynamixelInterface::read(const ros::Time& time, const ros::Duration& period){
+void MH5DynamixelInterface::read(const ros::Time& time, const ros::Duration& period)
+{
     int dxl_comm_result = COMM_TX_FAIL;               // Communication result
     uint8_t dxl_error = 0;                            // Dynamixel error
     bool dxl_getdata_result = false;                  // GetParam result
@@ -208,7 +265,8 @@ void MH5DynamixelInterface::read(const ros::Time& time, const ros::Duration& per
     }
 
     // process each servo
-    for(int i=0;i < num_joints;i++) {
+    for(int i=0;i < num_joints;i++)
+    {
         //only present servos
         if (!servo_present[i])
             continue;
@@ -229,7 +287,8 @@ void MH5DynamixelInterface::read(const ros::Time& time, const ros::Duration& per
         else {
             int32_t position = syncRead_->getData(servo_ids[i], 132, 4);
             // convert to radians
-            joint_position_state[i] = (position - 2047) * 0.001534355386369;
+            // for XL430 a value of 2048 = pi > factor = pi / 2048
+            joint_position_state[i] = (position - 2047) * 0.001533980787886;
         }
         //velocity
         dxl_getdata_result = syncRead_->isAvailable(servo_ids[i], 128, 4);
@@ -240,8 +299,11 @@ void MH5DynamixelInterface::read(const ros::Time& time, const ros::Duration& per
         else {
             int32_t velocity = syncRead_->getData(servo_ids[i], 128, 4);
             // convert to radians / sec
-            if (velocity > 1023)
-                velocity -= 4294967296;
+            // 1 tick = 0.229 rev / min 
+            // (see https://emanual.robotis.com/docs/en/dxl/x/xl430-w250/#velocity-limit44)
+            // factor = 0.229 * 2pi / 60 [rad/sec]
+            // if (velocity > 1023)
+            //     velocity -= 4294967296;
             joint_velocity_state[i] = velocity * 0.023980823922402;
         }
         //load
@@ -253,8 +315,11 @@ void MH5DynamixelInterface::read(const ros::Time& time, const ros::Duration& per
         else {
             int16_t load = syncRead_->getData(servo_ids[i], 126, 2);
             // convert to Nm
-            if (load > 1000)
-                load -= 65536;
+            // 1 tick = 0.1% of max torque
+            // max torque = 1.4 [Nm]
+            // (see https://emanual.robotis.com/docs/en/dxl/x/xl430-w250/#present-load126)
+            // if (load > 1000)
+            //     load -= 65536;
             joint_effort_state[i] = load * 0.0014;
         }
     }

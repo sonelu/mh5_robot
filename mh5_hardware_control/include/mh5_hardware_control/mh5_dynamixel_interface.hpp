@@ -57,7 +57,10 @@ protected:
 
     //help methods
     bool initPort();
+    bool initJoints();
+    bool findServos();
     bool initServos();
+    bool pingServo(const int index, const int num_tries);
     bool setupDynamixelLoops();
 
 };
