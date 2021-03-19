@@ -218,7 +218,7 @@
         </link>
 
         <joint name="${short_side}_elb_p" type="revolute">
-            <axis xyz="${-factor} 0 0"/>
+            <axis xyz="${factor} 0 0"/>
             <parent link="${side}_lower_arm_frame"/>
             <child link="${side}_lower_arm_servo"/>
             <origin xyz="0 0 -0.07325" rpy="0 0 ${-factor*pi/2}"/>
