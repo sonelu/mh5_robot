@@ -122,28 +122,17 @@ bool MH5DynamixelInterface::initJoints() {
     //resize vectors
     servo_ids.resize(num_joints);
     servo_present.resize(num_joints);
+    joint_direction_inverse.resize(num_joints);
+    joint_offset.resize(num_joints);
     joint_position_state.resize(num_joints);
     joint_velocity_state.resize(num_joints);
     joint_effort_state.resize(num_joints);
     joint_position_command.resize(num_joints);
     joint_velocity_command.resize(num_joints);
 
-    return true;
-}
-
-/**
- * @brief Reads the ID settings from parameter server and checks if the servo is
- *        avaialable. Updates the `servo_ids` and `servo_present` vectors.
- * 
- * @return true always
- */
-bool MH5DynamixelInterface::findServos()
-{
-    int servo_id;                                   // stores from param server
-
     for (int i=0; i < num_joints; i++)
     {
-        // read servo configuration
+        int servo_id;                    // stores from param server
         if (!nh_.getParam(joint_name[i] + "/id", servo_id)) {
             ROS_ERROR("[%s] ID not found for joint %s; will be disabled",
                       nh_.getNamespace().c_str(),
@@ -151,19 +140,41 @@ bool MH5DynamixelInterface::findServos()
             servo_present[i] = false;
             continue;
         }
-        
         servo_ids[i] = (uint8_t)servo_id;
+        servo_present[i] = true;
 
-        if (pingServo(i, 5)) 
-            servo_present[i] = true;
-        else {
-            ROS_ERROR("[%s] joint %s [%d] will be disabled (failed to communicate 5 times)", 
-                        nh_.getNamespace().c_str(),
-                        joint_name[i].c_str(), servo_ids[i]);
-            servo_present[i] = false;
+    bool direction_inverse = false;
+        nh_.getParam(joint_name[i] + "/inverse", direction_inverse);
+        joint_direction_inverse[i] = direction_inverse;
+
+        double offset = 0;
+        nh_.getParam(joint_name[i] + "/offset", offset);
+        joint_offset[i] = offset;
+    }
+
+    return true;
+}
+
+/**
+ * @brief Checks if the servo is avaialable. Updates the `servo_present` vector.
+ * 
+ * @return true always
+ */
+bool MH5DynamixelInterface::findServos()
+{
+    for (int i=0; i < num_joints; i++)
+        if (servo_present[i]) 
+        {
+            if (pingServo(i, 5)) 
+                servo_present[i] = true;
+            else {
+                ROS_ERROR("[%s] joint %s [%d] will be disabled (failed to communicate 5 times)", 
+                            nh_.getNamespace().c_str(),
+                            joint_name[i].c_str(), servo_ids[i]);
+                servo_present[i] = false;
+            }
         }
 
-    }
     return true;
 }
 
@@ -220,9 +231,109 @@ bool MH5DynamixelInterface::pingServo(const int index, const int num_tries)
 }
 
 
+/**
+ * @brief Initializes the robots' registers. If during initialization there are
+ *        errors (ex. failed to update registers more than 5 times) the servo
+ *        will be marked as `false` in `servo_present` vector.
+ * 
+ * @return true always
+ */
 bool MH5DynamixelInterface::initServos()
 {
+    #define TRIES 5
+    for (int i=0; i < num_joints; i++)
+
+        if (servo_present[i]) {
+            // common
+            writeRegister(i, 9, 1, 0, TRIES);       // return delay
+            writeRegister(i, 11, 1, 3, TRIES);      // operating mode
+            writeRegister(i, 31, 1, 75, TRIES);     // temperature limit
+            writeRegister(i, 32, 2, 135, TRIES);    // max voltage
+            writeRegister(i, 44, 4, 1023, TRIES);   // velocity limit
+            writeRegister(i, 48, 4, 4095, TRIES);   // max poisiton
+            writeRegister(i, 52, 4, 0, TRIES);      // min position
+
+            // direction
+            if (joint_direction_inverse[i])
+                writeRegister(i, 10, 1, 1, TRIES);  // inverse
+            else
+                writeRegister(i, 10, 1, 0, TRIES);  // direct
+
+            ROS_INFO("[%s] joint %s [%d] initialized",
+                     nh_.getNamespace().c_str(),
+                     joint_name[i].c_str(), servo_ids[i]);
+        }
+
     return true;
+}
+
+
+/**
+ * @brief Writes a register to a servo. If errors occure it will retry up to a number of
+ *        `num_tries` times. Depending on the `size` indicated will call the corresponding
+ *        Dynamixel `writeXByteTxRx` function. If a `size` different than [1, 2, 4] id provided
+ *        it will return error.
+ * 
+ * @param index the position of the servo to be written to
+ * @param address the start address of the register to be written to
+ * @param size the size of the register to be written to
+ * @param value the value to be written
+ * @param num_tries the number of tries to repeat the write in case there are errors
+ * @return true if the write was successful
+ * @return false if the write failed `num_tries` times
+ */
+bool MH5DynamixelInterface::writeRegister(const int index, const uint16_t address, const int size, const long value, const int num_tries)
+{
+    int dxl_comm_result = COMM_TX_FAIL;             // Communication result
+    uint8_t dxl_error = 0;                          // Dynamixel error
+    bool result = false;
+
+    // we'll make 5 attempt in case there are communication errors
+    for (int n=0; n < num_tries; n++)
+    {
+        switch(size) {
+            case 1:
+                dxl_comm_result = packetHandler_->write1ByteTxRx(
+                    portHandler_, servo_ids[index], address, (uint8_t) value, &dxl_error);
+                break;
+            case 2:
+                dxl_comm_result = packetHandler_->write2ByteTxRx(
+                    portHandler_, servo_ids[index], address, (uint16_t) value, &dxl_error);
+                break;
+            case 4:
+                dxl_comm_result = packetHandler_->write4ByteTxRx(
+                    portHandler_, servo_ids[index], address, (uint32_t) value, &dxl_error);
+                break;
+            default: {
+                ROS_ERROR("[%s] incorrect 'writeRegister' call with size %d",
+                           nh_.getNamespace().c_str(), size);
+                return false;
+            }
+        }
+
+        if (dxl_comm_result != COMM_SUCCESS) {
+            ROS_ERROR("[%s] writeRegister communication failure for servo %s [%d], register %d (try %d/%d)",
+                      nh_.getNamespace().c_str(),
+                      joint_name[index].c_str(),
+                      servo_ids[index],
+                      address, n, num_tries);
+            continue;
+        }
+
+        if (dxl_error != 0) {
+            ROS_ERROR("[%s] writeRegister packet error for servo %s [%d], register %d (try %d/%d)",
+                      nh_.getNamespace().c_str(),
+                      joint_name[index].c_str(),
+                      servo_ids[index],
+                      address, n, num_tries);
+            continue;
+        }
+
+        result = true;
+        break;
+    }
+
+    return result;
 }
 
 
@@ -288,7 +399,7 @@ void MH5DynamixelInterface::read(const ros::Time& time, const ros::Duration& per
             int32_t position = syncRead_->getData(servo_ids[i], 132, 4);
             // convert to radians
             // for XL430 a value of 2048 = pi > factor = pi / 2048
-            joint_position_state[i] = (position - 2047) * 0.001533980787886;
+            joint_position_state[i] = (position - 2047 ) * 0.001533980787886 + joint_offset[i];
         }
         //velocity
         dxl_getdata_result = syncRead_->isAvailable(servo_ids[i], 128, 4);

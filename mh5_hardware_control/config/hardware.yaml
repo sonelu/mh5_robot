@@ -25,10 +25,13 @@ upper_body:
     id: 52
   l_sho_p:
     id: 34
+    inverse: true
   l_sho_r:
     id: 33
+    inverse: true
   l_elb_y:
     id: 32
+    inverse: true
   l_elb_p:
     id: 31
   r_sho_p:
@@ -39,6 +42,7 @@ upper_body:
     id: 42
   r_elb_p:
     id: 41
+    inverse: true
 lower_body:
   type: mh5_hardware_interface/MH5DynamixelInterface
   port: /dev/ttySC1
@@ -60,25 +64,36 @@ lower_body:
     - r_ank_r
   l_hip_r:
     id: 16
+    inverse: true
   l_hip_p:
     id: 15
+    inverse: true
   l_kne_p:
     id: 14
+    inverse: true
+    offset: -4.71238898038469
   l_kne_y:
     id: 13
+    inverse: true
   l_ank_p:
     id: 12
+    inverse: true
   l_ank_r:
     id: 11
   r_hip_r:
     id: 26
   r_hip_p:
     id: 25
+    inverse: true
   r_kne_p:
     id: 24
+    inverse: true
+    offset: -4.71238898038469
   r_kne_y:
     id: 23
   r_ank_p:
     id: 22
+    inverse: true
   r_ank_r:
     id: 21
+    inverse: true

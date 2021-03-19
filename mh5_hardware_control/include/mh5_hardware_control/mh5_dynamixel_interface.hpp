@@ -40,27 +40,31 @@ protected:
     hardware_interface::PosVelJointInterface pos_vel_joint_interface;
 
     int num_joints;
-    std::vector<std::string> joint_name;
+    std::vector<std::string>    joint_name;
 
     //actual servos
-    std::vector<uint8_t> servo_ids;
-    std::vector<bool> servo_present;
+    std::vector<uint8_t>        servo_ids;
+    std::vector<bool>           servo_present;
+    std::vector<bool>           joint_direction_inverse;
+    std::vector<double>         joint_offset;
 
     //actual states
-    std::vector<double> joint_position_state;
-    std::vector<double> joint_velocity_state;
-    std::vector<double> joint_effort_state;
+    std::vector<double>         joint_position_state;
+    std::vector<double>         joint_velocity_state;
+    std::vector<double>         joint_effort_state;
+
 
     //commands
-    std::vector<double> joint_position_command;
-    std::vector<double> joint_velocity_command;
+    std::vector<double>         joint_position_command;
+    std::vector<double>         joint_velocity_command;
 
     //help methods
     bool initPort();
     bool initJoints();
     bool findServos();
     bool initServos();
-    bool pingServo(const int index, const int num_tries);
+    bool pingServo(const int /*index*/, const int /*num_tries*/);
+    bool writeRegister(const int /*index*/, const uint16_t /*address*/, const int /*size*/, const long /*value*/, const int /*num_tries*/);
     bool setupDynamixelLoops();
 
 };
