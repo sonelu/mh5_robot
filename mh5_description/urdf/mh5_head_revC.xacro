@@ -41,7 +41,7 @@
         </link>
 
         <joint name="head_p" type="revolute">
-            <axis xyz="0 -1 0"/>
+            <axis xyz="0 1 0"/>
             <parent link="head_servo"/>
             <child link="head_frame"/>
             <origin xyz="0 0 -0.024" rpy="0 -${pi/2} 0"/>
