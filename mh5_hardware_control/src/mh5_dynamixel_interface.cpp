@@ -62,17 +62,12 @@ bool MH5DynamixelInterface::initPort() {
         ROS_ERROR("[%s] no 'port' specified", nh_.getNamespace().c_str());
         return false;
     }
-    if (!nh_.getParam("baudrate", baudrate_)) {
-        ROS_ERROR("[%s] no 'baudrate' specified", nh_.getNamespace().c_str());
-        return false;
-    }
-    if (!nh_.getParam("rs485", rs485_)) {
-        rs485_ = false;
-    }
-    if (!nh_.getParam("protocol", protocol_)) {
-        ROS_ERROR("[%s] no 'protcol' specified", nh_.getNamespace().c_str());
-        return false;
-    }
+    if (!nh_.param("baudrate", baudrate_, 1000000))
+        ROS_INFO("[%s] no 'baudrate' specified; defaulting to 1000000 bps", nh_.getNamespace().c_str());
+
+    nh_.param("rs485", rs485_, false);
+
+    nh_.param("protocol", protocol_, 2.0); 
 
     // open the serial port
     portHandler_ = new mh5_port_handler::PortHandlerMH5(port_.c_str());
@@ -96,7 +91,8 @@ bool MH5DynamixelInterface::initPort() {
         ROS_INFO("[%s] successfully configured RS485 on port %s", nh_.getNamespace().c_str(), port_.c_str());
     }
 
-    packetHandler_ = dynamixel::PacketHandler::getPacketHandler(protocol_);
+    packetHandler_ = dynamixel::PacketHandler::getPacketHandler((float)protocol_);
+    ROS_INFO("[%s] Dynamixel protocol %3.1f initialzed", nh_.getNamespace().c_str(), protocol_);
 
     return true;
 }

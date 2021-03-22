@@ -28,7 +28,7 @@ protected:
     std::string port_;
     int baudrate_;
     bool rs485_;
-    float protocol_;
+    double protocol_;
 
     // dynamixel
     mh5_port_handler::PortHandlerMH5 *portHandler_;
