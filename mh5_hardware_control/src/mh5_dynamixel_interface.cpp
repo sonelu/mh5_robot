@@ -139,13 +139,8 @@ bool MH5DynamixelInterface::initJoints() {
         servo_ids[i] = (uint8_t)servo_id;
         servo_present[i] = true;
 
-    bool direction_inverse = false;
-        nh_.getParam(joint_name[i] + "/inverse", direction_inverse);
-        joint_direction_inverse[i] = direction_inverse;
-
-        double offset = 0;
-        nh_.getParam(joint_name[i] + "/offset", offset);
-        joint_offset[i] = offset;
+        joint_direction_inverse[i] = nh_.param<bool>(joint_name[i] + "/inverse", false);
+        joint_offset[i] = nh_.param<double>(joint_name[i] + "/offset", 0);
     }
 
     return true;
