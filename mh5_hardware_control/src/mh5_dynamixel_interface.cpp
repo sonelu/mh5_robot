@@ -5,13 +5,21 @@ namespace mh5_hardware_interface
 {
 
 MH5DynamixelInterface::MH5DynamixelInterface(){
-
 }
+
 
 MH5DynamixelInterface::~MH5DynamixelInterface(){
-
 }
 
+
+/**
+ * @brief Initializes the Dyanmixel inteface.
+ * 
+ * @param root_nh top node handle owning the control
+ * @param robot_hw_nh node handle to hardware owning this interface
+ * @return true if all asctions have been successful
+ * @return false if any of the action is unsucessful
+ */
 bool MH5DynamixelInterface::init(ros::NodeHandle& root_nh, ros::NodeHandle& robot_hw_nh){
     
     nh_ = robot_hw_nh;
@@ -246,9 +254,9 @@ bool MH5DynamixelInterface::initServos()
 
             // direction
             if (joint_direction_inverse[i])
-                writeRegister(i, 10, 1, 1, TRIES);  // inverse
+                writeRegister(i, 10, 1, 5, TRIES);  // inverse; time profile
             else
-                writeRegister(i, 10, 1, 0, TRIES);  // direct
+                writeRegister(i, 10, 1, 4, TRIES);  // direct; time profile
 
             ROS_INFO("[%s] joint %s [%d] initialized",
                      nh_.getNamespace().c_str(),
@@ -347,10 +355,21 @@ bool MH5DynamixelInterface::setupDynamixelLoops() {
         ROS_WARN("No servos active for SyncReadLoop");
     }
 
+    syncWrite_ = new dynamixel::GroupSyncWrite(portHandler_, packetHandler_, 108, 12);
+
     return true;
 }
 
 
+/**
+ * @brief Performs the read of position, velocity, load for all servos that
+ * are marked as present and converts the values to ISO (radians for position,
+ * rad / sec for velocity and Nm for load). Uses a Dynamixel SyncRead to read
+ * the values from all servis with one communication packet.
+ * 
+ * @param time The current time
+ * @param period The time passed since the last call to \ref read
+ */
 void MH5DynamixelInterface::read(const ros::Time& time, const ros::Duration& period)
 {
     int dxl_comm_result = COMM_TX_FAIL;               // Communication result
@@ -425,13 +444,79 @@ void MH5DynamixelInterface::read(const ros::Time& time, const ros::Duration& per
             joint_effort_state[i] = load * 0.0014;
         }
     }
-
 }
 
-void MH5DynamixelInterface::write(const ros::Time& time, const ros::Duration& period){
-   for(int i=0;i < num_joints;i++){
-       //robot.writeJoints(joint_effort_command[i]);
-   }
+
+/**
+ * @brief Performs the write of position, velocity profile and acceleration profile
+ * for all servos that are marked as present. Assumes the servos have already been
+ * configured with velocity profile (see Dyanamixel manual 
+ * https://emanual.robotis.com/docs/en/dxl/x/xl430-w250/#what-is-the-profile).
+ * Converts the values from ISO (radians for position, rad / sec for velocity)
+ * to Dynamixel internal measures. Uses a Dynamixel SyncWrite to write
+ * the values to all servos with one communication packet.
+ * 
+ * @param time The current time
+ * @param period The time passed since the last call to \ref read
+ */
+void MH5DynamixelInterface::write(const ros::Time& time, const ros::Duration& period)
+{
+    // buffer for Dynamixel values
+    uint8_t command[12];
+
+    bool dxl_addparam_result = false;                 // addParam result
+    int dxl_comm_result = COMM_TX_FAIL;               // Communication result
+    bool param_added = false;                         // at least one param added
+
+    syncWrite_->clearParam();
+    
+    for (int i=0; i < num_joints; i++)
+    {
+        if (servo_present[i])
+        {
+            //convert from radians and adjust for offset and dynamixel center
+            int32_t p = (int32_t)((joint_position_command[i] - joint_offset[i]) / 0.001533980787886 + 2047);
+            // velocity profile = duration of the move [ms]
+            uint32_t vp = abs((joint_position_command[i] - joint_position_state[i]) / joint_velocity_command[i]) * 1000;
+            // acceleration profile is 25% of velocity profile
+            uint32_t ap = vp / 4;
+            // platform-independent handling of byte order
+            // acceleration; register 108
+            command[0] = DXL_LOBYTE(DXL_LOWORD(ap));
+            command[1] = DXL_HIBYTE(DXL_LOWORD(ap));
+            command[2] = DXL_LOBYTE(DXL_HIWORD(ap));
+            command[3] = DXL_HIBYTE(DXL_HIWORD(ap));
+            // velocity profile ; register 112
+            command[4] = DXL_LOBYTE(DXL_LOWORD(vp));
+            command[5] = DXL_HIBYTE(DXL_LOWORD(vp));
+            command[6] = DXL_LOBYTE(DXL_HIWORD(vp));
+            command[7] = DXL_HIBYTE(DXL_HIWORD(vp));
+            // position; register 116
+            command[8] = DXL_LOBYTE(DXL_LOWORD(p));
+            command[9] = DXL_HIBYTE(DXL_LOWORD(p));
+            command[10] = DXL_LOBYTE(DXL_HIWORD(p));
+            command[11] = DXL_HIBYTE(DXL_HIWORD(p));
+            // addParam
+            dxl_addparam_result = syncWrite_->addParam(servo_ids[i], command);
+            if (dxl_addparam_result != true) {
+                ROS_ERROR("[%s] failed to addParam for sync write for %s [%d]",
+                          nh_.getNamespace().c_str(),
+                          joint_name[i].c_str(),
+                          servo_ids[i]);
+                continue;
+            }
+            else
+                param_added = true;
+        }
+    }
+
+    if (param_added) {
+        dxl_comm_result = syncWrite_->txPacket();
+        if (dxl_comm_result != COMM_SUCCESS)
+            ROS_DEBUG("[%s] sync read failed: %s", 
+                      nh_.getNamespace().c_str(),
+                      packetHandler_->getTxRxResult(dxl_comm_result));
+    }
 }
 
 }

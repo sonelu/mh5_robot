@@ -34,6 +34,7 @@ protected:
     mh5_port_handler::PortHandlerMH5 *portHandler_;
     dynamixel::PacketHandler *packetHandler_;
     dynamixel::GroupSyncRead *syncRead_;
+    dynamixel::GroupSyncWrite *syncWrite_;
 
     //interfaces
     hardware_interface::JointStateInterface joint_state_interface;
