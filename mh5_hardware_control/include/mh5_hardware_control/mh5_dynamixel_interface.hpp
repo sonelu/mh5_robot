@@ -8,9 +8,13 @@
 
 #include <dynamixel_sdk/dynamixel_sdk.h>
 #include "mh5_port_handler.hpp"
+#include "active_joint.hpp"
+
+#pragma once
 
 namespace mh5_hardware_interface
 {
+
 
 
 class MH5DynamixelInterface: public hardware_interface::RobotHW
@@ -38,8 +42,9 @@ protected:
     dynamixel::GroupSyncWrite *syncWrite_;
 
     //interfaces
-    hardware_interface::JointStateInterface joint_state_interface;
+    mh5_hardware_interface::JointStateInterface joint_state_interface;
     hardware_interface::PosVelJointInterface pos_vel_joint_interface;
+    mh5_hardware_interface::ActiveJointInterface active_joint_interface;
 
     int num_joints;
     std::vector<std::string>    joint_name;
@@ -54,11 +59,12 @@ protected:
     std::vector<double>         joint_position_state;
     std::vector<double>         joint_velocity_state;
     std::vector<double>         joint_effort_state;
-
+    std::vector<int>            joint_active_state;
 
     //commands
     std::vector<double>         joint_position_command;
     std::vector<double>         joint_velocity_command;
+    std::vector<int>            joint_active_command;
 
     // communication statistics
     int read_total_packets_;

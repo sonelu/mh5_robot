@@ -48,16 +48,20 @@ bool MH5DynamixelInterface::init(ros::NodeHandle& root_nh, ros::NodeHandle& robo
     //Register handles
     for(int i=0; i<num_joints; i++){
         //State
-        hardware_interface::JointStateHandle jointStateHandle(joint_name[i], &joint_position_state[i], &joint_velocity_state[i], &joint_effort_state[i]);
+        mh5_hardware_interface::JointStateHandle jointStateHandle(joint_name[i], &joint_position_state[i], &joint_velocity_state[i], &joint_effort_state[i], &joint_active_state[i]);
         joint_state_interface.registerHandle(jointStateHandle);
-        //Effort
+        //Control
         hardware_interface::PosVelJointHandle jointPosVelHandle(jointStateHandle, &joint_position_command[i], &joint_velocity_command[i]);
         pos_vel_joint_interface.registerHandle(jointPosVelHandle);
+        //Torque activation
+        mh5_hardware_interface::ActiveJointHandle jointActiveHandle(jointStateHandle, &joint_active_command[i]);
+        active_joint_interface.registerHandle(jointActiveHandle);
     }
 
     //Register interfaces
     registerInterface(&joint_state_interface);
     registerInterface(&pos_vel_joint_interface);
+    registerInterface(&active_joint_interface);
     
     //return true for successful init or ComboRobotHW initialisation will fail
     return true;
@@ -139,6 +143,7 @@ bool MH5DynamixelInterface::initJoints()
     joint_position_state.resize(num_joints);
     joint_velocity_state.resize(num_joints);
     joint_effort_state.resize(num_joints);
+    joint_active_state.resize(num_joints);
     joint_position_command.resize(num_joints);
     joint_velocity_command.resize(num_joints);
 
