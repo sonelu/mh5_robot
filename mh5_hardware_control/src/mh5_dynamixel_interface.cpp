@@ -20,9 +20,15 @@ MH5DynamixelInterface::~MH5DynamixelInterface(){
  * @return true if all asctions have been successful
  * @return false if any of the action is unsucessful
  */
-bool MH5DynamixelInterface::init(ros::NodeHandle& root_nh, ros::NodeHandle& robot_hw_nh){
-    
+bool MH5DynamixelInterface::init(ros::NodeHandle& root_nh, ros::NodeHandle& robot_hw_nh)
+{
     nh_ = robot_hw_nh;
+
+    // reset statistics
+    read_total_packets_ = 0;
+    read_error_packets_ = 0;
+    write_total_packets_ = 0;
+    write_error_packets_ = 0;
     
     if (!initPort())
         return false;
@@ -64,7 +70,8 @@ bool MH5DynamixelInterface::init(ros::NodeHandle& root_nh, ros::NodeHandle& robo
  * @return false if configuration information is missing or unable to open and
  *               configure the port
  */
-bool MH5DynamixelInterface::initPort() {
+bool MH5DynamixelInterface::initPort()
+{
     // get the serial port configuration
     if (!nh_.getParam("port", port_)) {
         ROS_ERROR("[%s] no 'port' specified", nh_.getNamespace().c_str());
@@ -111,7 +118,8 @@ bool MH5DynamixelInterface::initPort() {
  * @return true if al is ok
  * @return false if something is missing (ex. no 'joints' paramter is defined)
  */
-bool MH5DynamixelInterface::initJoints() {
+bool MH5DynamixelInterface::initJoints()
+{
     //get joint names and num of joint
     if (!nh_.getParam("joints", joint_name)) {
         ROS_ERROR("[%s] no 'joints' defined", nh_.getNamespace().c_str());
@@ -336,7 +344,8 @@ bool MH5DynamixelInterface::writeRegister(const int index, const uint16_t addres
 }
 
 
-bool MH5DynamixelInterface::setupDynamixelLoops() {
+bool MH5DynamixelInterface::setupDynamixelLoops()
+{
     bool params_added = false;                        // addParam result
     // start address = 126 (Present Load)
     // data length = 10 (Present Load, Present Velocity, Present Position)
@@ -378,10 +387,12 @@ void MH5DynamixelInterface::read(const ros::Time& time, const ros::Duration& per
 
     //call SyncRead
     dxl_comm_result = syncRead_->txRxPacket();
+    read_total_packets_ += 1;
     if (dxl_comm_result != COMM_SUCCESS) {
         ROS_DEBUG("[%s] SyncRead communication failed: %s",
                  nh_.getNamespace().c_str(),
                  packetHandler_->getTxRxResult(dxl_comm_result));
+        read_error_packets_ += 1;
         return;
     }
 
@@ -512,10 +523,13 @@ void MH5DynamixelInterface::write(const ros::Time& time, const ros::Duration& pe
 
     if (param_added) {
         dxl_comm_result = syncWrite_->txPacket();
-        if (dxl_comm_result != COMM_SUCCESS)
+        write_total_packets_ += 1;
+        if (dxl_comm_result != COMM_SUCCESS) {
             ROS_DEBUG("[%s] sync read failed: %s", 
                       nh_.getNamespace().c_str(),
                       packetHandler_->getTxRxResult(dxl_comm_result));
+            write_error_packets_ += 1;
+        }
     }
 }
 

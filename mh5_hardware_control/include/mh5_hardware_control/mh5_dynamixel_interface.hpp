@@ -12,6 +12,7 @@
 namespace mh5_hardware_interface
 {
 
+
 class MH5DynamixelInterface: public hardware_interface::RobotHW
 {
 public:
@@ -58,6 +59,12 @@ protected:
     //commands
     std::vector<double>         joint_position_command;
     std::vector<double>         joint_velocity_command;
+
+    // communication statistics
+    int read_total_packets_;
+    int read_error_packets_;
+    int write_total_packets_;
+    int write_error_packets_;
 
     //help methods
     bool initPort();

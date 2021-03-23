@@ -23,7 +23,7 @@ int main(int argc, char** argv){
         hw.write(ros::Time::now(), rate.expectedCycleTime());
         rate.sleep();
     }
-
+    ROS_INFO("stopped combo_control");
     spinner.stop();
 return 0;
 }
