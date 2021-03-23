@@ -9,6 +9,7 @@ MH5DynamixelInterface::MH5DynamixelInterface(){
 
 
 MH5DynamixelInterface::~MH5DynamixelInterface(){
+    ROS_INFO("Interface closed");
 }
 
 
@@ -48,13 +49,13 @@ bool MH5DynamixelInterface::init(ros::NodeHandle& root_nh, ros::NodeHandle& robo
     //Register handles
     for(int i=0; i<num_joints; i++){
         //State
-        mh5_hardware_interface::JointStateHandle jointStateHandle(joint_name[i], &joint_position_state[i], &joint_velocity_state[i], &joint_effort_state[i], &joint_active_state[i]);
+        hardware_interface::JointStateHandle jointStateHandle(joint_name[i], &joint_position_state[i], &joint_velocity_state[i], &joint_effort_state[i]);
         joint_state_interface.registerHandle(jointStateHandle);
         //Control
         hardware_interface::PosVelJointHandle jointPosVelHandle(jointStateHandle, &joint_position_command[i], &joint_velocity_command[i]);
         pos_vel_joint_interface.registerHandle(jointPosVelHandle);
         //Torque activation
-        mh5_hardware_interface::ActiveJointHandle jointActiveHandle(jointStateHandle, &joint_active_command[i]);
+        mh5_hardware_interface::ActiveJointHandle jointActiveHandle(joint_name[i], &joint_active_state[i], &joint_active_command[i]);
         active_joint_interface.registerHandle(jointActiveHandle);
     }
 
@@ -146,6 +147,7 @@ bool MH5DynamixelInterface::initJoints()
     joint_active_state.resize(num_joints);
     joint_position_command.resize(num_joints);
     joint_velocity_command.resize(num_joints);
+    joint_active_command.resize(num_joints);
 
     for (int i=0; i < num_joints; i++)
     {

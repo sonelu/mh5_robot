@@ -42,7 +42,7 @@ protected:
     dynamixel::GroupSyncWrite *syncWrite_;
 
     //interfaces
-    mh5_hardware_interface::JointStateInterface joint_state_interface;
+    hardware_interface::JointStateInterface joint_state_interface;
     hardware_interface::PosVelJointInterface pos_vel_joint_interface;
     mh5_hardware_interface::ActiveJointInterface active_joint_interface;
 
