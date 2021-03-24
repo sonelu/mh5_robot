@@ -6,6 +6,7 @@ find_package(catkin REQUIRED COMPONENTS
   hardware_interface
   combined_robot_hw
   joint_trajectory_controller
+  forward_command_controller
   dynamixel_sdk
   pluginlib
 )
