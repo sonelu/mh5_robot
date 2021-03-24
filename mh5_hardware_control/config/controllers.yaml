@@ -15,7 +15,7 @@ dynamixel_state:
   publish_rate: 100
 
 head:
-  type: pos_vel_controllers/JointTrajectoryController
+  type: mh5_hardware_interface/JointTrajectoryController
   joints:
     - head_p
     - head_y

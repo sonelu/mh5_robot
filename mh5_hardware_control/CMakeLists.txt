@@ -5,12 +5,18 @@ find_package(catkin REQUIRED COMPONENTS
   controller_manager
   hardware_interface
   combined_robot_hw
+  joint_trajectory_controller
   dynamixel_sdk
+  pluginlib
 )
 
 catkin_package(
   INCLUDE_DIRS include
-  CATKIN_DEPENDS controller_manager hardware_interface combined_robot_hw dynamixel_sdk
+  CATKIN_DEPENDS controller_manager 
+                 hardware_interface
+                 combined_robot_hw
+                 dynamixel_sdk
+                 joint_trajectory_controller
 )
 
 include_directories(
@@ -19,7 +25,7 @@ include_directories(
 )
 
 add_library(mh5_hardware_interfaces 
-    src/mh5_dynamixel_interface.cpp
+    src/dynamixel_interface.cpp
 )
 target_link_libraries(mh5_hardware_interfaces ${catkin_LIBRARIES})
 

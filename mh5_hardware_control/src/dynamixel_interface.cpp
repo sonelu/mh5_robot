@@ -1,8 +1,10 @@
-#include <mh5_hardware_control/mh5_dynamixel_interface.hpp>
-#include <mh5_hardware_control/mh5_port_handler.hpp>
 
-namespace mh5_hardware_interface
-{
+#include <pluginlib/class_list_macros.hpp>
+
+#include "mh5_hardware_control/dynamixel_interface.hpp"
+#include "mh5_hardware_control/active_joint.hpp"
+
+using namespace mh5_hardware_interface;
 
 MH5DynamixelInterface::MH5DynamixelInterface(){
 }
@@ -540,5 +542,7 @@ void MH5DynamixelInterface::write(const ros::Time& time, const ros::Duration& pe
     }
 }
 
-}
+
+
 PLUGINLIB_EXPORT_CLASS(mh5_hardware_interface::MH5DynamixelInterface, hardware_interface::RobotHW)
+PLUGINLIB_EXPORT_CLASS(mh5_hardware_interface::JointTrajectoryController, controller_interface::ControllerBase)

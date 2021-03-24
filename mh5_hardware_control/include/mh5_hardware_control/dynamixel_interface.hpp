@@ -1,20 +1,15 @@
-#include <iostream>
 #include <hardware_interface/joint_state_interface.h>
-#include <hardware_interface/joint_command_interface.h>
 #include <hardware_interface/posvel_command_interface.h>
 #include <hardware_interface/robot_hw.h>
-#include <pluginlib/class_list_macros.hpp>
-#include <ros/ros.h>
-
 #include <dynamixel_sdk/dynamixel_sdk.h>
-#include "mh5_port_handler.hpp"
+
+#include "port_handler.hpp"
 #include "active_joint.hpp"
 
 #pragma once
 
 namespace mh5_hardware_interface
 {
-
 
 
 class MH5DynamixelInterface: public hardware_interface::RobotHW

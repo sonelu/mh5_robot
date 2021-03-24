@@ -1,8 +1,7 @@
-#ifndef MH5_DYNAMIXEL_PORTHANDLER_H_
-#define MH5_DYNAMIXEL_PORTHANDLER_H_
 
 #include <dynamixel_sdk/port_handler.h>
 
+#pragma once
 
 // forward declaration of PortHandlerMH5 to be able to "friend" it with PortHandlerLinux
 namespace mh5_port_handler {
@@ -36,9 +35,7 @@ class PortHandlerMH5: public PARENT
 {
     public:
 
-        PortHandlerMH5(const char *port_name)
-            : PARENT(port_name) {}
-
+        PortHandlerMH5(const char *port_name) : PARENT(port_name) {}
 
         bool setRS485() {
     #if defined (__linux__)
@@ -62,4 +59,3 @@ class PortHandlerMH5: public PARENT
 };
 
 }
-#endif /* MH5_DYNAMIXEL_PORTHANDLER_H_ */
