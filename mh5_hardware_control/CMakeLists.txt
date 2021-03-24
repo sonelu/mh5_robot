@@ -27,6 +27,7 @@ include_directories(
 
 add_library(mh5_hardware_interfaces 
     src/dynamixel_interface.cpp
+    src/active_joint.cpp
 )
 target_link_libraries(mh5_hardware_interfaces ${catkin_LIBRARIES})
 
