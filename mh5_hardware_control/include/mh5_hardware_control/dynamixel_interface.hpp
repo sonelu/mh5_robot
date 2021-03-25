@@ -4,7 +4,7 @@
 #include <dynamixel_sdk/dynamixel_sdk.h>
 
 #include "port_handler.hpp"
-#include "active_joint.hpp"
+#include "active_joint_interface.hpp"
 
 #pragma once
 
@@ -54,12 +54,12 @@ protected:
     std::vector<double>         joint_position_state;
     std::vector<double>         joint_velocity_state;
     std::vector<double>         joint_effort_state;
-    std::vector<int>            joint_active_state;
+    std::vector<double>         joint_active_state;
 
     //commands
     std::vector<double>         joint_position_command;
     std::vector<double>         joint_velocity_command;
-    std::vector<int>            joint_active_command;
+    std::vector<double>         joint_active_command;
 
     // communication statistics
     int read_total_packets_;

@@ -27,9 +27,14 @@ include_directories(
 
 add_library(mh5_hardware_interfaces 
     src/dynamixel_interface.cpp
-    src/extended_trajectory_controller.cpp
 )
 target_link_libraries(mh5_hardware_interfaces ${catkin_LIBRARIES})
+
+add_library(mh5_controllers
+    src/extended_trajectory_controller.cpp
+    src/active_joint_controller.cpp
+)
+target_link_libraries(mh5_controllers ${catkin_LIBRARIES})
 
 add_executable(combo_control_node
     src/combo_control_node.cpp

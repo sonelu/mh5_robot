@@ -2,7 +2,7 @@
 #include <pluginlib/class_list_macros.hpp>
 
 #include "mh5_hardware_control/dynamixel_interface.hpp"
-#include "mh5_hardware_control/active_joint.hpp"
+#include "mh5_hardware_control/active_joint_interface.hpp"
 
 using namespace mh5_hardware_interface;
 
@@ -57,7 +57,7 @@ bool MH5DynamixelInterface::init(ros::NodeHandle& root_nh, ros::NodeHandle& robo
         hardware_interface::PosVelJointHandle jointPosVelHandle(jointStateHandle, &joint_position_command[i], &joint_velocity_command[i]);
         pos_vel_joint_interface.registerHandle(jointPosVelHandle);
         //Torque activation
-        mh5_hardware_interface::ActiveJointHandle jointActiveHandle(joint_name[i], &joint_active_state[i], &joint_active_command[i]);
+        hardware_interface::JointHandle jointActiveHandle(jointStateHandle, /*&joint_active_state[i], */&joint_active_command[i]);
         active_joint_interface.registerHandle(jointActiveHandle);
     }
 
@@ -527,6 +527,7 @@ void MH5DynamixelInterface::write(const ros::Time& time, const ros::Duration& pe
             }
             else
                 param_added = true;
+
         }
     }
 
