@@ -1,7 +1,7 @@
 <library path="lib/libmh5_hardware_interfaces">
 
-  <class name="mh5_hardware_interface/JointTrajectoryController"
-         type="mh5_hardware_interface::JointTrajectoryController"
+  <class name="mh5_hardware_interface/ExtendedJointTrajectoryController"
+         type="mh5_hardware_interface::ExtendedJointTrajectoryController"
          base_class_type="controller_interface::ControllerBase">
     <description>
       Joint trajectory controller using Pos/Vel and implementing Activation/Deactivation of torque

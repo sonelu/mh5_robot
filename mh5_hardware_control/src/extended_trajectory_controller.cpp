@@ -1,0 +1,4 @@
+#include <pluginlib/class_list_macros.hpp>
+#include "mh5_hardware_control/extended_trajectory_controller.hpp"
+
+PLUGINLIB_EXPORT_CLASS(mh5_hardware_interface::ExtendedJointTrajectoryController, controller_interface::ControllerBase)

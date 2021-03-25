@@ -545,4 +545,4 @@ void MH5DynamixelInterface::write(const ros::Time& time, const ros::Duration& pe
 
 
 PLUGINLIB_EXPORT_CLASS(mh5_hardware_interface::MH5DynamixelInterface, hardware_interface::RobotHW)
-PLUGINLIB_EXPORT_CLASS(mh5_hardware_interface::JointTrajectoryController, controller_interface::ControllerBase)
+//PLUGINLIB_EXPORT_CLASS(mh5_hardware_interface::JointTrajectoryController, controller_interface::ControllerBase)
