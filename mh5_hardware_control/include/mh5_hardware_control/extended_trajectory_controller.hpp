@@ -25,13 +25,9 @@ public:
 
     bool init(hardware_interface::RobotHW* robot_hw, ros::NodeHandle& root_nh, ros::NodeHandle& controller_nh);
 
-    // /** \name Real-Time Safe Functions
-    // *\{*/
-    // /** \brief Holds the current position. */
-    // void starting(const ros::Time& time);
+    void starting(const ros::Time& time);
 
-    // /** \brief Cancels the active action goal, if any. */
-    // void stopping(const ros::Time& /*time*/);
+    void stopping(const ros::Time& time);
 
     void update(const ros::Time& time, const ros::Duration& period);
 

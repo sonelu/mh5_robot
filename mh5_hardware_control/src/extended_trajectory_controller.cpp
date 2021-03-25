@@ -35,9 +35,24 @@ bool ExtendedJointTrajectoryController::init(hardware_interface::RobotHW* robot_
 }
 
 
+void ExtendedJointTrajectoryController::starting(const ros::Time& time)
+{
+    pos_controller_->starting(time);
+    act_controller_->starting(time);
+}
+
+
+void ExtendedJointTrajectoryController::stopping(const ros::Time& time)
+{
+    pos_controller_->stopping(time);
+    act_controller_->stopping(time);
+}
+
+
 void ExtendedJointTrajectoryController::update(const ros::Time& time, const ros::Duration& period)
 {
-
+    pos_controller_->update(time, period);
+    act_controller_->update(time, period);
 }
 
 

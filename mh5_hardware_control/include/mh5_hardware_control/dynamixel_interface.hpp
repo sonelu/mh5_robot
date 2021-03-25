@@ -74,6 +74,7 @@ protected:
     bool initServos();
     bool pingServo(const int /*index*/, const int /*num_tries*/);
     bool writeRegister(const int /*index*/, const uint16_t /*address*/, const int /*size*/, const long /*value*/, const int /*num_tries*/);
+    bool readRegister(const int /*index*/, const uint16_t /*address*/, const int /*size*/, long& /*value*/, const int /*num_tries*/);
     bool setupDynamixelLoops();
 
 };

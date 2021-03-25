@@ -20,7 +20,7 @@ public:
     ~ActiveJointController() {sub_command_.shutdown();}
 
     bool init(ActiveJointInterface* hw, ros::NodeHandle &n);
-    //void starting(const ros::Time& time);
+    void starting(const ros::Time& time) {}
     void update(const ros::Time& /*time*/, const ros::Duration& /*period*/);
 
     std::vector< std::string >                        joint_names_;

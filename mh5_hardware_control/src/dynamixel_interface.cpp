@@ -260,6 +260,35 @@ bool MH5DynamixelInterface::initServos()
     for (int i=0; i < num_joints; i++)
 
         if (servo_present[i]) {
+            // read torque enable
+            long enable;
+            if(!readRegister(i, 64, 1, enable, TRIES)) {
+                ROS_ERROR("[%s] failed to read torque status for %s [%d]",
+                      nh_.getNamespace().c_str(),
+                      joint_name[i].c_str(),
+                      servo_ids[i]);
+                continue;
+            }
+            else if (enable == 1) {
+                ROS_INFO("[%s] torqe is enabled for %s [%d]; it will be disabled to allow configuration of servos",
+                         nh_.getNamespace().c_str(),
+                         joint_name[i].c_str(),
+                         servo_ids[i]);
+                if (!writeRegister(i, 64, 1, 0,TRIES)) {
+                    ROS_ERROR("[%s] failed to reset torque status for %s [%d]",
+                               nh_.getNamespace().c_str(),
+                               joint_name[i].c_str(),
+                               servo_ids[i]);
+                    continue;
+                }
+                else {
+                    ROS_INFO("[%s] sucessfully reset torque status for %s [%d]",
+                              nh_.getNamespace().c_str(),
+                              joint_name[i].c_str(),
+                              servo_ids[i]);
+                }
+            }
+            joint_active_state[i] = 0;
             // common
             writeRegister(i, 9, 1, 0, TRIES);       // return delay
             writeRegister(i, 11, 1, 3, TRIES);      // operating mode
@@ -284,8 +313,65 @@ bool MH5DynamixelInterface::initServos()
 }
 
 
+bool MH5DynamixelInterface::readRegister(const int index, const uint16_t address, const int size, long& value, const int num_tries)
+{
+    int dxl_comm_result = COMM_TX_FAIL;             // Communication result
+    uint8_t dxl_error = 0;                          // Dynamixel error
+    bool result = false;
+    long buff;                                     // buffer for reading value
+
+    // we'll make 5 attempt in case there are communication errors
+    for (int n=0; n < num_tries; n++)
+    {
+        switch(size) {
+            case 1:
+                dxl_comm_result = packetHandler_->read1ByteTxRx(
+                    portHandler_, servo_ids[index], address, (uint8_t*) &buff, &dxl_error);
+                break;
+            case 2:
+                dxl_comm_result = packetHandler_->read2ByteTxRx(
+                    portHandler_, servo_ids[index], address, (uint16_t*) &buff, &dxl_error);
+                break;
+            case 4:
+                dxl_comm_result = packetHandler_->read4ByteTxRx(
+                    portHandler_, servo_ids[index], address, (uint32_t*) &buff, &dxl_error);
+                break;
+            default: {
+                ROS_ERROR("[%s] incorrect 'writeRegister' call with size %d",
+                           nh_.getNamespace().c_str(), size);
+                return false;
+            }
+        }
+
+        if (dxl_comm_result != COMM_SUCCESS) {
+            ROS_ERROR("[%s] readRegister communication failure for servo %s [%d], register %d (try %d/%d)",
+                      nh_.getNamespace().c_str(),
+                      joint_name[index].c_str(),
+                      servo_ids[index],
+                      address, n, num_tries);
+            continue;
+        }
+
+        if (dxl_error != 0) {
+            ROS_ERROR("[%s] readRegister packet error for servo %s [%d], register %d (try %d/%d)",
+                      nh_.getNamespace().c_str(),
+                      joint_name[index].c_str(),
+                      servo_ids[index],
+                      address, n, num_tries);
+            continue;
+        }
+
+        result = true;
+        value = buff;
+    }
+
+    return result;
+}
+
+
 /**
- * @brief Writes a register to a servo. If errors occure it will retry up to a number of
+ * @brief Writes a register to a servo.
+ *        If errors occure it will retry up to a number of
  *        `num_tries` times. Depending on the `size` indicated will call the corresponding
  *        Dynamixel `writeXByteTxRx` function. If a `size` different than [1, 2, 4] id provided
  *        it will return error.
@@ -541,6 +627,30 @@ void MH5DynamixelInterface::write(const ros::Time& time, const ros::Duration& pe
             write_error_packets_ += 1;
         }
     }
+
+    for (int i=0; i < num_joints; i++)
+    {
+        if (servo_present[i])
+        {
+            if (joint_active_command[i] != joint_active_state[i]) {
+                if(!writeRegister(i, 64, 1, joint_active_command[i], 5))
+                    ROS_ERROR("[%s] failed to change torque for %s [%d] to %d",
+                              nh_.getNamespace().c_str(),
+                              joint_name[i].c_str(),
+                              servo_ids[i],
+                              (int)joint_active_command[i]);
+                else {
+                    joint_active_state[i] = joint_active_command[i];
+                    ROS_INFO("[%s] successfully changed torque for %s [%d] to %d",
+                              nh_.getNamespace().c_str(),
+                              joint_name[i].c_str(),
+                              servo_ids[i],
+                              (int)joint_active_command[i]);
+                }
+            }
+        }
+    }
+
 }
 
 
