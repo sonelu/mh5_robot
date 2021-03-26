@@ -71,14 +71,14 @@ bool Joint::readRegister(const uint16_t address, const int size, long& value, co
     int dxl_comm_result = COMM_TX_FAIL;             // Communication result
     uint8_t dxl_error = 0;                          // Dynamixel error
     bool result = false;
-    long buff;                                     // buffer for reading value
+    long buff = 0;                                     // buffer for reading value
 
     // we'll make 5 attempt in case there are communication errors
     for (int n=0; n < num_tries; n++)
     {
         switch(size) {
             case 1:
-                dxl_comm_result = ph_->read1ByteTxRx(port_, id_, address, (uint8_t*) &buff, &dxl_error);
+                dxl_comm_result = ph_->read1ByteTxRx(port_, id_, address, (uint8_t *)&buff, &dxl_error);
                 break;
             case 2:
                 dxl_comm_result = ph_->read2ByteTxRx(port_, id_, address, (uint16_t*) &buff, &dxl_error);
