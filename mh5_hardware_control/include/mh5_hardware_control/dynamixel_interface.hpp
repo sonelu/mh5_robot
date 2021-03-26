@@ -56,8 +56,6 @@ protected:
     ros::NodeHandle                     nh_;
     const char*                         nss_;       // c string for nh_ namespace; used for messages
 
-
-
     //actual servos
     uint8_t         id_;
     bool            present_;
@@ -115,23 +113,6 @@ protected:
     int                         num_joints_;
     std::vector<Joint>          joints_;
 
-    // //actual servos
-    // std::vector<uint8_t>        servo_ids;
-    // std::vector<bool>           servo_present;
-    // std::vector<bool>           joint_direction_inverse;
-    // std::vector<double>         joint_offset;
-
-    // //actual states
-    // std::vector<double>         joint_position_state;
-    // std::vector<double>         joint_velocity_state;
-    // std::vector<double>         joint_effort_state;
-    // std::vector<double>         joint_active_state;
-
-    // //commands
-    // std::vector<double>         joint_position_command;
-    // std::vector<double>         joint_velocity_command;
-    // std::vector<double>         joint_active_command;
-
     // communication statistics
     int read_total_packets_;
     int read_error_packets_;
@@ -141,10 +122,6 @@ protected:
     //help methods
     bool initPort();
     bool initJoints();
-    // bool findServos();
-    // bool initServos();
-    // bool pingServo(const int /*index*/, const int /*num_tries*/);
-
     bool setupDynamixelLoops();
 
 };

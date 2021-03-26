@@ -213,12 +213,6 @@ void Joint::initRegisters()
 }
 
 
-
-
-
-
-
-
 MH5DynamixelInterface::MH5DynamixelInterface(){
 }
 
@@ -251,25 +245,15 @@ bool MH5DynamixelInterface::init(ros::NodeHandle& root_nh, ros::NodeHandle& robo
 
     if (!initJoints()) return false;
 
-    // if (!findServos())
-    //     return false;
-
-    // if (!initServos())
-    //     return false;
-
-    if (!setupDynamixelLoops())
-        return false;
+    if (!setupDynamixelLoops()) return false;
 
     //Register handles
     for(int i=0; i<num_joints_; i++){
         //State
-        //hardware_interface::JointStateHandle jointStateHandle(joint_name[i], &joint_position_state[i], &joint_velocity_state[i], &joint_effort_state[i]);
         joint_state_interface.registerHandle(joints_[i].getJointStateHandle());
-        //Control
-        // hardware_interface::PosVelJointHandle jointPosVelHandle(jointStateHandle, &joint_position_command[i], &joint_velocity_command[i]);
+        //Command Postion - Velocity
         pos_vel_joint_interface.registerHandle(joints_[i].getJointPosVelHandle());
         //Torque activation
-        // hardware_interface::JointHandle jointActiveHandle(jointStateHandle, /*&joint_active_state[i], */&joint_active_command[i]);
         active_joint_interface.registerHandle(joints_[i].getJointActiveHandle());
     }
 
@@ -381,148 +365,6 @@ bool MH5DynamixelInterface::initJoints()
     return true;
 }
 
-// /**
-//  * @brief Checks if the servo is avaialable. Updates the `servo_present` vector.
-//  * 
-//  * @return true always
-//  */
-// bool MH5DynamixelInterface::findServos()
-// {
-//     for (int i=0; i < num_joints; i++)
-//         if (servo_present[i]) 
-//         {
-//             if (pingServo(i, 5)) 
-//                 servo_present[i] = true;
-//             else {
-//                 ROS_ERROR("[%s] joint %s [%d] will be disabled (failed to communicate 5 times)", 
-//                             nh_.getNamespace().c_str(),
-//                             joint_name[i].c_str(), servo_ids[i]);
-//                 servo_present[i] = false;
-//             }
-//         }
-
-//     return true;
-// }
-
-
-// /**
-//  * @brief Pings the dyanmixel ID on the bus. Tries several times in case there
-//  *        are communication problems.
-//  * 
-//  * @param index the index of the joint for which to ping the Dynamixel 
-//  * @param num_tries how many tries to do in case there are no answers
-//  * @return true if the Dynamixel has answered
-//  * @return false if the Dynamixel failed to answer after `num_tries`
-//  */
-// bool MH5DynamixelInterface::pingServo(const int index, const int num_tries)
-// {    
-//     int dxl_comm_result = COMM_TX_FAIL;             // Communication result
-//     uint8_t dxl_error = 0;                          // Dynamixel error
-//     bool servo_ok = false;
-    
-//     for (int n=0; n < num_tries; n++)
-//     {
-//         dxl_comm_result = packetHandler_->ping(portHandler_, servo_ids[index], &dxl_error);
-        
-//         if (dxl_comm_result != COMM_SUCCESS) {
-//             ROS_ERROR("[%s] failed to communicate with joint %s [%d] (try %d/%d): %s", 
-//                       nh_.getNamespace().c_str(),
-//                       joint_name[index].c_str(),
-//                       servo_ids[index],
-//                       n + 1,
-//                       num_tries,
-//                       packetHandler_->getTxRxResult(dxl_comm_result));
-//             continue;
-//         }
-        
-//         if (dxl_error != 0) {
-//             ROS_ERROR("[%s] error reported when communicating with joint %s [%d] (try %d/%d): %s", 
-//                       nh_.getNamespace().c_str(),
-//                       joint_name[index].c_str(),
-//                       servo_ids[index], 
-//                       n + 1,
-//                       num_tries,
-//                       packetHandler_->getRxPacketError(dxl_error));
-//             continue;
-//         }
-        
-//         ROS_INFO("[%s] joint %s [%d] detected", 
-//                  nh_.getNamespace().c_str(),
-//                  joint_name[index].c_str(),
-//                  servo_ids[index]);
-//         servo_ok = true;
-//         break;
-//     }
-//     return servo_ok;
-// }
-
-
-// /**
-//  * @brief Initializes the robots' registers. If during initialization there are
-//  *        errors (ex. failed to update registers more than 5 times) the servo
-//  *        will be marked as `false` in `servo_present` vector.
-//  * 
-//  * @return true always
-//  */
-// bool MH5DynamixelInterface::initServos()
-// {
-//     for (int i=0; i < num_joints; i++)
-
-//         if (servo_present[i]) {
-//             // read torque enable
-//             long enable;
-//             if(!readRegister(i, 64, 1, enable, TRIES)) {
-//                 ROS_ERROR("[%s] failed to read torque status for %s [%d]",
-//                       nh_.getNamespace().c_str(),
-//                       joint_name[i].c_str(),
-//                       servo_ids[i]);
-//                 continue;
-//             }
-//             else if (enable == 1) {
-//                 ROS_INFO("[%s] torqe is enabled for %s [%d]; it will be disabled to allow configuration of servos",
-//                          nh_.getNamespace().c_str(),
-//                          joint_name[i].c_str(),
-//                          servo_ids[i]);
-//                 if (!writeRegister(i, 64, 1, 0,TRIES)) {
-//                     ROS_ERROR("[%s] failed to reset torque status for %s [%d]",
-//                                nh_.getNamespace().c_str(),
-//                                joint_name[i].c_str(),
-//                                servo_ids[i]);
-//                     continue;
-//                 }
-//                 else {
-//                     ROS_INFO("[%s] sucessfully reset torque status for %s [%d]",
-//                               nh_.getNamespace().c_str(),
-//                               joint_name[i].c_str(),
-//                               servo_ids[i]);
-//                 }
-//             }
-//             joint_active_state[i] = 0;
-//             // common
-//             writeRegister(i, 9, 1, 0, TRIES);       // return delay
-//             writeRegister(i, 11, 1, 3, TRIES);      // operating mode
-//             writeRegister(i, 31, 1, 75, TRIES);     // temperature limit
-//             writeRegister(i, 32, 2, 135, TRIES);    // max voltage
-//             writeRegister(i, 44, 4, 1023, TRIES);   // velocity limit
-//             writeRegister(i, 48, 4, 4095, TRIES);   // max poisiton
-//             writeRegister(i, 52, 4, 0, TRIES);      // min position
-
-//             // direction
-//             if (joint_direction_inverse[i])
-//                 writeRegister(i, 10, 1, 5, TRIES);  // inverse; time profile
-//             else
-//                 writeRegister(i, 10, 1, 4, TRIES);  // direct; time profile
-
-//             ROS_INFO("[%s] joint %s [%d] initialized",
-//                      nh_.getNamespace().c_str(),
-//                      joint_name[i].c_str(), servo_ids[i]);
-//         }
-
-//     return true;
-// }
-
-
-
 
 bool MH5DynamixelInterface::setupDynamixelLoops()
 {
@@ -596,10 +438,7 @@ void MH5DynamixelInterface::read(const ros::Time& time, const ros::Duration& per
             ROS_DEBUG("[%s] SyncRead getting position for ID %d failed", nss_, id);
         else {
             int32_t position = syncRead_->getData(id, 132, 4);
-            // convert to radians
-            // for XL430 a value of 2048 = pi > factor = pi / 2048
             j.setPositionFromRaw(position);
-            //joint_position_state[i] = (position - 2047 ) * 0.001533980787886 + joint_offset[i];
         }
         //velocity
         dxl_getdata_result = syncRead_->isAvailable(id, 128, 4);
@@ -607,13 +446,6 @@ void MH5DynamixelInterface::read(const ros::Time& time, const ros::Duration& per
             ROS_DEBUG("[%s] SyncRead getting velocity for ID %d failed", nss_, j.id());
         else {
             int32_t velocity = syncRead_->getData(id, 128, 4);
-            // convert to radians / sec
-            // 1 tick = 0.229 rev / min 
-            // (see https://emanual.robotis.com/docs/en/dxl/x/xl430-w250/#velocity-limit44)
-            // factor = 0.229 * 2pi / 60 [rad/sec]
-            // if (velocity > 1023)
-            //     velocity -= 4294967296;
-            //joint_velocity_state[i] = velocity * 0.023980823922402;
             j.setVelocityFromRaw(velocity);
         }
         //load
@@ -622,13 +454,6 @@ void MH5DynamixelInterface::read(const ros::Time& time, const ros::Duration& per
             ROS_DEBUG("[%s] SyncRead getting load for ID %d failed", nss_, id);
         else {
             int16_t load = syncRead_->getData(id, 126, 2);
-            // convert to Nm
-            // 1 tick = 0.1% of max torque
-            // max torque = 1.4 [Nm]
-            // (see https://emanual.robotis.com/docs/en/dxl/x/xl430-w250/#present-load126)
-            // if (load > 1000)
-            //     load -= 65536;
-            //joint_effort_state[i] = load * 0.0014;
             j.setEffortFromRaw(load);
         }
     }
@@ -664,13 +489,8 @@ void MH5DynamixelInterface::write(const ros::Time& time, const ros::Duration& pe
         uint8_t id = j.id();
         if (j.present())
         {
-            //convert from radians and adjust for offset and dynamixel center
-            // int32_t p = (int32_t)((joint_position_command[i] - joint_offset[i]) / 0.001533980787886 + 2047);
             int32_t p = j.getRawPositionFromCommand();
-            // velocity profile = duration of the move [ms]
-            // uint32_t vp = abs((joint_position_command[i] - joint_position_state[i]) / joint_velocity_command[i]) * 1000;
             uint32_t vp = j.getVelocityProfileFromCommand();
-            // acceleration profile is 25% of velocity profile
             uint32_t ap = vp / 4;
             // platform-independent handling of byte order
             // acceleration; register 108
