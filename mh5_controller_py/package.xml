@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>mh5_controller</name>
+  <name>mh5_controller_py</name>
   <version>0.0.0</version>
   <description>The mh5_robot package</description>
 
