@@ -3,7 +3,6 @@
 #include <trajectory_interface/quintic_spline_segment.h>
 #include <controller_interface/multi_interface_controller.h>
 
-
 #include "mh5_hardware_control/active_joint_controller.hpp"
 
 #pragma once
@@ -16,11 +15,11 @@ typedef joint_trajectory_controller::JointTrajectoryController<trajectory_interf
                                                                  hardware_interface::PosVelJointInterface>
         BaseJointTrajectoryController;
 
-class ExtendedJointTrajectoryController : public controller_interface::MultiInterfaceController<hardware_interface::PosVelJointInterface, ActiveJointInterface>
+class ExtendedJointTrajectoryController : public controller_interface::MultiInterfaceController<hardware_interface::PosVelJointInterface, mh5_hardware::ActiveJointInterface>
 {
 public:
     ExtendedJointTrajectoryController()
-    : controller_interface::MultiInterfaceController<hardware_interface::PosVelJointInterface, ActiveJointInterface> (true)
+    : controller_interface::MultiInterfaceController<hardware_interface::PosVelJointInterface, mh5_hardware::ActiveJointInterface> (true)
     {}
 
     bool init(hardware_interface::RobotHW* robot_hw, ros::NodeHandle& root_nh, ros::NodeHandle& controller_nh);

@@ -19,7 +19,7 @@ bool ExtendedJointTrajectoryController::init(hardware_interface::RobotHW* robot_
         return false;
     }
 
-    ActiveJointInterface* act_hw = robot_hw->get<ActiveJointInterface>();
+    mh5_hardware::ActiveJointInterface* act_hw = robot_hw->get<mh5_hardware::ActiveJointInterface>();
     if(!act_hw) {
         ROS_ERROR("Requires torque_interface");
         return false;

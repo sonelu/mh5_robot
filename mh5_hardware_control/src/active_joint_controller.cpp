@@ -4,7 +4,7 @@
 namespace mh5_hardware_interface
 {
 
-bool ActiveJointController::init(ActiveJointInterface* hw, ros::NodeHandle &n)
+bool ActiveJointController::init(mh5_hardware::ActiveJointInterface* hw, ros::NodeHandle &n)
 {
     std::string param_name = "joints";
     if(!n.getParam(param_name, joint_names_)) {

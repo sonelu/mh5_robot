@@ -9,6 +9,7 @@ find_package(catkin REQUIRED COMPONENTS
   forward_command_controller
   dynamixel_sdk
   pluginlib
+  mh5_hardware
 )
 
 catkin_package(
@@ -18,6 +19,7 @@ catkin_package(
                  combined_robot_hw
                  dynamixel_sdk
                  joint_trajectory_controller
+                 mh5_hardware
 )
 
 include_directories(
@@ -30,11 +32,11 @@ add_library(mh5_hardware_interfaces
 )
 target_link_libraries(mh5_hardware_interfaces ${catkin_LIBRARIES})
 
-add_library(mh5_controllers
+add_library(mh5_hardware_control
     src/extended_trajectory_controller.cpp
     src/active_joint_controller.cpp
 )
-target_link_libraries(mh5_controllers ${catkin_LIBRARIES})
+target_link_libraries(mh5_hardware_control ${catkin_LIBRARIES})
 
 add_executable(combo_control_node
     src/combo_control_node.cpp

@@ -1,4 +1,4 @@
-<library path="lib/libmh5_controllers">
+<library path="lib/libmh5_hardware_control">
 
   <class name="mh5_hardware_interface/ActiveJointController"
          type="mh5_hardware_interface::ActiveJointController"

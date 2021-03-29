@@ -1,6 +1,6 @@
 <launch>
     <rosparam file="$(find mh5_hardware_control)/config/controllers.yaml" command="load"/>
-    <rosparam file="$(find mh5_hardware_control)/config/hardware.yaml" command="load"/>
+    <rosparam file="$(find mh5_hardware)/config/hardware.yaml" command="load"/>
 
     <arg name="model" default="$(find mh5_description)/urdf/mh5_robot_revC.xacro"/>
 
