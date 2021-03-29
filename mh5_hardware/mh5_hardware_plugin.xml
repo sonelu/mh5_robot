@@ -1,0 +1,12 @@
+<library path="lib/libmh5_hardware">
+  
+  <class name="mh5_hardware/MH5DynamixelInterface"
+         type="mh5_hardware::MH5DynamixelInterface"
+         base_class_type="hardware_interface::RobotHW">
+    <description>
+      Dynamixel interface for MH5
+    </description>
+  </class>
+
+</library>
+
