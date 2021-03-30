@@ -168,20 +168,8 @@ bool MH5DynamixelInterface::setupDynamixelLoops()
     // start address = 126 (Present Load)
     // data length = 10 (Present Load, Present Velocity, Present Position)
     std::string loopName = nh_.getNamespace() + "pvl_reader";
-    syncRead_ = new mh5_hardware::GroupSyncRead(loopName, portHandler_, packetHandler_, 126, 10);
-
-    for (int i=0; i < num_joints_; i++) {
-        if (joints_[i].present()) {
-            if(!syncRead_->addParam(joints_[i].id()))
-                ROS_WARN("Failed to add servo ID %d to SyncReadLoop", joints_[i].id());
-            else
-                params_added = true;
-        }
-    }
-
-    if (!params_added) {
-        ROS_WARN("No servos active for SyncReadLoop");
-    }
+    pvlReader_ = new mh5_hardware::PVLReader(loopName, portHandler_, packetHandler_);
+    pvlReader_->prepare(joints_);
 
     syncWrite_ = new dynamixel::GroupSyncWrite(portHandler_, packetHandler_, 108, 12);
 
@@ -200,60 +188,8 @@ bool MH5DynamixelInterface::setupDynamixelLoops()
  */
 void MH5DynamixelInterface::read(const ros::Time& time, const ros::Duration& period)
 {
-    int dxl_comm_result = COMM_TX_FAIL;               // Communication result
-    uint8_t dxl_error = 0;                            // Dynamixel error
-    bool dxl_getdata_result = false;                  // GetParam result
-
-    //call SyncRead
-    dxl_comm_result = syncRead_->txRxPacket();
-    read_total_packets_ += 1;
-    if (dxl_comm_result != COMM_SUCCESS) {
-        ROS_DEBUG("[%s] SyncRead communication failed: %s",
-                 nh_.getNamespace().c_str(),
-                 packetHandler_->getTxRxResult(dxl_comm_result));
-        read_error_packets_ += 1;
-        return;
-    }
-
-    // process each servo
-    for(int i=0;i < num_joints_;i++)
-    {
-        Joint& j = joints_[i];
-        uint8_t id = j.id();     // to avoid callling it all the time...
-        //only present servos
-        if (!j.present())
-            continue;
-        // check no errors
-        if (syncRead_->getError(id, &dxl_error)) {
-            ROS_DEBUG("[%s] SyncRead error getting ID %d: %s",
-                      nss_, id, packetHandler_->getRxPacketError(dxl_error));
-            continue;
-        }
-        //position
-        dxl_getdata_result = syncRead_->isAvailable(id, 132, 4);
-        if (!dxl_getdata_result)
-            ROS_DEBUG("[%s] SyncRead getting position for ID %d failed", nss_, id);
-        else {
-            int32_t position = syncRead_->getData(id, 132, 4);
-            j.setPositionFromRaw(position);
-        }
-        //velocity
-        dxl_getdata_result = syncRead_->isAvailable(id, 128, 4);
-        if (!dxl_getdata_result)
-            ROS_DEBUG("[%s] SyncRead getting velocity for ID %d failed", nss_, j.id());
-        else {
-            int32_t velocity = syncRead_->getData(id, 128, 4);
-            j.setVelocityFromRaw(velocity);
-        }
-        //load
-        dxl_getdata_result = syncRead_->isAvailable(id, 126, 2);
-        if (!dxl_getdata_result)
-            ROS_DEBUG("[%s] SyncRead getting load for ID %d failed", nss_, id);
-        else {
-            int16_t load = syncRead_->getData(id, 126, 2);
-            j.setEffortFromRaw(load);
-        }
-    }
+    pvlReader_->Execute();
+    pvlReader_->afterExecute(joints_);
 }
 
 

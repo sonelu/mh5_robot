@@ -30,7 +30,7 @@ protected:
     // dynamixel
     mh5_port_handler::PortHandlerMH5 *portHandler_;
     dynamixel::PacketHandler *packetHandler_;
-    mh5_hardware::GroupSyncRead *syncRead_;
+    mh5_hardware::PVLReader *pvlReader_;
     dynamixel::GroupSyncWrite *syncWrite_;
 
     //interfaces
