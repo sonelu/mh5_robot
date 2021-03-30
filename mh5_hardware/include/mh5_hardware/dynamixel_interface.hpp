@@ -1,6 +1,7 @@
 #include "dynamixel_joint.hpp"
-#include "active_joint_interface.hpp"
 #include "dynamixel_loop.hpp"
+#include "active_joint_interface.hpp"
+
 
 #pragma once
 
@@ -37,6 +38,7 @@ protected:
     hardware_interface::JointStateInterface     joint_state_interface;
     hardware_interface::PosVelJointInterface    pos_vel_joint_interface;
     mh5_hardware::ActiveJointInterface          active_joint_interface;
+    mh5_hardware::CommunicationStatsInterface   communication_stats_interface;
 
     int                         num_joints_;
     std::vector<Joint>          joints_;

@@ -113,3 +113,7 @@ left_leg:
       goal: 0.5
     l_ank_r:
       goal: 0.5
+
+communication_statistics:
+  type: mh5_controllers/CommunicationStatsController
+  publish_period: 10.0

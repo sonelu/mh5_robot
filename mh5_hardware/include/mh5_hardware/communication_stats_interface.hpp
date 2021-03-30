@@ -5,13 +5,13 @@
 namespace mh5_hardware
 {
 
-class CommStatsHandle
+class CommunicationStatsHandle
 {
 public:
 
-    CommStatsHandle() = default;
+    CommunicationStatsHandle() = default;
 
-    CommStatsHandle(const std::string& name, const long *packets, const long* errors, const long* tot_packets, const long *tot_errors, bool *reset)
+    CommunicationStatsHandle(const std::string& name, const long *packets, const long* errors, const long* tot_packets, const long *tot_errors, bool *reset)
     : name_(name), packets_(packets), errors_(errors), tot_packets_(tot_packets), tot_errors_(tot_errors), reset_(reset)
     {
         if (!packets)
@@ -54,6 +54,6 @@ private:
 
 };
 
-class CommStatsInterface : public hardware_interface::HardwareResourceManager<CommStatsHandle> {};
+class CommunicationStatsInterface : public hardware_interface::HardwareResourceManager<CommunicationStatsHandle> {};
 
 } // namespace

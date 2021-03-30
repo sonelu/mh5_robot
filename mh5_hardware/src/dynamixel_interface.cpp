@@ -178,8 +178,18 @@ bool MH5DynamixelInterface::setupDynamixelLoops()
         ROS_INFO("[%s] loop %s initialized at %.1f", nss_, loopName.c_str(), rate);
     pvlReader_ = new mh5_hardware::PVLReader(ns+"_"+loopName, rate, portHandler_, packetHandler_);
     pvlReader_->prepare(joints_);
+    communication_stats_interface.registerHandle(pvlReader_->getCommStatHandle());
 
+    // Temperature, Voltage (TV) Reader
+
+    // Positon, Velocity (PV) Writer
     syncWrite_ = new dynamixel::GroupSyncWrite(portHandler_, packetHandler_, 108, 12);
+
+    // PID Writer
+    // TODO
+
+    //Register interfaces
+    registerInterface(&communication_stats_interface);
 
     return true;
 }

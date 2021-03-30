@@ -10,6 +10,7 @@ find_package(catkin REQUIRED COMPONENTS
   dynamixel_sdk
   pluginlib
   mh5_hardware
+  diagnostic_msgs
 )
 
 catkin_package(
@@ -30,6 +31,7 @@ include_directories(
 add_library(mh5_controllers
     src/extended_trajectory_controller.cpp
     src/active_joint_controller.cpp
+    src/communication_stats_controller.cpp
 )
 target_link_libraries(mh5_controllers ${catkin_LIBRARIES})
 

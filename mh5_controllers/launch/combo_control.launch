@@ -14,5 +14,6 @@
              left_arm
              right_arm
              left_leg
+             communication_statistics
     "/>
 </launch>

@@ -18,4 +18,13 @@
     </description>
   </class>
 
+  <class name="mh5_controllers/CommunicationStatsController"
+         type="mh5_controllers::CommunicationStatsController"
+         base_class_type="controller_interface::ControllerBase">
+    <description>
+      Publishes the communication statistics on /communication_statistics topic of type
+      diagnostic_msgs::DiagnosticArray.
+    </description>
+  </class>
+
 </library>

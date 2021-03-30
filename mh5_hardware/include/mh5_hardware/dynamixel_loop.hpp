@@ -25,7 +25,7 @@ public:
     void resetStats()        { packets_ = 0; errors_ = 0; }
     void resetAllStats()     { resetStats(); tot_packets_ = 0; tot_errors_ = 0;}
 
-    const CommStatsHandle& getCommStatHandle() { return comm_stats_handle_;}
+    const CommunicationStatsHandle& getCommStatHandle() { return comm_stats_handle_;}
 
     /* prepares the loop based on the joints provided */
     virtual bool prepare(std::vector<Joint>& joints) = 0 ;
@@ -70,7 +70,7 @@ protected:
     void incPackets()   { packets_++; tot_packets_++;}
     void incErrors()    { errors_++; tot_errors_++;}
 
-    const CommStatsHandle comm_stats_handle_;
+    const CommunicationStatsHandle comm_stats_handle_;
 
 };
 
