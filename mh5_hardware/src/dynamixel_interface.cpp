@@ -167,7 +167,8 @@ bool MH5DynamixelInterface::setupDynamixelLoops()
     bool params_added = false;                        // addParam result
     // start address = 126 (Present Load)
     // data length = 10 (Present Load, Present Velocity, Present Position)
-    syncRead_ = new dynamixel::GroupSyncRead(portHandler_, packetHandler_, 126, 10);
+    std::string loopName = nh_.getNamespace() + "pvl_reader";
+    syncRead_ = new mh5_hardware::GroupSyncRead(loopName, portHandler_, packetHandler_, 126, 10);
 
     for (int i=0; i < num_joints_; i++) {
         if (joints_[i].present()) {

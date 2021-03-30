@@ -1,5 +1,6 @@
 #include "dynamixel_joint.hpp"
 #include "active_joint_interface.hpp"
+#include "dynamixel_loop.hpp"
 
 #pragma once
 
@@ -29,7 +30,7 @@ protected:
     // dynamixel
     mh5_port_handler::PortHandlerMH5 *portHandler_;
     dynamixel::PacketHandler *packetHandler_;
-    dynamixel::GroupSyncRead *syncRead_;
+    mh5_hardware::GroupSyncRead *syncRead_;
     dynamixel::GroupSyncWrite *syncWrite_;
 
     //interfaces
