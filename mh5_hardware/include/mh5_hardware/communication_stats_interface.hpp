@@ -11,8 +11,8 @@ public:
 
     CommStatsHandle() = default;
 
-    CommStatsHandle(const std::string& name, const long *packets, const long* errors, const long* tot_packets, const long *tot_errors)
-    : name_(name), packets_(packets), errors_(errors), tot_packets_(tot_packets), tot_errors_(tot_errors)
+    CommStatsHandle(const std::string& name, const long *packets, const long* errors, const long* tot_packets, const long *tot_errors, bool *reset)
+    : name_(name), packets_(packets), errors_(errors), tot_packets_(tot_packets), tot_errors_(tot_errors), reset_(reset)
     {
         if (!packets)
             throw hardware_interface::HardwareInterfaceException("Cannot create handle '" + name + "'. Packets data pointer is null.");
@@ -25,6 +25,9 @@ public:
 
         if (!tot_errors)
             throw hardware_interface::HardwareInterfaceException("Cannot create handle '" + name + "'. Total errors data pointer is null.");
+
+        if (!reset)
+            throw hardware_interface::HardwareInterfaceException("Cannot create handle '" + name + "'. Reset data pointer is null.");
     }
 
     std::string getName()           const { return name_;}
@@ -38,6 +41,8 @@ public:
     const long* getTotPacketsPtr()  const { return tot_packets_;}
     const long* getTotErrorsPtr()   const { return tot_errors_;}
 
+    void setReset(bool reset)       { assert(reset_); *reset_ = reset;}
+
 private:
 
     std::string  name_;
@@ -45,6 +50,7 @@ private:
     const long*  errors_      = {nullptr};
     const long*  tot_packets_ = {nullptr};
     const long*  tot_errors_  = {nullptr};
+    bool*        reset_       = {nullptr};
 
 };
 

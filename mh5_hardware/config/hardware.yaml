@@ -18,6 +18,8 @@ upper_body:
   baudrate: 2000000
   protocol: 2.0
   rs485: true
+  rates:
+    pvl_reader: 75.0
   head_p:
     id: 51
     inverse: true

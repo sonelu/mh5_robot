@@ -164,11 +164,19 @@ bool MH5DynamixelInterface::initJoints()
 
 bool MH5DynamixelInterface::setupDynamixelLoops()
 {
-    bool params_added = false;                        // addParam result
-    // start address = 126 (Present Load)
-    // data length = 10 (Present Load, Present Velocity, Present Position)
-    std::string loopName = nh_.getNamespace() + "pvl_reader";
-    pvlReader_ = new mh5_hardware::PVLReader(loopName, portHandler_, packetHandler_);
+    std::string loopName;
+    double rate;
+    std::string ns = nh_.getNamespace();
+
+    // Position, Velocity, Load (PVL) Reader
+    loopName = "pvl_reader";
+    if(!nh_.getParam("rates/"+loopName, rate)) {
+        ROS_INFO("[%s] no '%s' available; default to 100.0", nss_, ("rates/"+loopName).c_str());
+        rate = 100.0;
+    }
+    else
+        ROS_INFO("[%s] loop %s initialized at %.1f", nss_, loopName.c_str(), rate);
+    pvlReader_ = new mh5_hardware::PVLReader(ns+"_"+loopName, rate, portHandler_, packetHandler_);
     pvlReader_->prepare(joints_);
 
     syncWrite_ = new dynamixel::GroupSyncWrite(portHandler_, packetHandler_, 108, 12);
@@ -188,7 +196,7 @@ bool MH5DynamixelInterface::setupDynamixelLoops()
  */
 void MH5DynamixelInterface::read(const ros::Time& time, const ros::Duration& period)
 {
-    pvlReader_->Execute();
+    pvlReader_->Execute(time, period);
     pvlReader_->afterExecute(joints_);
 }
 
