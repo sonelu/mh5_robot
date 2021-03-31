@@ -3,13 +3,16 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to mh5_robot's documentation!
-=====================================
+Welcome to MH5 Robot ROS Packages documentation!
+================================================
+
+This repo contains ROS packages for working with the MH5 humanoid robot.
 
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
 
+   packages/mh5_hardware
 
 
 Indices and tables

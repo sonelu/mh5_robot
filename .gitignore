@@ -7,3 +7,5 @@ src/action_client_test.py
 .gitignore
 .vscode/*
 
+documentation/_build
+documentation/_xml
