@@ -7,3 +7,4 @@ Package Reference
    :maxdepth: 4
 
    mh5_hardware_reference
+   mh5_controllers_reference
