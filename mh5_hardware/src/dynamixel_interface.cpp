@@ -18,14 +18,6 @@ MH5DynamixelInterface::~MH5DynamixelInterface(){
 }
 
 
-/**
- * @brief Initializes the Dyanmixel inteface.
- * 
- * @param root_nh top node handle owning the control
- * @param robot_hw_nh node handle to hardware owning this interface
- * @return true if all asctions have been successful
- * @return false if any of the action is unsucessful
- */
 bool MH5DynamixelInterface::init(ros::NodeHandle& root_nh, ros::NodeHandle& robot_hw_nh)
 {
     nh_ = robot_hw_nh;
@@ -62,13 +54,7 @@ bool MH5DynamixelInterface::init(ros::NodeHandle& root_nh, ros::NodeHandle& robo
     return true;
 }
 
-/**
- * @brief Initializes the Dynamixel port
- * 
- * @return true if all went ok
- * @return false if configuration information is missing or unable to open and
- *               configure the port
- */
+
 bool MH5DynamixelInterface::initPort()
 {
     // get the serial port configuration
@@ -111,12 +97,7 @@ bool MH5DynamixelInterface::initPort()
     return true;
 }
 
-/**
- * @brief Initializes the joint information and the associated structures.
- * 
- * @return true if al is ok
- * @return false if something is missing (ex. no 'joints' paramter is defined)
- */
+
 bool MH5DynamixelInterface::initJoints()
 {
     //get joint names and num of joint
@@ -195,15 +176,7 @@ bool MH5DynamixelInterface::setupDynamixelLoops()
 }
 
 
-/**
- * @brief Performs the read of position, velocity, load for all servos that
- * are marked as present and converts the values to ISO (radians for position,
- * rad / sec for velocity and Nm for load). Uses a Dynamixel SyncRead to read
- * the values from all servis with one communication packet.
- * 
- * @param time The current time
- * @param period The time passed since the last call to \ref read
- */
+
 void MH5DynamixelInterface::read(const ros::Time& time, const ros::Duration& period)
 {
     pvlReader_->Execute(time, period);
@@ -211,18 +184,6 @@ void MH5DynamixelInterface::read(const ros::Time& time, const ros::Duration& per
 }
 
 
-/**
- * @brief Performs the write of position, velocity profile and acceleration profile
- * for all servos that are marked as present. Assumes the servos have already been
- * configured with velocity profile (see Dyanamixel manual 
- * https://emanual.robotis.com/docs/en/dxl/x/xl430-w250/#what-is-the-profile).
- * Converts the values from ISO (radians for position, rad / sec for velocity)
- * to Dynamixel internal measures. Uses a Dynamixel SyncWrite to write
- * the values to all servos with one communication packet.
- * 
- * @param time The current time
- * @param period The time passed since the last call to \ref read
- */
 void MH5DynamixelInterface::write(const ros::Time& time, const ros::Duration& period)
 {
     // buffer for Dynamixel values
