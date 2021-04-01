@@ -28,7 +28,7 @@ class Joint
     :private-members:
     :undoc-members:
 
-class CommunicationStats
+class LoopWithCommunicationStats
 ------------------------
 
 .. doxygenclass:: mh5_hardware::LoopWithCommunicationStats
