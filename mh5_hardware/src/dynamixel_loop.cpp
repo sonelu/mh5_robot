@@ -37,6 +37,20 @@ bool GroupSyncRead::Communicate()
 }
 
 
+bool GroupSyncWrite::Communicate()
+{
+    int dxl_comm_result = txPacket();
+
+    if (dxl_comm_result != COMM_SUCCESS) {
+        ROS_DEBUG("[%s] SyncWrite communication failed: %s",
+                  getName().c_str(),
+                  getPacketHandler()->getTxRxResult(dxl_comm_result));
+        return false;
+    }
+    return true;
+}
+
+
 bool PVLReader::afterExecute(std::vector<Joint>& joints)
 {
     uint8_t dxl_error = 0;                            // Dynamixel error
@@ -85,4 +99,50 @@ bool PVLReader::afterExecute(std::vector<Joint>& joints)
 
     // even if there are errors
     return true;
+}
+
+bool PVWriter::beforeExecute(std::vector<Joint>& joints)
+{
+    // buffer for Dynamixel values
+    uint8_t command[12];
+
+    bool dxl_addparam_result = false;                 // addParam result
+    bool param_added = false;                         // at least one param added
+
+    clearParam();
+    
+    for (auto & joint : joints)
+    {
+        if (joint.present())
+        {
+            int32_t p = joint.getRawPositionFromCommand();
+            uint32_t vp = joint.getVelocityProfileFromCommand();
+            uint32_t ap = vp / 4;
+            // platform-independent handling of byte order
+            // acceleration; register 108
+            command[0] = DXL_LOBYTE(DXL_LOWORD(ap));
+            command[1] = DXL_HIBYTE(DXL_LOWORD(ap));
+            command[2] = DXL_LOBYTE(DXL_HIWORD(ap));
+            command[3] = DXL_HIBYTE(DXL_HIWORD(ap));
+            // velocity profile ; register 112
+            command[4] = DXL_LOBYTE(DXL_LOWORD(vp));
+            command[5] = DXL_HIBYTE(DXL_LOWORD(vp));
+            command[6] = DXL_LOBYTE(DXL_HIWORD(vp));
+            command[7] = DXL_HIBYTE(DXL_HIWORD(vp));
+            // position; register 116
+            command[8] = DXL_LOBYTE(DXL_LOWORD(p));
+            command[9] = DXL_HIBYTE(DXL_LOWORD(p));
+            command[10] = DXL_LOBYTE(DXL_HIWORD(p));
+            command[11] = DXL_HIBYTE(DXL_HIWORD(p));
+            // addParam
+            dxl_addparam_result = addParam(joint.id(), command);
+            if (dxl_addparam_result != true) {
+                ROS_ERROR("Failed to add servo ID %d to loop %s", joint.id(), getName().c_str());
+                continue;
+            }
+            else
+                param_added = true;
+        }
+    }
+    return param_added;
 }
