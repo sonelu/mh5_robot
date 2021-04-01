@@ -164,8 +164,17 @@ bool MH5DynamixelInterface::setupDynamixelLoops()
     // Temperature, Voltage (TV) Reader
 
     // Positon, Velocity (PV) Writer
-    syncWrite_ = new dynamixel::GroupSyncWrite(portHandler_, packetHandler_, 108, 12);
-
+    loopName = "pv_writer";
+    if(!nh_.getParam("rates/"+loopName, rate)) {
+        ROS_INFO("[%s] no '%s' available; default to 100.0", nss_, ("rates/"+loopName).c_str());
+        rate = 100.0;
+    }
+    else
+        ROS_INFO("[%s] loop %s initialized at %.1f", nss_, loopName.c_str(), rate);
+    pvWriter_ = new mh5_hardware::PVWriter(ns+"_"+loopName, rate, portHandler_, packetHandler_);
+    pvWriter_->prepare(joints_);
+    communication_stats_interface.registerHandle(pvWriter_->getCommStatHandle());
+    
     // PID Writer
     // TODO
 
@@ -179,66 +188,66 @@ bool MH5DynamixelInterface::setupDynamixelLoops()
 
 void MH5DynamixelInterface::read(const ros::Time& time, const ros::Duration& period)
 {
-    pvlReader_->Execute(time, period);
-    pvlReader_->afterExecute(joints_);
+    pvlReader_->Execute(time, period, joints_);
 }
 
 
 void MH5DynamixelInterface::write(const ros::Time& time, const ros::Duration& period)
 {
+    pvWriter_->Execute(time, period, joints_);
     // buffer for Dynamixel values
-    uint8_t command[12];
+    // uint8_t command[12];
 
-    bool dxl_addparam_result = false;                 // addParam result
-    int dxl_comm_result = COMM_TX_FAIL;               // Communication result
-    bool param_added = false;                         // at least one param added
+    // bool dxl_addparam_result = false;                 // addParam result
+    // int dxl_comm_result = COMM_TX_FAIL;               // Communication result
+    // bool param_added = false;                         // at least one param added
 
-    syncWrite_->clearParam();
+    // syncWrite_->clearParam();
     
-    for (int i=0; i < num_joints_; i++)
-    {
-        Joint& j = joints_[i];
-        uint8_t id = j.id();
-        if (j.present())
-        {
-            int32_t p = j.getRawPositionFromCommand();
-            uint32_t vp = j.getVelocityProfileFromCommand();
-            uint32_t ap = vp / 4;
-            // platform-independent handling of byte order
-            // acceleration; register 108
-            command[0] = DXL_LOBYTE(DXL_LOWORD(ap));
-            command[1] = DXL_HIBYTE(DXL_LOWORD(ap));
-            command[2] = DXL_LOBYTE(DXL_HIWORD(ap));
-            command[3] = DXL_HIBYTE(DXL_HIWORD(ap));
-            // velocity profile ; register 112
-            command[4] = DXL_LOBYTE(DXL_LOWORD(vp));
-            command[5] = DXL_HIBYTE(DXL_LOWORD(vp));
-            command[6] = DXL_LOBYTE(DXL_HIWORD(vp));
-            command[7] = DXL_HIBYTE(DXL_HIWORD(vp));
-            // position; register 116
-            command[8] = DXL_LOBYTE(DXL_LOWORD(p));
-            command[9] = DXL_HIBYTE(DXL_LOWORD(p));
-            command[10] = DXL_LOBYTE(DXL_HIWORD(p));
-            command[11] = DXL_HIBYTE(DXL_HIWORD(p));
-            // addParam
-            dxl_addparam_result = syncWrite_->addParam(id, command);
-            if (dxl_addparam_result != true) {
-                ROS_ERROR("[%s] failed to addParam for sync write for %s [%d]", nss_, j.name(), id);
-                continue;
-            }
-            else
-                param_added = true;
-        }
-    }
+    // for (int i=0; i < num_joints_; i++)
+    // {
+    //     Joint& j = joints_[i];
+    //     uint8_t id = j.id();
+    //     if (j.present())
+    //     {
+    //         int32_t p = j.getRawPositionFromCommand();
+    //         uint32_t vp = j.getVelocityProfileFromCommand();
+    //         uint32_t ap = vp / 4;
+    //         // platform-independent handling of byte order
+    //         // acceleration; register 108
+    //         command[0] = DXL_LOBYTE(DXL_LOWORD(ap));
+    //         command[1] = DXL_HIBYTE(DXL_LOWORD(ap));
+    //         command[2] = DXL_LOBYTE(DXL_HIWORD(ap));
+    //         command[3] = DXL_HIBYTE(DXL_HIWORD(ap));
+    //         // velocity profile ; register 112
+    //         command[4] = DXL_LOBYTE(DXL_LOWORD(vp));
+    //         command[5] = DXL_HIBYTE(DXL_LOWORD(vp));
+    //         command[6] = DXL_LOBYTE(DXL_HIWORD(vp));
+    //         command[7] = DXL_HIBYTE(DXL_HIWORD(vp));
+    //         // position; register 116
+    //         command[8] = DXL_LOBYTE(DXL_LOWORD(p));
+    //         command[9] = DXL_HIBYTE(DXL_LOWORD(p));
+    //         command[10] = DXL_LOBYTE(DXL_HIWORD(p));
+    //         command[11] = DXL_HIBYTE(DXL_HIWORD(p));
+    //         // addParam
+    //         dxl_addparam_result = syncWrite_->addParam(id, command);
+    //         if (dxl_addparam_result != true) {
+    //             ROS_ERROR("[%s] failed to addParam for sync write for %s [%d]", nss_, j.name(), id);
+    //             continue;
+    //         }
+    //         else
+    //             param_added = true;
+    //     }
+    // }
 
-    if (param_added) {
-        dxl_comm_result = syncWrite_->txPacket();
-        write_total_packets_ += 1;
-        if (dxl_comm_result != COMM_SUCCESS) {
-            ROS_DEBUG("[%s] sync read failed: %s", nss_, packetHandler_->getTxRxResult(dxl_comm_result));
-            write_error_packets_ += 1;
-        }
-    }
+    // if (param_added) {
+    //     dxl_comm_result = syncWrite_->txPacket();
+    //     write_total_packets_ += 1;
+    //     if (dxl_comm_result != COMM_SUCCESS) {
+    //         ROS_DEBUG("[%s] sync read failed: %s", nss_, packetHandler_->getTxRxResult(dxl_comm_result));
+    //         write_error_packets_ += 1;
+    //     }
+    // }
 
     // torqe activation
     for (int i=0; i < num_joints_; i++)

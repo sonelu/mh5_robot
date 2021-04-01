@@ -116,7 +116,7 @@ protected:
      * servos.
      */
     mh5_hardware::PVLReader *pvlReader_;
-    dynamixel::GroupSyncWrite *syncWrite_;
+    mh5_hardware::PVWriter  *pvWriter_;
 
     //interfaces
     hardware_interface::JointStateInterface     joint_state_interface;

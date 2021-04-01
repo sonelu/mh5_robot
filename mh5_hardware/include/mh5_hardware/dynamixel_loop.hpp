@@ -88,14 +88,14 @@ public:
 
     /**
      * @brief This is an activity that needs to be performed each time in the
-     * loop just before the execution. This allows the particular implementation
+     * loop just before the communication. This allows the particular implementation
      * of the loop to do activities required before the actual communication.
      * 
      * @param joints an array of joints that might be needed in this step
      * @return true if the activity was successful
      * @return false if there was an error performing the activity
      */
-    virtual bool beforeExecute(std::vector<Joint>& joints) = 0;
+    virtual bool beforeCommunication(std::vector<Joint>& joints) = 0;
 
     /**
      * @brief Wraps the actual communication steps so that it takes into account
@@ -105,29 +105,42 @@ public:
      * rate) the method will simply return true.
      * 
      * If enough time has passed, the method checks first if there was a request
-     * to reset the statistics then it will call resetStats(). Before calling
-     * the Communicate() method it will increment the number of packets
-     * statistics. It then calls Communicate() and if the call was not successfull
-     * it will increment the number of errors statistics.
+     * to reset the statistics then it will call resetStats(). It will then call:
+     * beforeCommunication() and if this is not successfule it will stop and
+     * return false. If the step above is successful it will increment the
+     * packets statistics and then call Communicate() and check again the
+     * result. If this is not successfull it will increment the number of
+     * errors and return false. If the communication was successfull it will call
+     * afterCommunication() and return the result of that processing.
      * 
      * @param time time to execute the method (typically close to now)
      * @param period the time passed since the last call to this method
+     * @param joints an array of joints that need to be processed
      * @return true if the processing (including the call to Communicate() ) was
      * successfull
      * @return false the call to Communicate() was unsuccessfull
      */
-    bool Execute(const ros::Time& time, const ros::Duration& period) {
-        if (loop_rate_ > 0.0 && last_execution_time_ + ros::Duration(1.0/loop_rate_) < time) {
+    bool Execute(const ros::Time& time, const ros::Duration& period, std::vector<Joint>& joints)
+    {
+        if (loop_rate_ > 0.0 && last_execution_time_ + ros::Duration(1.0/loop_rate_) < time)
+        {
             last_execution_time_ += ros::Duration(1.0/loop_rate_);
+        
             if (reset_) {                   // was requested to reset statistics
                 resetStats();
                 reset_ = false;
             }
+        
+            if(!beforeCommunication(joints))
+                return false;
+            
             incPackets();
             bool result = Communicate();
-            if (!result)
+            if (!result) {
                 incErrors();
-            return result;
+                return false;
+            }
+            return afterCommunication(joints);
         }
         return true;
     }
@@ -143,7 +156,7 @@ public:
 
     /**
      * @brief This is an activity that needs to be performed each time in the
-     * loop just after the execution. This allows the particular implementation
+     * loop just after the communication. This allows the particular implementation
      * of the loop to do activities required after the actual communication
      * (ex. for an read loop to retrieve the data from the response package and
      * store it in the joints attributes).
@@ -152,7 +165,7 @@ public:
      * @return true if the activity was successful
      * @return false if there was an error performing the activity
      */
-    virtual bool afterExecute(std::vector<Joint>& joints) = 0;
+    virtual bool afterCommunication(std::vector<Joint>& joints) = 0;
 
 protected:
 
@@ -262,7 +275,7 @@ public:
      * @param joints an array of joints that might be needed in this step
      * @return true always
      */
-    bool beforeExecute(std::vector<Joint>& joints) override {return true;}
+    bool beforeCommunication(std::vector<Joint>& joints) override {return true;}
 
     /**
      * @brief Particular implementation of the communication, specific to the
@@ -312,7 +325,7 @@ public:
      * @param joints an array of joints that might be needed in this step
      * @return true always
      */
-    bool afterExecute(std::vector<Joint>& joints) { return true; }
+    bool afterCommunication(std::vector<Joint>& joints) { return true; }
 
 
     /**
@@ -358,7 +371,7 @@ public:
      * @return true 
      * @return false 
      */
-    bool afterExecute(std::vector<Joint>& joints) override;
+    bool afterCommunication(std::vector<Joint>& joints) override;
 };
 
 
@@ -387,7 +400,7 @@ public:
      * @return true if there is at least one joint that has been added to the loop
      * @return false if no joints were added to the loop
      */
-    bool beforeExecute(std::vector<Joint>& joints) override;
+    bool beforeCommunication(std::vector<Joint>& joints) override;
 };
 
 

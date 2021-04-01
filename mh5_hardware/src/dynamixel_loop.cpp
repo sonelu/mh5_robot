@@ -51,7 +51,7 @@ bool GroupSyncWrite::Communicate()
 }
 
 
-bool PVLReader::afterExecute(std::vector<Joint>& joints)
+bool PVLReader::afterCommunication(std::vector<Joint>& joints)
 {
     uint8_t dxl_error = 0;                            // Dynamixel error
     bool dxl_getdata_result = false;                  // GetParam result
@@ -101,7 +101,7 @@ bool PVLReader::afterExecute(std::vector<Joint>& joints)
     return true;
 }
 
-bool PVWriter::beforeExecute(std::vector<Joint>& joints)
+bool PVWriter::beforeCommunication(std::vector<Joint>& joints)
 {
     // buffer for Dynamixel values
     uint8_t command[12];
