@@ -1,33 +1,74 @@
-#!/usr/bin/env python3
+
+"""
+    A Director ...
+"""
 
 import rospy
-import rospkg
 import actionlib
-import os
-import yaml
-import math
 
 from control_msgs.msg import FollowJointTrajectoryAction
+
 from mh5_director.msg import RunScriptAction, RunScriptResult, RunScriptFeedback
-from control_msgs.msg import FollowJointTrajectoryGoal
-from trajectory_msgs.msg import JointTrajectoryPoint
+from script import Script
+
+class Director:
+    """The Director class
+    """
+
+    def __init__(self, script_path):
+        self.script_path = script_path
+        self.joint_controllers = {}
+        self.clients = {}
+        self.server = None
 
 
-def do_run_script(goal):
-    rospy.loginfo(f'goal received:\n{goal}')
-    # load the script;
-    try:
-        with open(os.path.join(script_path, goal.script_name), 'r') as f:
-            script_def = yaml.load(f, Loader=yaml.FullLoader)
-        units = script_def.get('units', 'rad')
-        if units == 'deg':
-            conv = 180.0 / math.pi
+    def find_trajectory_controllers(self):
+        """Looks for TrajectoryControllers defined in the param server
+        and retrieves information about the joints used.
+        """
+        all_params = rospy.get_param_names()
+
+        for p in all_params:
+            if rospy.has_param(p+"/type") and rospy.has_param(p+"joints"):
+                if "JointTrajectoryController"  in rospy.get_param(p+"/type"):
+                    self.joint_controllers[p] = rospy.get_param(p+"/joints")
+                    rospy.loginfo(f'Controller {p} detected with joints: '
+                                  '{self.joint_controllers[p]}')
+        if self.joint_controllers == {}:
+            rospy.logerror('No JointTrajectoryControllers detected.')
+            return False
         else:
-            conv = 1.0
-        joint_names = script_def['joint_names']
-        poses = script_def['poses']
-        scenes = script_def['scenes']
-        script = script_def['script']
+            return True
+
+
+    def setup_clients(self):
+        for c in self.joint_controllers.keys():
+            client = actionlib.SimpleActionClient(c + '/follow_joint_trajectory', FollowJointTrajectoryAction)
+            rospy.loginfo(f'Wating for controller: {c}/follow_joint_trajectory')
+            client.wait_for_server()
+            self.clients[c] = client
+            rospy.loginfo(f'...Controller {c} available')
+
+
+    def setup_server(self):
+        rospy.loginfo('Setting up the RunScript server...')
+        self.server = actionlib.SimpleActionServer('director', RunScriptAction, self.do_run_script, False)
+        rospy.loginfo('Starting the server...')
+        self.server.start()
+        rospy.loginfo('Server started successfully')
+
+
+    def do_run_script(goal):
+        rospy.loginfo(f'goal received:\n{goal}')
+
+        try:
+            script = Script.from_file(goal.script_name, [self.script_path])
+
+
+        except Exception as e:
+            response = RunScriptResult(e.__repr__(), rospy.Duration())
+            server.set_aborted(response)
+            return
 
         request = FollowJointTrajectoryGoal()
         if type(joint_names) is not list:
@@ -52,10 +93,7 @@ def do_run_script(goal):
         start_time = rospy.get_rostime()
         client.send_goal(request, feedback_cb=feedback_follow_joint_trajectory)
 
-    except Exception as e:
-        response = RunScriptResult(e.__repr__(), rospy.Duration())
-        server.set_aborted(response)
-        return
+
 
     client.wait_for_result()
     result = client.get_result()
@@ -66,34 +104,3 @@ def do_run_script(goal):
     else:
         response = RunScriptResult(f'Script {goal.script_name} completed\n{result.error_string}', exec_time)
         server.set_succeeded(response)
-
-
-def feedback_follow_joint_trajectory(feedback):
-    pass
-
-if __name__ == '__main__':
-
-    rospy.init_node('mh5_director', log_level=rospy.INFO)
-
-    if rospy.has_param('~script_directory'):
-        script_path = rospy.get_param('~script_directory')
-    else:
-        script_path = os.path.join(rospkg.RosPack().get_path('mh5_director'), 'scripts')
-    rospy.loginfo(f'Using path: {script_path}')
-    # setup the client
-    rospy.loginfo('Setting up the follow_joint_trajectory client...')
-    client = actionlib.SimpleActionClient('follow_joint_trajectory', FollowJointTrajectoryAction)
-    rospy.loginfo('Waiting for server...')
-    client.wait_for_server()
-    rospy.loginfo('Server avialable')
-
-    # setup the server
-    rospy.loginfo('Setting up the RunScript server...')
-    server = actionlib.SimpleActionServer('director', RunScriptAction, do_run_script, False)
-    rospy.loginfo('Starting the server...')
-    server.start()
-    rospy.loginfo('Server started successfully')
-
-    # main loop
-    rospy.loginfo('Wating for orders')
-    rospy.spin()
