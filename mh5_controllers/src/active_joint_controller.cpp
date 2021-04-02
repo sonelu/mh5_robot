@@ -29,9 +29,11 @@ bool ActiveJointController::init(mh5_hardware::ActiveJointInterface* hw, ros::No
         }
     }
 
-    commands_buffer_.writeFromNonRT(0.0);
+    commands_buffer_.writeFromNonRT(false);
 
-    sub_command_ = n.subscribe<std_msgs::Bool>("torque/command", 1, &ActiveJointController::commandCB, this);
+    torque_on_ = n.advertiseService("torque/on", &ActiveJointController::torqueOnCB, this);
+    torque_off_ = n.advertiseService("torque/off", &ActiveJointController::torqueOffCB, this);
+
     return true;
 }
 

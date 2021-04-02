@@ -11,6 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
   pluginlib
   mh5_hardware
   diagnostic_msgs
+  std_srvs
 )
 
 catkin_package(
