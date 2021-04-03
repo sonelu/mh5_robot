@@ -14,26 +14,22 @@ namespace mh5_controllers
  * servos.
  * 
  * Requires mh5_harware::ActiveJointInterfaces to be registered with the hardware
- * interface. Reads "joints" parameter from the param server, which should contain
- * a list of joint names that are controlled by this controllers.
+ * interface. Reads "groups" parameter from the param server, which should contain
+ * a list of groups that can be toggled in the same time. It is possible to 
+ * nest groups in each other as long as they build on each other.
  * 
- * Advertises 2 services under the namespace where launched:
+ * Advertises a service ``/torque_control/switch_torque`` of type 
+ * ``mh5_controllers/ActivateJoint``. The name passed in calls to this 
+ * service can be individual joints or groups of joints.
  * 
- * - "torque/on" of type std_srvs::Trigger; this will buffer the request to
- * turn torque on for all joints associated with the controller
- * - "torque/off" of type std_srvs::Trigger; this will buffer the request to
- * turn torque off for all joints associated with the controller
+ *      rosservice call /torque_control/swtich_torque "{name: "head_p", state: true}"
  * 
- * The controller is intended to be as easy to use as possible from the 
- * command line such that no parameters are needed to be passed when calling
- * it:
+ * of for a group:
  * 
- *      rosservice call /left_arm/torque/on
+ *      rosservice call /torque_control/swtich_torque "{name: "head", state: true}"
  * 
- * Will simply turn on the torque on all the servos associated with the 
- * "left_arm". Due to the way the servos are grouped in MH5 robot (head,
- * left_arm, right_arm, left_leg, right_leg) there is little need for activating
- * / deactivating torques at a more granular level.
+ * Will simply turn on  or off the torque on all the servos associated with the 
+ * group.
  */
 class ActiveJointController : public controller_interface::Controller<mh5_hardware::ActiveJointInterface>
 {
@@ -49,22 +45,21 @@ public:
 
     /**
      * @brief Destroy the Active Joint Controller object. Shuts also down the 
-     * two ROS servers.
+     *  ROS service.
      */
     ~ActiveJointController() {torque_srv_.shutdown(); }
 
     /**
      * @brief Initializes the controller by reading the joint list from the
-     * parameter server under "joints". It expects a list of joint names
-     * that are already registered with the hardware manager. If the parameter
-     * is not provided or none of the joints listed are accessible through
-     * the hardware interface the initialization will fail. It also trigger
-     * a torque off request.
+     * parameter server under "groups". If no parameter is provided it will
+     * create a group "all" and assign all avaialable resources to this
+     * group. If groups are defined then they should be first listed in the
+     * "groups" parameter, then each one of them should be listed separately
+     * with the joints, or subgroups that are included. If subgroups are used
+     * they have to be fully defined first, befire they are used in a superior
+     * group. 
      * 
-     * This function also advertises the two ROS services:
-     * - torque/on
-     * - torque/off
-     * That will be shown under the current namespace of the initiator.
+     * This function also advertises the ROS service: /[controller name]/switch_torque
      * 
      * @param hw the hardware interface that will provide the access to the
      * repoces
@@ -104,11 +99,6 @@ public:
      * depending on the command processed.
      */
     realtime_tools::RealtimeBuffer<ActivateJoint::Request> commands_buffer_;
-
-    // /**
-    //  * @brief Convenience, keeps the number of joints for loops, etc.
-    //  */
-    // unsigned int                                      n_joints_;
 
 private:
 

@@ -45,27 +45,13 @@ bool ActiveJointController::init(mh5_hardware::ActiveJointInterface* hw, ros::No
                   n.getNamespace().c_str(), group.c_str(), joints_[group].size());
         }
     }
+    // we need this bacuse we're reusing the ardware_interface::JointCommandInterface
+    // in mh5_hardware::ActiveJointInterface and this uses registered handles
+    // since the effective change of the torque is done in the hardware
+    // interface (MH5DynamixelInterface) in the write() method that is entirely
+    // under out control so no coflicts can arise between updating torque status
+    // registers and other write steps.
     hw->clearClaims();
-
-    // n_joints_ = joint_names_.size();
-
-    // if(n_joints_ == 0) {
-    //     ROS_ERROR("List of joint names is empty.");
-    //     return false;
-    // }
-
-    // for(unsigned int i=0; i<n_joints_; i++)
-    // {
-    //     try {
-    //         joints_.push_back(hw->getHandle(joint_names_[i]));
-    //     }
-    //     catch (const hardware_interface::HardwareInterfaceException& e) {
-    //         ROS_ERROR("Exception thrown: %s", e.what());
-    //         return false;
-    //     }
-    // }
-
-    // commands_buffer_.writeFromNonRT(false);
 
     torque_srv_ = n.advertiseService("switch_torque", &ActiveJointController::torqueCB, this);
 
