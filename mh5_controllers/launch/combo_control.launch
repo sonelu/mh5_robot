@@ -10,10 +10,7 @@
     <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen" ns="/"
         args="
              dynamixel_state
-             head
-             left_arm
-             right_arm
-             left_leg
+             dynamixel_control
              communication_statistics
     "/>
 </launch>

@@ -1,0 +1,119 @@
+dynamixel_state:
+  type: joint_state_controller/JointStateController
+  publish_rate: 100
+
+head:
+  type: mh5_controllers/ExtendedJointTrajectoryController
+  joints:
+    - head_p
+    - head_y
+  gains:
+    head_p: {p: 30.0, i: 1, d: 0, i_clamp_min: -1, i_clamp_max: 1}
+    head_y: {p: 30.0, i: 1, d: 0, i_clamp_min: -1, i_clamp_max: 1}
+  velocity_ff:
+    head_p: 1.0
+    head_y: 1.0
+  constrains:
+    goal_time: 10.0
+    head_p:
+      goal: 0.5
+    head_y:
+      goal: 0.5
+
+left_arm:
+  type: pos_vel_controllers/JointTrajectoryController
+  joints:
+    - l_sho_p
+    - l_sho_r
+    - l_elb_y
+    - l_elb_p
+  gains:
+    l_sho_p: {p: 30.0, i: 1, d: 0, i_clamp_min: -1, i_clamp_max: 1}
+    l_sho_r: {p: 30.0, i: 1, d: 0, i_clamp_min: -1, i_clamp_max: 1}
+    l_elb_y: {p: 30.0, i: 1, d: 0, i_clamp_min: -1, i_clamp_max: 1}
+    l_elb_p: {p: 30.0, i: 1, d: 0, i_clamp_min: -1, i_clamp_max: 1}
+  velocity_ff:
+    l_sho_p: 1.0
+    l_sho_r: 1.0
+    l_elb_y: 1.0
+    l_elb_p: 1.0
+  constrains:
+    goal_time: 10.0
+    l_sho_p:
+      goal: 0.5
+    l_sho_r:
+      goal: 0.5
+    l_elb_y:
+      goal: 0.5
+    l_elb_p:
+      goal: 0.5
+
+right_arm:
+  type: pos_vel_controllers/JointTrajectoryController
+  joints:
+    - r_sho_p
+    - r_sho_r
+    - r_elb_y
+    - r_elb_p
+  gains:
+    r_sho_p: {p: 30.0, i: 1, d: 0, i_clamp_min: -1, i_clamp_max: 1}
+    r_sho_r: {p: 30.0, i: 1, d: 0, i_clamp_min: -1, i_clamp_max: 1}
+    r_elb_y: {p: 30.0, i: 1, d: 0, i_clamp_min: -1, i_clamp_max: 1}
+    r_elb_p: {p: 30.0, i: 1, d: 0, i_clamp_min: -1, i_clamp_max: 1}
+  velocity_ff:
+    r_sho_p: 1.0
+    r_sho_r: 1.0
+    r_elb_y: 1.0
+    r_elb_p: 1.0
+  constrains:
+    goal_time: 10.0
+    r_sho_p:
+      goal: 0.5
+    r_sho_r:
+      goal: 0.5
+    r_elb_y:
+      goal: 0.5
+    r_elb_p:
+      goal: 0.5
+
+left_leg:
+  type: pos_vel_controllers/JointTrajectoryController
+  joints:
+    - l_hip_r
+    - l_hip_p
+    - l_kne_p
+    - l_kne_y
+    - l_ank_p
+    - l_ank_r
+  gains:
+    l_hip_r: {p: 30.0, i: 1, d: 0, i_clamp_min: -1, i_clamp_max: 1}
+    l_hip_p: {p: 30.0, i: 1, d: 0, i_clamp_min: -1, i_clamp_max: 1}
+    l_kne_p: {p: 30.0, i: 1, d: 0, i_clamp_min: -1, i_clamp_max: 1}
+    l_kne_y: {p: 30.0, i: 1, d: 0, i_clamp_min: -1, i_clamp_max: 1}
+    l_ank_p: {p: 30.0, i: 1, d: 0, i_clamp_min: -1, i_clamp_max: 1}
+    l_ank_r: {p: 30.0, i: 1, d: 0, i_clamp_min: -1, i_clamp_max: 1}
+  velocity_ff:
+    l_hip_r: 1.0
+    l_hip_p: 1.0
+    l_kne_p: 1.0
+    l_kne_y: 1.0
+    l_ank_p: 1.0
+    l_ank_r: 1.0
+  constrains:
+    goal_time: 10.0
+    l_hip_r:
+      goal: 0.5
+    l_hip_p:
+      goal: 0.5
+    l_kne_p:
+      goal: 0.5
+    l_kne_y:
+      goal: 0.5
+    l_ank_p:
+      goal: 0.5
+    l_ank_r:
+      goal: 0.5
+
+communication_statistics:
+  type: mh5_controllers/CommunicationStatsController
+  publish_period: 10.0
