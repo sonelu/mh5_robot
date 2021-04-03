@@ -1,48 +1,123 @@
 #include <pluginlib/class_list_macros.hpp>
 #include "mh5_controllers/active_joint_controller.hpp"
+#include "mh5_controllers/ActivateJoint.h"
 
 namespace mh5_controllers
 {
 
 bool ActiveJointController::init(mh5_hardware::ActiveJointInterface* hw, ros::NodeHandle &n)
 {
-    std::string param_name = "joints";
-    if(!n.getParam(param_name, joint_names_)) {
-        ROS_ERROR("Failed to getParam '%s' (namespace: %s).", param_name, n.getNamespace());
-        return false;
-    }
-    n_joints_ = joint_names_.size();
-
-    if(n_joints_ == 0) {
-        ROS_ERROR("List of joint names is empty.");
-        return false;
-    }
-
-    for(unsigned int i=0; i<n_joints_; i++)
+    if(!n.hasParam("groups"))
     {
-        try {
-            joints_.push_back(hw->getHandle(joint_names_[i]));
+        ROS_INFO("[%s] no groups specified; all joints will be placed in a group called 'all'",
+                  n.getNamespace().c_str());
+        joints_["all"];
+        for (auto & joint_name : hw->getNames()) {
+            joints_["all"].push_back(hw->getHandle(joint_name));
         }
-        catch (const hardware_interface::HardwareInterfaceException& e) {
-            ROS_ERROR("Exception thrown: %s", e.what());
-            return false;
+        ROS_INFO("[%s] group 'all' registered with %d items",
+                  n.getNamespace().c_str(), joints_["all"].size());
+    }
+    else
+    {
+        std::vector<std::string> groups;
+        n.getParam("groups", groups);
+        for (auto & group : groups)
+        {
+            std::vector<std::string>    names;      // could be joints or subgroups
+            std::vector<std::string>    joint_names;// only joint names
+            std::vector<hardware_interface::JointHandle>    joint_handles;
+            joints_[group];
+            n.getParam(group, names);
+            for (auto & name : names) {
+                if (joints_.count(name))
+                {
+                    // handle subgroup; we copy the handles from the subgroup
+                    for (auto & handle : joints_[name]) {
+                        joints_[group].push_back(handle);
+                    }
+                }
+                else {
+                    joints_[group].push_back(hw->getHandle(name));
+                }
+            }
+            ROS_INFO("[%s] group '%s' registered with %d items",
+                  n.getNamespace().c_str(), group.c_str(), joints_[group].size());
         }
     }
+    hw->clearClaims();
 
-    commands_buffer_.writeFromNonRT(false);
+    // n_joints_ = joint_names_.size();
 
-    torque_on_ = n.advertiseService("torque/on", &ActiveJointController::torqueOnCB, this);
-    torque_off_ = n.advertiseService("torque/off", &ActiveJointController::torqueOffCB, this);
+    // if(n_joints_ == 0) {
+    //     ROS_ERROR("List of joint names is empty.");
+    //     return false;
+    // }
+
+    // for(unsigned int i=0; i<n_joints_; i++)
+    // {
+    //     try {
+    //         joints_.push_back(hw->getHandle(joint_names_[i]));
+    //     }
+    //     catch (const hardware_interface::HardwareInterfaceException& e) {
+    //         ROS_ERROR("Exception thrown: %s", e.what());
+    //         return false;
+    //     }
+    // }
+
+    // commands_buffer_.writeFromNonRT(false);
+
+    torque_srv_ = n.advertiseService("switch_torque", &ActiveJointController::torqueCB, this);
 
     return true;
 }
 
 
+bool ActiveJointController::torqueCB(mh5_controllers::ActivateJoint::Request &req, mh5_controllers::ActivateJoint::Response &res)
+{
+    if (joints_.count(req.name))  {
+        commands_buffer_.writeFromNonRT(req);
+        res.success = true;
+        res.message = "Group " + req.name + " torque change buffered";
+        return true;
+    }
+
+    // a little ugly to search for and 
+    for (auto & group: joints_) {
+        for (auto & handle : joints_[group.first]) {
+            if (handle.getName() == req.name) {
+                commands_buffer_.writeFromNonRT(req);
+                res.success = true;
+                res.message = "Joint " + req.name + " torque change buffered";
+                return true;
+            }
+        }
+    }
+
+    // no group nor joint with that name available
+    res.success = false;
+    res.message = "No group of joint named " + req.name + " found";
+    return false;
+}
+
+
 void ActiveJointController::update(const ros::Time& /*time*/, const ros::Duration& /*period*/)
 {
-    double command = *commands_buffer_.readFromRT();
-    for(unsigned int i=0; i<n_joints_; i++)
-        joints_[i].setCommand(command);
+    ActivateJoint::Request command = *commands_buffer_.readFromRT();
+
+    if (joints_.count(command.name))  {
+        for (auto & handle : joints_[command.name])
+            handle.setCommand(command.state);
+        return;
+    }
+
+    for (auto & group : joints_)
+        for (auto & handle : joints_[group.first])
+            if (handle.getName() == command.name)
+            {
+                handle.setCommand(command.state);
+                return;
+            }
 }
 
 } // namespace

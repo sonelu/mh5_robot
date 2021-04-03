@@ -12,6 +12,18 @@ find_package(catkin REQUIRED COMPONENTS
   mh5_hardware
   diagnostic_msgs
   std_srvs
+  std_msgs
+  message_generation
+)
+
+add_service_files(
+  FILES
+  ActivateJoint.srv
+)
+
+generate_messages(
+  DEPENDENCIES
+  std_msgs
 )
 
 catkin_package(
@@ -22,12 +34,15 @@ catkin_package(
                  dynamixel_sdk
                  joint_trajectory_controller
                  mh5_hardware
+                 std_msgs 
+                 message_runtime
 )
 
 include_directories(
   include
   ${catkin_INCLUDE_DIRS}
 )
+
 
 add_library(mh5_controllers
     src/extended_trajectory_controller.cpp

@@ -11,6 +11,7 @@
         args="
              dynamixel_state
              dynamixel_control
+             torque_control
              communication_statistics
     "/>
 </launch>

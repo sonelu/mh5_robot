@@ -2,6 +2,7 @@
 #include <realtime_tools/realtime_buffer.h>
 #include <controller_interface/controller.h>
 #include <mh5_hardware/active_joint_interface.hpp>
+#include "mh5_controllers/ActivateJoint.h"
 
 #pragma once
 
@@ -50,7 +51,7 @@ public:
      * @brief Destroy the Active Joint Controller object. Shuts also down the 
      * two ROS servers.
      */
-    ~ActiveJointController() {torque_on_.shutdown(); torque_off_.shutdown();}
+    ~ActiveJointController() {torque_srv_.shutdown(); }
 
     /**
      * @brief Initializes the controller by reading the joint list from the
@@ -93,70 +94,39 @@ public:
     void update(const ros::Time& /*time*/, const ros::Duration& /*period*/);
 
     /**
-     * @brief Joint names as read from the parameter server.
+     * @brief Map group->list of joint handles
      */
-    std::vector< std::string >                        joint_names_;
-
-    /**
-     * @brief Handles to all the joints retrieved from the hardware interface.
-     */
-    std::vector< hardware_interface::JointHandle >    joints_;
+    std::map<std::string, std::vector< hardware_interface::JointHandle >>   joints_;
 
     /**
      * @brief Holds commands to be processed during the update() processings.
      * The service callbacks only store "true" or "false" in this buffer
      * depending on the command processed.
      */
-    realtime_tools::RealtimeBuffer<double>            commands_buffer_;
+    realtime_tools::RealtimeBuffer<ActivateJoint::Request> commands_buffer_;
 
-    /**
-     * @brief Convenience, keeps the number of joints for loops, etc.
-     */
-    unsigned int                                      n_joints_;
+    // /**
+    //  * @brief Convenience, keeps the number of joints for loops, etc.
+    //  */
+    // unsigned int                                      n_joints_;
 
 private:
 
     /**
-     * @brief ROS Service that responds to the "torque/on" calls.
+     * @brief ROS Service that responds to the "switch_torque" calls.
      */
-    ros::ServiceServer torque_on_;
+    ros::ServiceServer torque_srv_;
 
     /**
-     * @brief ROS Service that responds to the "torque/off" calls.
-     */
-    ros::ServiceServer torque_off_;
-
-    /**
-     * @brief Callback for processing "torque/on" calls. Stores a ``true`` in the
-     * commands_buffer_ and returns ``true`` and a message that the commmand is
-     * buffered for execution.
+     * @brief Callback for processing "switch_torque" calls. Checks if the requested
+     * group exists or if there is a joint by that name
      * 
-     * @param req the service request; empty
-     * @param res the service response as per std_srvs::Trigger::Response
+     * @param req the service request; group/joint name  + desired state
+     * @param res the service response; if things are successful + detailed message
      * @return true always
      */
-    bool torqueOnCB(std_srvs::Trigger::Request &req, std_srvs::Trigger::Response &res) {
-        commands_buffer_.writeFromNonRT(true);
-        res.success = true;
-        res.message = "Command torque on buffered for execution";
-        return true;
-    }
+    bool torqueCB(mh5_controllers::ActivateJoint::Request &req, mh5_controllers::ActivateJoint::Response &res);
 
-    /**
-     * @brief Callback for processing "torque/off" calls. Stores a ``false`` in the
-     * commands_buffer_ and returns ``true`` and a message that the commmand is
-     * buffered for execution.
-     * 
-     * @param req the service request; empty
-     * @param res the service response as per std_srvs::Trigger::Response
-     * @return true always
-     */
-    bool torqueOffCB(std_srvs::Trigger::Request &req, std_srvs::Trigger::Response &res) {
-        commands_buffer_.writeFromNonRT(false);
-        res.success = true;
-        res.message = "Command torque off buffered for execution";
-        return true;
-    }
 
 };
 

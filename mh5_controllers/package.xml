@@ -15,6 +15,8 @@
   <build_depend>dynamixel_sdk</build_depend>
   <build_depend>joint_trajectory_controller</build_depend>
   <build_depend>pluginlib</build_depend>
+  <build_depend>std_msgs</build_depend>
+  <build_depend>message_runtime</build_depend>
   
   <depend>controller_interface</depend> <!-- exec_depend required for plugin -->
   <depend>combined_robot_hw</depend>    <!-- exec_depend required for plugin -->
@@ -31,6 +33,8 @@
   <exec_depend>mh5_hardware</exec_depend>
   <exec_depend>dynamixel_sdk</exec_depend>
   <exec_depend>joint_trajectory_controller</exec_depend>
+  <exec_depend>std_msgs</exec_depend>
+  <exec_depend>message_runtime</exec_depend>
 
   <export>
     <controller_interface plugin="${prefix}/mh5_controllers_plugin.xml"/>
