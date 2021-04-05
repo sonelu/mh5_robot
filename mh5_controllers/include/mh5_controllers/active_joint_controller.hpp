@@ -88,10 +88,12 @@ public:
      */
     void update(const ros::Time& /*time*/, const ros::Duration& /*period*/);
 
+private:
+
     /**
      * @brief Map group->list of joint handles
      */
-    std::map<std::string, std::vector< hardware_interface::JointHandle >>   joints_;
+    std::map<std::string, std::vector< mh5_hardware::JointHandleWithFlag >>   joints_;
 
     /**
      * @brief Holds commands to be processed during the update() processings.
@@ -99,8 +101,6 @@ public:
      * depending on the command processed.
      */
     realtime_tools::RealtimeBuffer<ActivateJoint::Request> commands_buffer_;
-
-private:
 
     /**
      * @brief ROS Service that responds to the "switch_torque" calls.
