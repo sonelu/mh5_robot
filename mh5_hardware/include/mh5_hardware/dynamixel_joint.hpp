@@ -102,19 +102,17 @@ public:
      * @brief Hard-codes the initialization of the following registers in the
      * joint (see https://emanual.robotis.com/docs/en/dxl/x/xl430-w250/#control-table):
      * 
-     * ================== ======== ====== ======================
-     * Register           Address  Value      Comments
-     * ================== ======== ====== ======================
-     * return delay       9        0      0 us delay time
-     * drive mode         10       4      if no "inverse" mode set
-     * drive mode         10       5      if "inverse" mode set
-     * operating mode     11       3      position control mode
-     * temperature limit  31       75     75 degrees Celsius
-     * max voltage        32       135    13.5 V
-     * velocity limit     44       1023   max velocity
-     * max position       48       4095   max value
-     * min position       52       0      min value
-     * ================== ======== ====== ======================
+     * | Register          | Address | Value | Comments                  |
+     * | :---------------- | ------: | ----: | :------------------------ |
+     * | return delay      | 9       | 0     | 0 us delay time           |
+     * | drive mode        | 10      | 4     | if no "inverse" mode set  |
+     * | drive mode        | 10      | 5     | if "inverse" mode set     |
+     * | operating mode    | 11      | 3     | position control mode     |
+     * | temperature limit | 31      | 75    | 75 degrees Celsius        |
+     * | max voltage       | 32      | 135   | 13.5 V                    |
+     * | velocity limit    | 44      | 1023  | max velocity              |
+     * | max position      | 48      | 4095  | max value                 |
+     * | min position      | 52      | 0     | min value                 |
      */
     void initRegisters();
 
