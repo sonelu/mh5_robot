@@ -124,7 +124,7 @@ public:
     {
         if (loop_rate_ > 0.0 && last_execution_time_ + ros::Duration(1.0/loop_rate_) < time)
         {
-            last_execution_time_ += ros::Duration(1.0/loop_rate_);
+            last_execution_time_ = time;
         
             if (reset_) {                   // was requested to reset statistics
                 resetStats();
