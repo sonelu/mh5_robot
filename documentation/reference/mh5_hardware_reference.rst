@@ -29,7 +29,7 @@ class Joint
     :undoc-members:
 
 class LoopWithCommunicationStats
-------------------------
+--------------------------------
 
 .. doxygenclass:: mh5_hardware::LoopWithCommunicationStats
     :members:
@@ -47,7 +47,7 @@ class GroupSyncRead
     :undoc-members:
 
 class GroupSyncWrite
--------------------
+--------------------
 
 .. doxygenclass:: mh5_hardware::GroupSyncWrite
     :members:

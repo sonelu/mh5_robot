@@ -33,17 +33,17 @@ public:
      * 
      * It will look for the following paramters in the server, under the joint name:
      * 
-     *  - id: the Dynamixel ID of the servo; if missing the joint will be marked 
+     * - ``id``: the Dynamixel ID of the servo; if missing the joint will be marked 
      * as not prosent (ex. present_ = false) and this will exclude it from all
      * communication
      * 
-     *  - inverse: indicates that the joint has position values specified CW (default)
+     * - ``inverse``: indicates that the joint has position values specified CW (default)
      * are CCW see https://emanual.robotis.com/docs/en/dxl/x/xl430-w250/#drive-mode10
      * bit 0. If not present the default is ``false``
      * 
-     *  - offest: a value [in radians] that will be added to converted raw position
+     * - ``offset``: a value [in radians] that will be added to converted raw position
      * from the hardware register to report present position of servos in radians.
-     * Conversly it will be substracted from the desired command position before
+     * Conversely it will be substracted from the desired command position before
      * converting to the raw position value to be stored in the servo.
      * 
      * Initializes the jointStateHandle_, jointPosVelHandle_ and jointActiveHandle_
@@ -100,19 +100,23 @@ public:
 
     /**
      * @brief Hard-codes the initialization of the following registers in the
-     * joint (see https://emanual.robotis.com/docs/en/dxl/x/xl430-w250/#control-table):
+     * joint (see https://emanual.robotis.com/docs/en/dxl/x/xl430-w250/#control-table).
      * 
-     * | Register          | Address | Value | Comments                  |
-     * | :---------------- | ------: | ----: | :------------------------ |
-     * | return delay      | 9       | 0     | 0 us delay time           |
-     * | drive mode        | 10      | 4     | if no "inverse" mode set  |
-     * | drive mode        | 10      | 5     | if "inverse" mode set     |
-     * | operating mode    | 11      | 3     | position control mode     |
-     * | temperature limit | 31      | 75    | 75 degrees Celsius        |
-     * | max voltage       | 32      | 135   | 13.5 V                    |
-     * | velocity limit    | 44      | 1023  | max velocity              |
-     * | max position      | 48      | 4095  | max value                 |
-     * | min position      | 52      | 0     | min value                 |
+     * The registers are initialized as follows:
+     * 
+     * Register          | Address | Value | Comments                 
+     * ----------------- | ------- | ----- | -------------------------
+     * return delay      | 9       | 0     | 0 us delay time          
+     * drive mode        | 10      | 4     | if no "inverse" mode set 
+     * drive mode        | 10      | 5     | if "inverse" mode set    
+     * operating mode    | 11      | 3     | position control mode    
+     * temperature limit | 31      | 75    | 75 degrees Celsius       
+     * max voltage       | 32      | 135   | 13.5 V                   
+     * velocity limit    | 44      | 1023  | max velocity             
+     * max position      | 48      | 4095  | max value                
+     * min position      | 52      | 0     | min value                
+     * 
+     * Other registers might be added in the future.
      */
     void initRegisters();
 
@@ -255,8 +259,8 @@ public:
      * @brief The velocity_command_ indicates the desired velocity (in rad/s) for
      * the execution of the position commands. Since we configure the servo in time
      * profile mode, the command is translated into a desired duration for the
-     * execution of the position command, that is after that stored into register
-     * 112. For this the method calculates the delta between the desired position
+     * execution of the position command, that is after that stored into 
+     * register 112. For this the method calculates the delta between the desired position
      * and the current position divided by the desired velocity, obtaining thus
      * the desired duration for the move. The number is then multiplied with 1000
      * as the harware expect the duration in ms. The full formula for the value
@@ -264,7 +268,8 @@ public:
      * 
      *      result = abs((position_command_ - position_state_) / velocity_command_) * 1000
      * 
-     * @return uint32_t 
+     * @return uint32_t a value suitable for writing to the hardware profile velocity
+     * for the desired position in velocity_command_ expressed in radians/s.
      */
     uint32_t getVelocityProfileFromCommand() { return abs((position_command_ - position_state_) / velocity_command_) * 1000; }
 
