@@ -1,4 +1,5 @@
 #include <pluginlib/class_list_macros.hpp>
+//#include <diagnostic_msgs/KeyValue.h>
 #include "mh5_controllers/communication_stats_controller.hpp"
 
 using namespace mh5_controllers;
@@ -16,7 +17,7 @@ bool CommunicationStatsController::init(mh5_hardware::CommunicationStatsInterfac
     }
 
     // realtime publisher
-    realtime_pub_.reset(new realtime_tools::RealtimePublisher<diagnostic_msgs::DiagnosticArray>(root_nh, "communication_statistics", 4));
+    realtime_pub_.reset(new realtime_tools::RealtimePublisher<diagnostic_msgs::DiagnosticArray>(root_nh, "diagnostics", 4));
 
     // get joints and allocate message
     for (auto & loop_name : loop_names)
@@ -25,16 +26,17 @@ bool CommunicationStatsController::init(mh5_hardware::CommunicationStatsInterfac
 
         diagnostic_msgs::DiagnosticStatus* s = new diagnostic_msgs::DiagnosticStatus();
         s->name = loop_name;
-        // oneStatus.message = ...
-        // oneStatus.hardware_id = ...
+        // s.level = ...
+        // s.message = ...
+        // s.hardware_id = ...
         s->values.resize(7);
-        s->values[0].key = "packets";                s->values[0].value = "0";
-        s->values[1].key = "errors";                 s->values[1].value = "0";
-        s->values[2].key = "error_rate_perc";        s->values[2].value = "0";
-        s->values[3].key = "total_packets";          s->values[3].value = "0";
-        s->values[4].key = "total_errors";           s->values[4].value = "0";
-        s->values[5].key = "total_error_rate_perc";  s->values[5].value = "0";
-        s->values[6].key = "real_rate";              s->values[6].value = "0";
+        s->values[0].key = "packets";
+        s->values[1].key = "errors";
+        s->values[2].key = "error_rate_perc";
+        s->values[3].key = "total_packets";
+        s->values[4].key = "total_errors";
+        s->values[5].key = "total_error_rate_perc";
+        s->values[6].key = "real_rate";
 
         realtime_pub_->msg_.status.push_back(*s);
     }
@@ -59,7 +61,8 @@ void CommunicationStatsController::update(const ros::Time& time, const ros::Dura
         if (realtime_pub_->trylock())
         {
             // we're actually publishing, so increment time
-            last_publish_time_ = last_publish_time_ + ros::Duration(publish_period_);
+            // last_publish_time_ = last_publish_time_ + ros::Duration(publish_period_);
+            last_publish_time_ = time;
 
             // populate joint state message:
             // - fill only joints that are present in the JointStateInterface, i.e. indices [0, num_hw_joints_)
@@ -68,16 +71,17 @@ void CommunicationStatsController::update(const ros::Time& time, const ros::Dura
             
             for (unsigned i=0; i<communication_states_.size()   ; i++) {
                 mh5_hardware::CommunicationStatsHandle& state = communication_states_[i];
+                diagnostic_msgs::DiagnosticStatus &status = realtime_pub_->msg_.status[i];
             
-                realtime_pub_->msg_.status[i].values[0].value = std::to_string(state.getPackets());
-                realtime_pub_->msg_.status[i].values[1].value = std::to_string(state.getErrors());
-                realtime_pub_->msg_.status[i].values[2].value = std::to_string(100.0 * state.getErrors() / state.getPackets());
+                status.values[0].value = std::to_string(state.getPackets());
+                status.values[1].value = std::to_string(state.getErrors());
+                status.values[2].value = std::to_string(100.0 * state.getErrors() / state.getPackets());
 
-                realtime_pub_->msg_.status[i].values[3].value = std::to_string(state.getTotPackets());
-                realtime_pub_->msg_.status[i].values[4].value = std::to_string(state.getTotErrors());
-                realtime_pub_->msg_.status[i].values[5].value = std::to_string(100.0 * state.getTotErrors() / state.getTotPackets());
+                status.values[3].value = std::to_string(state.getTotPackets());
+                status.values[4].value = std::to_string(state.getTotErrors());
+                status.values[5].value = std::to_string(100.0 * state.getTotErrors() / state.getTotPackets());
 
-                realtime_pub_->msg_.status[i].values[6].value = std::to_string((double)state.getPackets() / publish_period_);
+                status.values[6].value = std::to_string((double)state.getPackets() / publish_period_);
             }
             realtime_pub_->unlockAndPublish();
 
