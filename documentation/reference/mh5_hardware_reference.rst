@@ -5,7 +5,7 @@ Main classes
 ------------
 
 class MH5DynamixelInterface
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. doxygenclass:: mh5_hardware::MH5DynamixelInterface
     :members:
@@ -17,7 +17,7 @@ Supporting classes
 ------------------
 
 class MH5PortHandler
-~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^
 
 .. doxygenclass:: mh5_port_handler::PortHandlerMH5
     :members:
@@ -26,7 +26,7 @@ class MH5PortHandler
     :undoc-members:
 
 class Joint
-~~~~~~~~~~~
+^^^^^^^^^^^
 
 .. doxygenclass:: mh5_hardware::Joint
     :members:
@@ -35,10 +35,10 @@ class Joint
     :undoc-members:
 
 Syncronization Loops
--------------------
+--------------------
 
 class LoopWithCommunicationStats
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. doxygenclass:: mh5_hardware::LoopWithCommunicationStats
     :members:
@@ -47,7 +47,7 @@ class LoopWithCommunicationStats
     :undoc-members:
 
 class GroupSyncRead
-~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^
 
 .. doxygenclass:: mh5_hardware::GroupSyncRead
     :members:
@@ -56,7 +56,7 @@ class GroupSyncRead
     :undoc-members:
 
 class GroupSyncWrite
-~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^
 
 .. doxygenclass:: mh5_hardware::GroupSyncWrite
     :members:
@@ -65,7 +65,7 @@ class GroupSyncWrite
     :undoc-members:
 
 class PVLReader
-~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^
 
 .. doxygenclass:: mh5_hardware::PVLReader
     :members:
@@ -74,7 +74,7 @@ class PVLReader
     :undoc-members:
 
 class PVWriter
-~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^
 
 .. doxygenclass:: mh5_hardware::PVWriter
     :members:
@@ -86,7 +86,7 @@ class PVWriter
 ----------------------------------
 
 class JointHandleWithFlag
-~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. doxygenclass:: mh5_hardware::JointHandleWithFlag
     :members:
@@ -95,7 +95,7 @@ class JointHandleWithFlag
     :undoc-members:
 
 class ActiveJointInterface
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. doxygenclass:: mh5_hardware::ActiveJointInterface
     :members:
@@ -104,7 +104,7 @@ class ActiveJointInterface
     :undoc-members:
 
 class CommunicationStatsHandle
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. doxygenclass:: mh5_hardware::CommunicationStatsHandle
     :members:
@@ -113,7 +113,7 @@ class CommunicationStatsHandle
     :undoc-members:
 
 class CommunicationStatsInterface
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. doxygenclass:: mh5_hardware::CommunicationStatsInterface
     :members:

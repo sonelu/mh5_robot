@@ -9,7 +9,7 @@ Welcome to MH5 Robot ROS Packages documentation!
 This repo contains ROS packages for working with the MH5 humanoid robot.
 
 .. toctree::
-   :maxdepth: 4
+   :maxdepth: 5
    :caption: MH5 Robot ROS Packages
 
    packages/index

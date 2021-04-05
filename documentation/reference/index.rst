@@ -4,7 +4,7 @@ Package Reference
 =================
 
 .. toctree::
-   :maxdepth: 4
+   :maxdepth: 5
 
    mh5_hardware_reference
    mh5_controllers_reference
