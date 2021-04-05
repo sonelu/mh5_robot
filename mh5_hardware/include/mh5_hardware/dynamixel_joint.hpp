@@ -208,6 +208,15 @@ public:
     bool toggleTorque();
 
     /**
+     * @brief Produces an internal format for torque status based on a desired 
+     * command.
+     * 
+     * @return uint8_t value suitable for writing to the hardware for the
+     * desired torque status.
+     */
+    uint8_t getRawTorqueActiveFromCommand() { return (uint8_t) active_command_;}
+
+    /**
      * @brief Set the position_state_ (represented in radians) from a raw_pos
      * that represents the value read from the hardware. It takes into account
      * the servo's charactistics, and the offset with the formula:

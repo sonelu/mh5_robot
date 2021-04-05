@@ -84,7 +84,7 @@ public:
      * @return true if the activity was successful
      * @return false if there was an error performing the activity
      */
-    virtual bool prepare(std::vector<Joint>& joints) = 0 ;
+    virtual bool prepare(std::vector<Joint *> joints) = 0 ;
 
     /**
      * @brief This is an activity that needs to be performed each time in the
@@ -95,7 +95,7 @@ public:
      * @return true if the activity was successful
      * @return false if there was an error performing the activity
      */
-    virtual bool beforeCommunication(std::vector<Joint>& joints) = 0;
+    virtual bool beforeCommunication(std::vector<Joint *> joints) = 0;
 
     /**
      * @brief Wraps the actual communication steps so that it takes into account
@@ -120,7 +120,7 @@ public:
      * successfull
      * @return false the call to Communicate() was unsuccessfull
      */
-    bool Execute(const ros::Time& time, const ros::Duration& period, std::vector<Joint>& joints)
+    bool Execute(const ros::Time& time, const ros::Duration& period, std::vector<Joint *> joints)
     {
         if (loop_rate_ > 0.0 && last_execution_time_ + ros::Duration(1.0/loop_rate_) < time)
         {
@@ -165,7 +165,7 @@ public:
      * @return true if the activity was successful
      * @return false if there was an error performing the activity
      */
-    virtual bool afterCommunication(std::vector<Joint>& joints) = 0;
+    virtual bool afterCommunication(std::vector<Joint *> joints) = 0;
 
 protected:
 
@@ -266,7 +266,7 @@ public:
      * @return true if at least one joint has been added to the loop
      * @return false if no joints has been suucessfully added to the loop
      */
-    bool prepare(std::vector<Joint>& joints) override;
+    bool prepare(std::vector<Joint *> joints) override;
 
     /**
      * @brief Simply returns true. SyncReads do not need any additional preparation
@@ -275,7 +275,7 @@ public:
      * @param joints an array of joints that might be needed in this step
      * @return true always
      */
-    bool beforeCommunication(std::vector<Joint>& joints) override {return true;}
+    bool beforeCommunication(std::vector<Joint *> joints) override {return true;}
 
     /**
      * @brief Particular implementation of the communication, specific to the
@@ -315,7 +315,7 @@ public:
      * @param joints an array of joints that might be needed in this step
      * @return true always
      */
-    bool prepare(std::vector<Joint>& joints) { return true; }
+    bool prepare(std::vector<Joint *> joints) { return true; }
 
 
     /**
@@ -325,7 +325,7 @@ public:
      * @param joints an array of joints that might be needed in this step
      * @return true always
      */
-    bool afterCommunication(std::vector<Joint>& joints) { return true; }
+    bool afterCommunication(std::vector<Joint *> joints) { return true; }
 
 
     /**
@@ -371,7 +371,7 @@ public:
      * @return true 
      * @return false 
      */
-    bool afterCommunication(std::vector<Joint>& joints) override;
+    bool afterCommunication(std::vector<Joint *> joints) override;
 };
 
 
@@ -385,6 +385,16 @@ public:
 class PVWriter : public GroupSyncWrite
 {
 public:
+    /**
+     * @brief Initializes the writer object with start address 108 and 12 bytes of
+     * information to be written (4 for position, 4 for velocity profile and
+     * 4 for acceleration profile)
+     * 
+     * @param name the name of the loop
+     * @param loop_rate the rate to be executed
+     * @param port the Dynamixel port handle to be used for communication
+     * @param ph the Dynamixel protocol handle to be used for communication
+     */
     PVWriter(const std::string& name, double loop_rate, dynamixel::PortHandler *port, dynamixel::PacketHandler *ph)
     : GroupSyncWrite(name, loop_rate, port, ph, 108, 12) {}
 
@@ -400,8 +410,32 @@ public:
      * @return true if there is at least one joint that has been added to the loop
      * @return false if no joints were added to the loop
      */
-    bool beforeCommunication(std::vector<Joint>& joints) override;
+    bool beforeCommunication(std::vector<Joint *> joints) override;
 };
 
+
+/**
+ * @brief Specialization of the GroupSyncWrite to perform the write of the torque
+ * register for XL430 Dynamixel series. It will only syncronize devices
+ * that have changed (ex. the shouldToggleTorque() returns ``true``).
+ */
+class TWriter : public GroupSyncWrite
+{
+public:
+    TWriter(const std::string& name, double loop_rate, dynamixel::PortHandler *port, dynamixel::PacketHandler *ph)
+    : GroupSyncWrite(name, loop_rate, port, ph, 64, 1) {}
+
+    /**
+     * @brief For each joint checks if the active state has changed (the controller
+     * call to setCommand() would have activated the field active_command_flag_ that
+     * can be checked by calling shouldToggleTorque()). Also, only servos that are
+     * "present" are included.
+     * 
+     * @param joints vector of joints for processing
+     * @return true if there is at least one joint that has been added to the loop
+     * @return false if no joints were added to the loop
+     */
+    bool beforeCommunication(std::vector<Joint *> joints) override;
+};
 
 } //namespace

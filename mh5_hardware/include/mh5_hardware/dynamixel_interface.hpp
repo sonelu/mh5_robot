@@ -116,7 +116,17 @@ protected:
      * servos.
      */
     mh5_hardware::PVLReader *pvlReader_;
+
+    /**
+     * @brief SyncLoop for writing the position and velocity
+     */
     mh5_hardware::PVWriter  *pvWriter_;
+
+    /**
+     * @brief SyncLoop for writing the torque status command
+     */
+    mh5_hardware::TWriter   *tWriter_;
+
 
     //interfaces
     hardware_interface::JointStateInterface     joint_state_interface;
@@ -125,13 +135,7 @@ protected:
     mh5_hardware::CommunicationStatsInterface   communication_stats_interface;
 
     int                         num_joints_;
-    std::vector<Joint>          joints_;
-
-    // communication statistics
-    int read_total_packets_;
-    int read_error_packets_;
-    int write_total_packets_;
-    int write_error_packets_;
+    std::vector<Joint *>        joints_;
 
     /**
      * @brief Initializes the Dynamixel port.
@@ -148,6 +152,32 @@ protected:
      * @return false 
      */
     bool initJoints();
+
+    /**
+     * @brief Convenience function that constructs a loop, reads parameters
+     * "rates/<loop_name>" from parameter server or, if not found, uses
+     * a default rate for initialisation. It also calls prepare() and 
+     * registers it communication handle (from getCommStatHandle() with the
+     * HW communication status inteface)
+     * 
+     * @tparam Loop the class for the loop
+     * @param name the name of the loop
+     * @param default_rate the default rate to use incase no parameter is 
+     * found in the parameter server
+     * @return Loop* the newly created loop object
+     */
+    template <class Loop>
+    Loop* setupLoop(std::string name, const double default_rate);
+
+    /**
+     * @brief Creates and initializes all the loops used by the HW interface:
+     * - Read: position, velocity, load (pvl_reader)
+     * - Read: temperature, voltage (tv_reader)
+     * - Write: position, velocity (pv_writer)
+     * - Write: torque (t_writer)
+     * 
+     * @return true 
+     */
     bool setupDynamixelLoops();
 
 };
