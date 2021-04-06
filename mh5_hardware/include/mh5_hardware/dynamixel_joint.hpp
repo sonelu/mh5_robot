@@ -254,6 +254,26 @@ public:
     void setEffortFromRaw(int32_t raw_eff) { effort_state_ = raw_eff * 0.0014;}
 
     /**
+     * @brief @brief Set the voltage_state_ (represented in V) 
+     * from a raw_volt that represents the value read from the hardware. The method
+     * simply divides with 100 and converts to double.
+     * 
+     * @param raw_volt the value of voltage as read in hardware
+     */
+    void setVoltageFromRaw(int16_t raw_volt) { voltage_state_ = raw_volt / 100.0; }
+
+
+    /**
+     * @brief Set the temperature_state_ (represented in degrees Celsius) 
+     * from a raw_temp that represents the value read from the hardware. The method
+     * simply converts to double.
+     * 
+     * @param raw_temp 
+     */
+    void setTemperatureFromRaw(int8_t raw_temp) { temperature_state_ = (double) raw_temp; }
+
+
+    /**
      * @brief Produces an internal format for position based on a desired 
      * command position (expressed in radians) using the formula:
      * 
@@ -304,118 +324,79 @@ public:
     const mh5_hardware::JointHandleWithFlag& getJointActiveHandle() { return jointActiveHandle_; }
 
 protected:
-    /**
-     * @brief The name of the joint
-     */
+    /// @brief The name of the joint
     std::string                         name_;
 
-    /**
-     * @brief The communication port to be used
-     */
+    /// @brief The communication port to be used
     mh5_port_handler::PortHandlerMH5*   port_;
 
-    /**
-     * @brief Dynamixel packet handler to be used
-     */
+    /// @brief Dynamixel packet handler to be used
     dynamixel::PacketHandler*           ph_;
 
-    /**
-     * @brief The node handler of the owner (hardware interface)
-     */
+    /// @brief The node handler of the owner (hardware interface)
     ros::NodeHandle                     nh_;
 
-    /**
-     * @brief Name of the owner as a c_str() - for easy printing of messages
-     */
-    const char*                         nss_;       // c string for nh_ namespace; used for messages
+    /// @brief Name of the owner as a c_str() - for easy printing of messages
+    const char*                         nss_;
 
     //actual servos
-    /**
-     * @brief Servo ID
-     */
+    /// @brief Servo ID
     uint8_t         id_;
 
-    /**
-     * @brief Servo is present (true) or not (false)
-     */
+    /// @brief Servo is present (true) or not (false)
     bool            present_;
 
-    /**
-     * @brief Servo uses inverse rotation
-     */
+    /// @brief Servo uses inverse rotation
     bool            inverse_;
 
-    /**
-     * @brief Offest for servo from 0 position (center) in radians
-     */
+    /// @brief Offest for servo from 0 position (center) in radians
     double          offset_;
 
     //actual states
-    /**
-     * @brief Current position in radians
-     */
+    /// @brief Current position in radians
     double          position_state_;
 
-    /**
-     * @brief Current velocity in radians/s
-     */
+    /// @brief Current velocity in radians/s
     double          velocity_state_;
 
-    /**
-     * @brief Current effort in Nm
-     */
+    /// @brief Current effort in Nm
     double          effort_state_;
 
-    /**
-     * @brief Current torque state [0.0 or 1.0]
-     */
+    /// @brief Current torque state [0.0 or 1.0]
     double          active_state_;
 
+    /// @brief Current voltage [V]
+    double          voltage_state_;
+
+    /// @brief Current temperature deg C
+    double          temperature_state_;
+
     //commands
-    /**
-     * @brief Desired position in radians
-     */
+    /// @brief Desired position in radians
     double          position_command_;
 
-    /**
-     * @brief Desired velocity in radians/s
-     */
+    /// @brief Desired velocity in radians/s
     double          velocity_command_;
 
-    /**
-     * @brief Indicates that the controller has updated the
-     * desired poistion / velocity and is not yet syncronised.
-     */
+    /// @brief Indicates that the controller has updated the
+    /// desired poistion / velocity and is not yet syncronised.
     bool            poistion_command_flag_;
-    
-    /**
-     * @brief Desired torque state [0.0 or 1.0]
-     */
+
+    /// @brief Desired torque state [0.0 or 1.0]
     double          active_command_;
 
-    /**
-     * @brief Indicates that the controller has updated the
-     * desired torque state and is not yet syncronised.
-     */
+    /// @brief Indicates that the controller has updated the
+    /// desired torque state and is not yet syncronised.
     bool            active_command_flag_;
 
     //hardware handles
-    /**
-     * @brief A handle that provides access to position, velocity and effort
-     *  to be supplied to the hardware iterface
-     */
+    /// @brief A handle that provides access to position, velocity and effort
     hardware_interface::JointStateHandle    jointStateHandle_;
 
-    /**
-     * @brief A handle that provides access to desired position and desired velocity
-     *  to be supplied to the hardware iterface
-     */
+    /// @brief A handle that provides access to desired position and desired velocity
     hardware_interface::PosVelJointHandle   jointPosVelHandle_;
 
-    /**
-     * @brief A handle that provides access to desired torque state
-     *  to be supplied to the hardware iterface
-     */
+    /// @brief A handle that provides access to desired torque state
     mh5_hardware::JointHandleWithFlag       jointActiveHandle_;
 };
 

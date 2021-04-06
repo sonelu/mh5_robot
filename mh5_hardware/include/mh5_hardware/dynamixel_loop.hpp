@@ -124,7 +124,7 @@ public:
     {
         if (loop_rate_ > 0.0 && last_execution_time_ + ros::Duration(1.0/loop_rate_) < time)
         {
-            last_execution_time_ = time;
+            last_execution_time_ += ros::Duration(1.0/loop_rate_);
         
             if (reset_) {                   // was requested to reset statistics
                 resetStats();
@@ -365,6 +365,41 @@ public:
      * velocity and load registers. Unpacks the data from the returned response
      * and calls the joints' setPositionFromRaw(), setVelocityFromRaw(),
      * setEffortFromRaw() to update them. If there are errors there will be
+     * ROS_DEBUG messages issued but the processing will not be stopped.
+     * 
+     * @param joints 
+     * @return true 
+     * @return false 
+     */
+    bool afterCommunication(std::vector<Joint *> joints) override;
+};
+
+
+/**
+ * @brief Specialization of the GroupSyncRead to perform the read of the following
+ * registers for XL430 Dynamixel series: present temperature, present voltage,
+ * (hence the name TV).
+ */
+class TVReader : public GroupSyncRead
+{
+public:
+    /**
+     * @brief Construct a new TVReader object. Uses 144 as the start of the address
+     * and 3 as the data_lenght
+     * 
+     * @param name the name of the loop; used for messages and for registering resources
+     * @param loop_rate the rate the loop will be expected to run
+     * @param port the dynamixel::PortHandler needed for the communication
+     * @param ph the dynamixel::PacketHandler needed for communication 
+     */
+    TVReader(const std::string& name, double loop_rate, dynamixel::PortHandler *port, dynamixel::PacketHandler *ph)
+    : GroupSyncRead(name, loop_rate, port, ph, 144, 3) {}
+
+    /**
+     * @brief Postprocessing of data after communication, specific to the temperature,
+     * and voltage registers. Unpacks the data from the returned response
+     * and calls the joints' setTemperatureFromRaw(), setVoltageFromRaw(),
+     * to update them. If there are errors there will be
      * ROS_DEBUG messages issued but the processing will not be stopped.
      * 
      * @param joints 

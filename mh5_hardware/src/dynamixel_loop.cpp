@@ -101,6 +101,50 @@ bool PVLReader::afterCommunication(std::vector<Joint *> joints)
     return true;
 }
 
+
+bool TVReader::afterCommunication(std::vector<Joint *> joints)
+{
+    uint8_t dxl_error = 0;                            // Dynamixel error
+    bool dxl_getdata_result = false;                  // GetParam result
+    
+    // process each servo
+    for(auto & joint : joints)
+    {
+        const char* name = getName().c_str();   // for messsages
+        uint8_t id = joint->id();                // to avoid callling it all the time...
+
+        if (!joint->present())                   //only present servos
+            continue;
+        
+        // check no errors
+        if (getError(id, &dxl_error)) {
+            ROS_DEBUG("[%s] SyncRead error getting ID %d: %s",
+                      name, id, getPacketHandler()->getRxPacketError(dxl_error));
+            continue;
+        }
+        //voltage
+        dxl_getdata_result = isAvailable(id, 144, 2);
+        if (!dxl_getdata_result)
+            ROS_DEBUG("[%s] SyncRead getting voltage for ID %d failed", name, id);
+        else {
+            int16_t voltage = getData(id, 144, 2);
+            joint->setVoltageFromRaw(voltage);
+        }
+        //temperature
+        dxl_getdata_result = isAvailable(id, 146, 1);
+        if (!dxl_getdata_result)
+            ROS_DEBUG("[%s] SyncRead getting temperature for ID %d failed", name, id);
+        else {
+            int8_t temperature = getData(id, 146,1);
+            joint->setTemperatureFromRaw(temperature);
+        }
+    }
+
+    // even if there are errors
+    return true;
+}
+
+
 bool PVWriter::beforeCommunication(std::vector<Joint *> joints)
 {
     // buffer for Dynamixel values

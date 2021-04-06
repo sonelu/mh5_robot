@@ -167,19 +167,16 @@ Loop* MH5DynamixelInterface::setupLoop(std::string name, const double default_ra
 
 bool MH5DynamixelInterface::setupDynamixelLoops()
 {
-    std::string loopName;
-    double rate;
-    std::string ns = nh_.getNamespace();
-
     // Position, Velocity, Load (PVL) Reader
     pvlReader_ = setupLoop<mh5_hardware::PVLReader>("pvl_reader", 100.0);
 
     // Temperature, Voltage (TV) Reader
+    tvReader_ = setupLoop<mh5_hardware::TVReader>("tv_reader", 1.0);
 
     // Positon, Velocity (PV) Writer
     pvWriter_ = setupLoop<mh5_hardware::PVWriter>("pv_writer", 100.0);
 
-    // Positon, Velocity (PV) Writer
+    // Torque (T) Writer
     tWriter_ = setupLoop<mh5_hardware::TWriter>("t_writer", 2.0);
 
     // PID Writer
@@ -196,32 +193,14 @@ bool MH5DynamixelInterface::setupDynamixelLoops()
 void MH5DynamixelInterface::read(const ros::Time& time, const ros::Duration& period)
 {
     pvlReader_->Execute(time, period, joints_);
+    tvReader_->Execute(time, period, joints_);
 }
 
 
 void MH5DynamixelInterface::write(const ros::Time& time, const ros::Duration& period)
 {
     pvWriter_->Execute(time, period, joints_);
-
-    // torqe activation
-    // for (int i=0; i < num_joints_; i++)
-    // {
-    //     Joint& j = joints_[i];
-    //     if (j.present())
-    //     {
-    //         if (j.shouldToggleTorque()) {
-    //             if(!j.toggleTorque())
-    //                 ROS_ERROR("[%s] failed to change torque for %s [%d] to %d",
-    //                           nss_, j.name().c_str(), j.id(), (int)j.isActive(false));
-    //             else {
-    //                 ROS_INFO("[%s] successfully changed torque for %s [%d] to %d",
-    //                           nss_, j.name().c_str(), j.id(), (int)j.isActive(false));
-    //             }
-    //         }
-    //     }
-    // }
     tWriter_->Execute(time, period, joints_);
-
 }
 
 

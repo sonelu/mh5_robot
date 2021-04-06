@@ -111,20 +111,16 @@ protected:
     mh5_port_handler::PortHandlerMH5 *portHandler_;
     dynamixel::PacketHandler *packetHandler_;
 
-    /**
-     * @brief Sync Loop for reading the position, velocity and load of the
-     * servos.
-     */
+    // Read Loops
+    /// @brief Sync Loop for reading the position, velocity and load
     mh5_hardware::PVLReader *pvlReader_;
+    /// @brief Sync Loop for reading the temperature and voltage
+    mh5_hardware::TVReader  *tvReader_;
 
-    /**
-     * @brief SyncLoop for writing the position and velocity
-     */
+    // Write Loops
+    /// @brief SyncLoop for writing the position and velocity
     mh5_hardware::PVWriter  *pvWriter_;
-
-    /**
-     * @brief SyncLoop for writing the torque status command
-     */
+    /// @brief SyncLoop for writing the torque status command
     mh5_hardware::TWriter   *tWriter_;
 
 
