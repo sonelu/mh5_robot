@@ -1,1 +1,6 @@
+# we need phinx 3.4.3 because the latest version of breathe was not
+# released for 3.5.x and if we use sphinx 3.5.x the version 4.15 of
+# breathe will be installed which is old and misses functionlity
+# (ex. tables) 
+sphinx=3.4.3
 breathe
