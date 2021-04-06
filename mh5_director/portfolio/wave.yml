@@ -1,8 +1,8 @@
-units: 'deg'
+units: deg
 
-joint_names: [
-  'l_sho_p', 'l_sho_r', 'l_elb_y', 'l_elb_p',
-  'r_sho_p', 'r_sho_r', 'r_elb_y', 'r_elb_p'
+joints: [
+  l_sho_p, l_sho_r, l_elb_y, l_elb_p,
+  r_sho_p, r_sho_r, r_elb_y, r_elb_p
 ]
 
 poses:
@@ -43,18 +43,18 @@ poses:
 
 scenes:
   scene_raise:
-  - ['pose_raise1', 3.0]
+  - {pose: pose_raise1, duration: 3.0}
 
   scene_wave_once:
-  - ['pose_wave_out', 0.75]
-  - ['pose_wave_in', 0.75]
+  - {pose: pose_wave_out, duration: 0.75}
+  - {pose: pose_wave_in, duration: 0.75}
 
   scene_lower:
-  - ['pose_lower', 3.0]
+  - {pose: pose_lower, duration: 3.0}
 
-script:
-  - 'scene_raise'
-  - 'scene_wave_once'
-  - 'scene_wave_once'
-  - 'scene_wave_once'
-  - 'scene_lower'
+scripts:
+  wave_three_times:
+    - {scene: scene_raise}
+    - {scene: scene_wave_once, repeat: 3}
+    - {scene: scene_lower}
+
