@@ -4,13 +4,13 @@
 using namespace mh5_hardware;
 
 
-bool GroupSyncRead::prepare(std::vector<Joint>& joints)
+bool GroupSyncRead::prepare(std::vector<Joint *> joints)
 {
     bool params_added = false;
     for (auto & joint : joints) {
-        if (joint.present()) {
-            if(!addParam(joint.id()))
-                ROS_WARN("Failed to add servo ID %d to loop %s", joint.id(), getName().c_str());
+        if (joint->present()) {
+            if(!addParam(joint->id()))
+                ROS_WARN("Failed to add servo ID %d to loop %s", joint->id(), getName().c_str());
             else
                 params_added = true;
         }
@@ -51,7 +51,7 @@ bool GroupSyncWrite::Communicate()
 }
 
 
-bool PVLReader::afterCommunication(std::vector<Joint>& joints)
+bool PVLReader::afterCommunication(std::vector<Joint *> joints)
 {
     uint8_t dxl_error = 0;                            // Dynamixel error
     bool dxl_getdata_result = false;                  // GetParam result
@@ -60,9 +60,9 @@ bool PVLReader::afterCommunication(std::vector<Joint>& joints)
     for(auto & joint : joints)
     {
         const char* name = getName().c_str();   // for messsages
-        uint8_t id = joint.id();                // to avoid callling it all the time...
+        uint8_t id = joint->id();                // to avoid callling it all the time...
 
-        if (!joint.present())                   //only present servos
+        if (!joint->present())                   //only present servos
             continue;
         
         // check no errors
@@ -77,7 +77,7 @@ bool PVLReader::afterCommunication(std::vector<Joint>& joints)
             ROS_DEBUG("[%s] SyncRead getting position for ID %d failed", name, id);
         else {
             int32_t position = getData(id, 132, 4);
-            joint.setPositionFromRaw(position);
+            joint->setPositionFromRaw(position);
         }
         //velocity
         dxl_getdata_result = isAvailable(id, 128, 4);
@@ -85,7 +85,7 @@ bool PVLReader::afterCommunication(std::vector<Joint>& joints)
             ROS_DEBUG("[%s] SyncRead getting velocity for ID %d failed", name, id);
         else {
             int32_t velocity = getData(id, 128, 4);
-            joint.setVelocityFromRaw(velocity);
+            joint->setVelocityFromRaw(velocity);
         }
         //load
         dxl_getdata_result = isAvailable(id, 126, 2);
@@ -93,7 +93,7 @@ bool PVLReader::afterCommunication(std::vector<Joint>& joints)
             ROS_DEBUG("[%s] SyncRead getting load for ID %d failed", name, id);
         else {
             int16_t load = getData(id, 126, 2);
-            joint.setEffortFromRaw(load);
+            joint->setEffortFromRaw(load);
         }
     }
 
@@ -101,7 +101,7 @@ bool PVLReader::afterCommunication(std::vector<Joint>& joints)
     return true;
 }
 
-bool PVWriter::beforeCommunication(std::vector<Joint>& joints)
+bool PVWriter::beforeCommunication(std::vector<Joint *> joints)
 {
     // buffer for Dynamixel values
     uint8_t command[12];
@@ -113,10 +113,10 @@ bool PVWriter::beforeCommunication(std::vector<Joint>& joints)
     
     for (auto & joint : joints)
     {
-        if (joint.present())
+        if (joint->present())
         {
-            int32_t p = joint.getRawPositionFromCommand();
-            uint32_t vp = joint.getVelocityProfileFromCommand();
+            int32_t p = joint->getRawPositionFromCommand();
+            uint32_t vp = joint->getVelocityProfileFromCommand();
             uint32_t ap = vp / 4;
             // platform-independent handling of byte order
             // acceleration; register 108
@@ -135,13 +135,45 @@ bool PVWriter::beforeCommunication(std::vector<Joint>& joints)
             command[10] = DXL_LOBYTE(DXL_HIWORD(p));
             command[11] = DXL_HIBYTE(DXL_HIWORD(p));
             // addParam
-            dxl_addparam_result = addParam(joint.id(), command);
+            dxl_addparam_result = addParam(joint->id(), command);
             if (dxl_addparam_result != true) {
-                ROS_ERROR("Failed to add servo ID %d to loop %s", joint.id(), getName().c_str());
+                ROS_ERROR("Failed to add servo ID %d to loop %s", joint->id(), getName().c_str());
                 continue;
             }
             else
                 param_added = true;
+        }
+    }
+    return param_added;
+}
+
+
+bool TWriter::beforeCommunication(std::vector<Joint *> joints)
+{
+    // buffer for Dynamixel values
+    uint8_t command[1];
+
+    bool dxl_addparam_result = false;                 // addParam result
+    bool param_added = false;                         // at least one param added
+
+    clearParam();
+    
+    for (auto & joint : joints)
+    {
+        if (joint->present() && joint->shouldToggleTorque())
+        {
+            command[0] = joint->getRawTorqueActiveFromCommand();
+            // addParam
+            dxl_addparam_result = addParam(joint->id(), command);
+            if (dxl_addparam_result != true) {
+                ROS_ERROR("Failed to add servo ID %d to loop %s", joint->id(), getName().c_str());
+                continue;
+            }
+            else {
+                param_added = true;
+                joint->resetActiveCommandFlag();
+                ROS_INFO("will toggle torque for %s to %d", joint->name().c_str(), *command);
+            }
         }
     }
     return param_added;

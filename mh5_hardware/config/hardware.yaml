@@ -19,7 +19,9 @@ upper_body:
   protocol: 2.0
   rs485: true
   rates:
-    pvl_reader: 75.0
+    pvl_reader: 100.0
+    pv_writer: 100.0
+    t_writer: 2.0
   head_p:
     id: 51
     inverse: true
@@ -51,6 +53,10 @@ lower_body:
   baudrate: 2000000
   protocol: 2.0
   rs485: true
+  rates:
+    pvl_reader: 100.0
+    pv_writer: 100.0
+    t_writer: 2.0
   joints:
     - l_hip_r
     - l_hip_p

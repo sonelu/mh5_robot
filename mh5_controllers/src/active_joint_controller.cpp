@@ -82,7 +82,7 @@ bool ActiveJointController::torqueCB(mh5_controllers::ActivateJoint::Request &re
 
     // no group nor joint with that name available
     res.success = false;
-    res.message = "No group of joint named " + req.name + " found";
+    res.message = "No group or joint named " + req.name + " found";
     return false;
 }
 
@@ -91,19 +91,27 @@ void ActiveJointController::update(const ros::Time& /*time*/, const ros::Duratio
 {
     ActivateJoint::Request command = *commands_buffer_.readFromRT();
 
-    if (joints_.count(command.name))  {
-        for (auto & handle : joints_[command.name])
-            handle.setCommand(command.state);
-        return;
+    if (command.name != "")
+    {
+        if (joints_.count(command.name))  {
+            for (auto & handle : joints_[command.name])
+                handle.setCommand(command.state);
+            // we need to rest it because it would be latched
+            commands_buffer_.initRT(ActivateJoint::Request());
+            return;
+        }
+
+        for (auto & group : joints_)
+            for (auto & handle : joints_[group.first])
+                if (handle.getName() == command.name)
+                {
+                    handle.setCommand(command.state);
+                    // we need to rest it because it would be latched
+                    commands_buffer_.initRT(ActivateJoint::Request());
+                    return;
+                }
     }
 
-    for (auto & group : joints_)
-        for (auto & handle : joints_[group.first])
-            if (handle.getName() == command.name)
-            {
-                handle.setCommand(command.state);
-                return;
-            }
 }
 
 } // namespace
