@@ -154,6 +154,23 @@ bool Joint::writeRegister(const uint16_t address, const int size, const long val
 }
 
 
+bool Joint::reboot()
+{
+    int dxl_comm_result = COMM_TX_FAIL;             // Communication result
+    uint8_t dxl_error = 0;                          // Dynamixel error
+
+    dxl_comm_result = ph_->reboot(port_, id_, &dxl_error);
+    if (dxl_comm_result != COMM_SUCCESS)
+        ROS_ERROR("Failed to reset device %s [%d]: %s", 
+                   name_.c_str(), id_, ph_->getTxRxResult(dxl_comm_result));
+    else if (dxl_error != 0)
+        ROS_ERROR("Failed to reset device %s [%d]: %s", 
+                   name_.c_str(), id_, ph_->getRxPacketError(dxl_error));
+    else
+        ROS_INFO("Successful rebooted device %s [%d]",  name_.c_str(), id_);
+}
+
+
 bool Joint::isActive(bool refresh)
 {
     if (refresh) {

@@ -150,6 +150,16 @@ public:
      */
     bool readRegister(const uint16_t address, const int size, long& value, const int num_tries);
 
+
+    /**
+     * @brief Reboots the devices by invoking the REBOOT Dynamixel instruction
+     * 
+     * @return true if the reboot was successful
+     * @return false if there were communication of harware errors
+     */
+    bool reboot();
+
+
     /**
      * @brief Returns if the joint is active (torque on).
      * 
