@@ -1,7 +1,9 @@
-from pathlib import Path
 import yaml
 from os.path import join
 
+import rospy
+from control_msgs.msg import FollowJointTrajectoryGoal
+from trajectory_msgs.msg import JointTrajectoryPoint
 
 class Portfolio():
     """[summary] A portfolio of scripts.
@@ -48,7 +50,7 @@ class Portfolio():
                     - {scene: A, inverse: true}
 
     """
-    
+
     @classmethod
     def from_file(cls, path, file_name):
         """Constructs a ``Portfolio`` object by reading a YAML defintion
@@ -67,6 +69,10 @@ class Portfolio():
         
     def __init__(self, name='dummy_portfolio', units='rad', joints=[], poses={}, scenes={}, scripts={}, **kwargs):
         self.name = name
+
+        # check units
+        if units not in ['rad', 'deg']:
+            raise ValueError(f'>>> Portfolio file {name} units should be "rad" or "deg" only')
         self.units = units
 
         # check joints
@@ -129,3 +135,45 @@ class Portfolio():
                     raise ValueError(f'>>> Script {script_name} item {index+1} inverse {scene["repeat"]} should be an int')
         self.scripts = scripts
 
+    def get_script_names(self):
+        return list(self.scripts.keys())
+
+    def to_joint_trajectory_goal(self, script_name):
+        if not script_name in self.scripts:
+            return None
+
+        goal = FollowJointTrajectoryGoal()
+        goal.trajectory.joint_names = self.joints
+
+        running_duration = 0
+
+        script_steps = self.scripts[script_name]
+        for script_step in script_steps:
+            # TODO handle inverse
+            scene_name = script_step['scene']
+            inverse = script_step['inverse']
+            repeat = script_step['repeat']
+
+            for _ in range(repeat):
+                
+                scene_steps = self.scenes[scene_name]
+
+                for scene_step in scene_steps:
+
+                    pose_name = scene_step['pose']
+                    duration = scene_step['duration']
+
+
+                    if self.units == 'deg':
+                        positions = [pos / 57.295779513 for pos in self.poses[pose_name]]
+                    else:
+                        positions = self.poses[pose_name]
+
+                    point = JointTrajectoryPoint()
+                    point.positions = positions
+                    point.time_from_start = rospy.Duration.from_sec(running_duration + duration)
+                    goal.trajectory.points.append(point)
+
+                    running_duration = running_duration + duration
+
+        return goal

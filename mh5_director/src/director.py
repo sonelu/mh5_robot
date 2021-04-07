@@ -25,7 +25,7 @@ class Director:
         self.portfolios =  {}
         # self.joint_controllers = {}
         # self.clients = {}
-        # self.server = None
+        self.run_server = None
 
 
     def load_scripts(self):
@@ -36,9 +36,10 @@ class Director:
             rospy.loginfo(f"[mh5_director] loading portfolio {file}")
             portfolio = Portfolio.from_file(self.portfolio_path, file)
             if (portfolio):
-                self.portfolios[file] = portfolio
+                name = file.split('.')[0]
+                self.portfolios[name] = portfolio
                 for script in portfolio.scripts:
-                    rospy.loginfo(f"[mh5_director] >> script {script} avaialable in portfolio {file}")
+                    rospy.loginfo(f"[mh5_director] >> script {script} avaialable in portfolio {name}")
 
 
     # def find_trajectory_controllers(self):
@@ -69,17 +70,21 @@ class Director:
     #         rospy.loginfo(f'...Controller {c} available')
 
 
-    # def setup_server(self):
-    #     rospy.loginfo('Setting up the RunScript server...')
-    #     self.server = actionlib.SimpleActionServer('director', RunScriptAction, self.do_run_script, False)
-    #     rospy.loginfo('Starting the server...')
-    #     self.server.start()
-    #     rospy.loginfo('Server started successfully')
+    def setup_services(self):
+
+        rospy.loginfo('[director] setting up the RunScript action server...')
+        self.run_server = actionlib.SimpleActionServer('director/run', RunScriptAction, self.do_run_script, False)
+        rospy.loginfo('[director] starting the server...')
+        self.run_server.start()
+        rospy.loginfo('[director] director/run started successfully')
 
 
-    # def do_run_script(goal):
-    #     rospy.loginfo(f'goal received:\n{goal}')
+    def do_run_script(self, goal):
+        script_name = goal.script_name
+        rospy.loginfo(f'[director] running script: {script_name}')
 
+
+        # if script_name not in self.portfolios
     #     try:
     #         script = Script.from_file(goal.script_name, [self.script_path])
 
@@ -123,3 +128,7 @@ class Director:
     # else:
     #     response = RunScriptResult(f'Script {goal.script_name} completed\n{result.error_string}', exec_time)
     #     server.set_succeeded(response)
+
+
+    def setup_action_client(self):
+        pass
