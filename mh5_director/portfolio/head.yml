@@ -1,0 +1,63 @@
+units: deg
+
+joints: [
+  head_p, head_y
+]
+
+poses:
+  head_front: [0, 0]
+
+  head_left: [0, 30]
+
+  head_right: [0, -30]
+
+  head_up: [20, 0]
+
+  head_down: [-15, 0]
+
+scenes:
+
+  head_front:
+  - {pose: head_front, duration: 0.5}
+
+  'no':
+  - {pose: head_left, duration: 0.5}
+  - {pose: head_right, duration: 0.5}
+
+  'yes':
+  - {pose: head_up, duration: 0.5}
+  - {pose: head_down, duration: 0.5}
+
+scripts:
+  front:
+  - {scene: head_front, inverse: False, repeat: 1}
+
+  'no':
+  - {scene: head_front, inverse: False, repeat: 1}
+  - {scene: 'no', inverse: False, repeat: 1}
+  - {scene: head_front, inverse: False, repeat: 1}
+
+  no-no:
+  - {scene: head_front, inverse: False, repeat: 1}
+  - {scene: 'no', inverse: False, repeat: 2}
+  - {scene: head_front, inverse: False, repeat: 1}
+
+  no-no-no:
+  - {scene: head_front, inverse: False, repeat: 1}
+  - {scene: 'no', inverse: False, repeat: 3}
+  - {scene: head_front, inverse: False, repeat: 1}
+
+  'yes':
+  - {scene: head_front, inverse: False, repeat: 1}
+  - {scene: 'yes', inverse: False, repeat: 1}
+  - {scene: head_front, inverse: False, repeat: 1}
+
+  yes-yes:
+  - {scene: head_front, inverse: False, repeat: 1}
+  - {scene: 'yes', inverse: False, repeat: 2}
+  - {scene: head_front, inverse: False, repeat: 1}
+
+  yes-yes-yes:
+  - {scene: head_front, inverse: False, repeat: 1}
+  - {scene: 'yes', inverse: False, repeat: 3}
+  - {scene: head_front, inverse: False, repeat: 1}

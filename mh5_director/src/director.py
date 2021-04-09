@@ -10,15 +10,31 @@ import rospy
 import actionlib
 
 from control_msgs.msg import FollowJointTrajectoryAction
+from mh5_director.msg import RunScript
 
-from mh5_director.msg import RunScriptAction, RunScriptResult, RunScriptFeedback
+# from mh5_director.msg import RunScriptAction, RunScriptResult, RunScriptFeedback
 from portfolio import Portfolio
 
 class Director:
     """The Director class
+
+    Reads script definitions from YAML files and can execute them by passing
+    the pose information to the ``dynamixel_control/follow_joint_trajectory``
+    action server.
+
+    Listens to the ``director/run`` topic for commands to execute a script.
     """
 
     def __init__(self, portfolio_path=None):
+        """Initializes the director.
+
+        If the path is not provided in the call, the method
+        uses the ``portfolio`` directory in the ``mh5_director`` package.
+
+        :param portfolio_path: the path to use for loading script definctions
+        , defaults to None
+        :type portfolio_path: string, optional
+        """
         if not portfolio_path:
             portfolio_path = join(rospkg.RosPack().get_path('mh5_director'), 'portfolio')
         self.portfolio_path = portfolio_path
@@ -26,9 +42,17 @@ class Director:
         # self.joint_controllers = {}
         # self.clients = {}
         self.run_server = None
+        self.action_client = None
 
 
     def load_scripts(self):
+        """Loads YAML files from the ``portfolio_path`` and stores them
+        in the ``portfolios`` attribute.
+        
+        Searches for YAML files in the provided directory to extract script
+        defintions.
+
+        """
         files = [f for f in listdir(self.portfolio_path) 
                     if isfile(join(self.portfolio_path, f)) and
                        ('.yml' in f or '.yaml' in f)]
@@ -39,96 +63,82 @@ class Director:
                 name = file.split('.')[0]
                 self.portfolios[name] = portfolio
                 for script in portfolio.scripts:
-                    rospy.loginfo(f"[mh5_director] >> script {script} avaialable in portfolio {name}")
-
-
-    # def find_trajectory_controllers(self):
-    #     """Looks for TrajectoryControllers defined in the param server
-    #     and retrieves information about the joints used.
-    #     """
-    #     all_params = rospy.get_param_names()
-
-    #     for p in all_params:
-    #         if rospy.has_param(p+"/type") and rospy.has_param(p+"joints"):
-    #             if "JointTrajectoryController"  in rospy.get_param(p+"/type"):
-    #                 self.joint_controllers[p] = rospy.get_param(p+"/joints")
-    #                 rospy.loginfo(f'Controller {p} detected with joints: '
-    #                               '{self.joint_controllers[p]}')
-    #     if self.joint_controllers == {}:
-    #         rospy.logerror('No JointTrajectoryControllers detected.')
-    #         return False
-    #     else:
-    #         return True
-
-
-    # def setup_clients(self):
-    #     for c in self.joint_controllers.keys():
-    #         client = actionlib.SimpleActionClient(c + '/follow_joint_trajectory', FollowJointTrajectoryAction)
-    #         rospy.loginfo(f'Wating for controller: {c}/follow_joint_trajectory')
-    #         client.wait_for_server()
-    #         self.clients[c] = client
-    #         rospy.loginfo(f'...Controller {c} available')
-
+                    rospy.loginfo(f"[mh5_director] ... script {script} avaialable in portfolio {name}")
 
     def setup_services(self):
+        """Starts the subscriptions.
 
-        rospy.loginfo('[director] setting up the RunScript action server...')
-        self.run_server = actionlib.SimpleActionServer('director/run', RunScriptAction, self.do_run_script, False)
-        rospy.loginfo('[director] starting the server...')
-        self.run_server.start()
-        rospy.loginfo('[director] director/run started successfully')
-
-
-    def do_run_script(self, goal):
-        script_name = goal.script_name
-        rospy.loginfo(f'[director] running script: {script_name}')
-
-
-        # if script_name not in self.portfolios
-    #     try:
-    #         script = Script.from_file(goal.script_name, [self.script_path])
-
-
-    #     except Exception as e:
-    #         response = RunScriptResult(e.__repr__(), rospy.Duration())
-    #         server.set_aborted(response)
-    #         return
-
-    #     request = FollowJointTrajectoryGoal()
-    #     if type(joint_names) is not list:
-    #         raise TypeError('joint_names should be a list of joints')
-    #     request.trajectory.joint_names = joint_names
-    #     duration_from_start = rospy.Duration(0, 0)
-    #     if type(script) is not list:
-    #         raise TypeError('script should be a list of scenes')
-    #     for scene_name in script:
-    #         scene = scenes[scene_name]
-    #         if type(scene) is not list:
-    #             raise TypeError(f'scene {scene_name} should be a list of poses')
-    #         for pose_name, duration in scene:
-    #             pose = poses[pose_name]
-    #             point = JointTrajectoryPoint()
-    #             point.time_from_start = duration_from_start + rospy.Duration.from_sec(duration)
-    #             if len(pose) != len(joint_names):
-    #                 raise ValueError(f'values for pose {pose_name} do not match the number of joints')
-    #             point.positions = [float(val) / conv for val in pose]
-    #             request.trajectory.points.append(point)
-    #             duration_from_start = point.time_from_start
-    #     start_time = rospy.get_rostime()
-    #     client.send_goal(request, feedback_cb=feedback_follow_joint_trajectory)
-
-
-
-    # client.wait_for_result()
-    # result = client.get_result()
-    # exec_time = rospy.get_rostime() - start_time
-    # if result.error_code != 0:
-    #     response = RunScriptResult(f'Script {goal.script_name} failed.\n{result.error_string}', exec_time)
-    #     server.set_aborted(response)
-    # else:
-    #     response = RunScriptResult(f'Script {goal.script_name} completed\n{result.error_string}', exec_time)
-    #     server.set_succeeded(response)
-
+        Director subscribes to:
+        - ``director/run`` - used to trigger the execution of a script
+        - ...
+        """
+        self.run_server = rospy.Subscriber('director/run', RunScript, self.run_script_callback)
+        rospy.loginfo('[mh5_director] director/run waiting for commands...')
 
     def setup_action_client(self):
-        pass
+        """Sets up the subscription to the ``dynamixel_control/follow_joint_trajectory``
+        action server.
+
+        The function will wait for the action server to become available.
+        """
+        self.action_client = actionlib.SimpleActionClient('dynamixel_control/follow_joint_trajectory', FollowJointTrajectoryAction)
+        rospy.loginfo(f'[mh5_director] wating for action server: dynamixel_control/follow_joint_trajectory')
+        self.action_client.wait_for_server()
+        rospy.loginfo(f'[mh5_director]...action server available')
+
+    def run_script_callback(self, msg):
+        """Callback for ``director/run``
+
+        The request script should be in the form: <portfolio.script>.
+         Will log errors if the requested portfolio or script in that portfolio
+         doesn't exist.
+
+         The information in the script is converted into a JointTrajectoryGoal
+         and passed to the action server. If the ``feedback`` attribute in the
+         message is True, the script_feedback_callback() will be also submitted
+         to the send_goal() method of the action client. If the ``wait``
+         attribute in the message is True the method will wait for the 
+         action server to finish before completing.
+
+        :param msg: message received 
+        :type msg: RunScript
+        """
+        combo_name = msg.script
+        port_name, scr_name = combo_name.split('.')[:2]
+
+        if port_name not in self.portfolios:
+            rospy.logerror(f'[mh5_director] portfolio {port_name} does not exist')
+            return
+        if scr_name not in self.portfolios[port_name].scripts:
+            rospy.logerror(f'[mh5_director] script {scr_name} does not exist in portfolio {port_name}')
+            return
+
+        rospy.loginfo(f'[mh5_director] running script: {scr_name} in porfolio {port_name}')
+
+        goal = self.portfolios[port_name].to_joint_trajectory_goal(scr_name)
+
+        if msg.feedback:
+            self.action_client.send_goal(goal, feedback_cb=self.script_feedback_callback)
+        else:
+            self.action_client.send_goal(goal)
+
+        if msg.wait:
+            self.action_client.wait_for_result()
+            rospy.loginfo(f'[mh5_director] script {port_name}.{scr_name} completed')
+            # print some results
+            # ...
+        
+
+    def script_feedback_callback(self, feedback):
+        """Provides feedback while running the script.
+
+        :param feedback: the feedback provided by the action server
+        :type feedback: FollowJointTrajectoryFeedback
+        """
+        num_joints = len(feedback.joint_names)
+        # rospy.loginfo(f'[mh5_director] {feedback.actual.time_from_start.to_sec()}')
+        rospy.loginfo(f'[director] avg error: {sum(feedback.error.positions)/num_joints:.2f}, max error: {max(feedback.error.positions):.2f}')
+        # detail feedback
+
+
+

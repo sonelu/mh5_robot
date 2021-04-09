@@ -9,6 +9,22 @@ joints: [
 ]
 
 poses:
+  pose_prepare: [
+    0, 0,
+    0, 0, 0, 0,
+    0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0
+  ]
+
+  pose_stand: [
+    0, 0,
+    -25.0, 0, 0, 0,
+    -25.0, 0, 0, 0,
+    0, 30, 60, 0, 30, 0,
+    0, 30, 60, 0, 30, 0
+  ]
+
   pose_sit: [
     0, 0,
     -10.0, 0, 0, 0,
@@ -17,10 +33,21 @@ poses:
     0, 95.0, 205.0, 0, 110.0, 0
   ]
 
+
 scenes:
+
+  scene_stand:
+  - {pose: pose_prepare, duration: 3.0}
+  - {pose: pose_stand, duration: 2.0}
+
   scene_sit:
   - {pose: pose_sit, duration: 6.0}
 
+
 scripts:
+  stand:
+  - {scene: scene_stand, inverse: False, repeat: 1}
+
   sit:
-  - {scene: scene_sit}
+  - {scene: scene_sit, inverse: False, repeat: 1}
+
