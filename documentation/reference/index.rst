@@ -8,3 +8,4 @@ Package Reference
 
    mh5_hardware_reference
    mh5_controllers_reference
+   mh5_director_reference
