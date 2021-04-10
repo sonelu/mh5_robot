@@ -59,7 +59,9 @@ autodoc_default_options = {
 }
 
 autodoc_mock_imports = [
-    'mh5_director.msg'
+    'mh5_director.msg',
+    'rospkg',
+    'yaml'
 ]
 breathe_projects = { "mh5_robot": "_xml" }
 breathe_default_project = "mh5_robot"
