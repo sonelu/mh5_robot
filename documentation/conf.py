@@ -64,6 +64,7 @@ autodoc_mock_imports = [
     'rospy',
     'actionlib',
     'control_msgs',
+    'trajectory_msgs',
     'yaml'
 ]
 breathe_projects = { "mh5_robot": "_xml" }
