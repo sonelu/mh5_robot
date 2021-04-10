@@ -4,8 +4,15 @@
 class Director
 --------------
 
-.. class:: Director
+.. autoclass:: director.Director
     :members:
-    :protected-members:
+    :private-members:
+    :undoc-members:
+
+class Portfolio
+---------------
+
+.. autoclass:: portfolio.Portfolio
+    :members:
     :private-members:
     :undoc-members:

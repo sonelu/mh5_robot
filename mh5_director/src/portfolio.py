@@ -6,7 +6,7 @@ from control_msgs.msg import FollowJointTrajectoryGoal
 from trajectory_msgs.msg import JointTrajectoryPoint
 
 class Portfolio():
-    """[summary] A portfolio of scripts.
+    """A portfolio of scripts.
 
     A Portfolio is a collection of scripts that can share between them
     elements like scenes and poses.
@@ -14,40 +14,48 @@ class Portfolio():
     A portfolio is composed of the following elements:
 
     - ``joint_names``: a list of joints that the scenes in the portfolio can
-    access, in that specific order. To avoid having to list them again
-    and again for each pose it is expected that all joints have to be used
-    precisely in the order they are listed in the ``joint_names``.
+      access, in that specific order. To avoid having to list them again
+      and again for each pose it is expected that all joints have to be used
+      precisely in the order they are listed in the ``joint_names``.
 
-            joint_names: [a, b, c, d]
+    .. code-block:: YAML
+
+        joint_names: [a, b, c, d]
 
     - ``poses`` is a dictionary of poses, each with its own name, followed
-    by a list of joint positions - for all joints in the ``joint_names`` in
-    that order.
+      by a list of joint positions - for all joints in the ``joint_names`` in
+      that order.
 
-            poses:
-                pose1 : [1.0, 1.0, 0.0, 0.0]
-                pose2 : [2.0, 1.0, 1.0, 1.0]
-                ...
+    .. code-block:: YAML
+
+        poses:
+            pose1 : [1.0, 1.0, 0.0, 0.0]
+            pose2 : [2.0, 1.0, 1.0, 1.0]
+            ...
 
     - ``scenes`` is a dictionary of scenes, each scene containing a list of
-    poses to be reached together with the duration needed to reach that pose.
+      poses to be reached together with the duration needed to reach that pose.
 
-            scenes:
-                sceneA:
-                    - {pose: pose1, duration: 2.0}
-                sceneB:
-                    - {pose: pose2, duration: 1.0}
-                    - {pose: pose1, duration: 1.0}
+    .. code-block:: YAML
+
+        scenes:
+            sceneA:
+                - {pose: pose1, duration: 2.0}
+            sceneB:
+                - {pose: pose2, duration: 1.0}
+                - {pose: pose1, duration: 1.0}
 
     - ``scripts`` is a distionary of scripts, each containing a list of scenes
-    and allowing to specify a number of repeats and if the exeecution should be
-    in reverse.
+      and allowing to specify a number of repeats and if the exeecution should be
+      in reverse.
 
-            scripts:
-                scriptX:
-                    - {scene: A, inverse: false}
-                    - {scene: B, inverse: false, repeat: 5}
-                    - {scene: A, inverse: true}
+    .. code-block:: YAML
+
+        scripts:
+            scriptX:
+                - {scene: A, inverse: false}
+                - {scene: B, inverse: false, repeat: 5}
+                - {scene: A, inverse: true}
 
     """
 

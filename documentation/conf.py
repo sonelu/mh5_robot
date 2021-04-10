@@ -13,6 +13,7 @@
 import os, subprocess
 import sys
 sys.path.insert(0, os.path.abspath('../'))
+sys.path.insert(0, os.path.abspath('../mh5_director/src/'))
 
 import sphinx_rtd_theme
 
@@ -57,6 +58,9 @@ autodoc_default_options = {
      'exclude-members': '__weakref__'
 }
 
+autodoc_mock_imports = [
+    'mh5_director.msg'
+]
 breathe_projects = { "mh5_robot": "_xml" }
 breathe_default_project = "mh5_robot"
 subprocess.call('doxygen', shell=True)
