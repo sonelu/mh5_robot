@@ -210,7 +210,23 @@ bool PVWriter::beforeCommunication(std::vector<Joint *> joints)
 /******************/
 bool TWriter::beforeCommunication(std::vector<Joint *> joints)
 {
-    // buffer for Dynamixel values
+    // handle reboot
+    for (auto & joint: joints)
+    {
+        if (joint->present() && joint->shouldReboot()) {
+            if(joint->reboot(5)) {
+                ROS_INFO("joint %s [%d] rebooted", joint->name().c_str(), joint->id());
+                joint->resetRebootCommandFlag();
+            }
+            else {
+                ROS_ERROR("joint %s [%d] failed to reboot", joint->name().c_str(), joint->id());
+                // we do the reset of the command to force the user to reissue the command
+                joint->resetRebootCommandFlag();
+            }
+        }
+    }
+
+    // handle torque changes
     uint8_t command[1];
 
     bool dxl_addparam_result = false;                 // addParam result
@@ -237,25 +253,4 @@ bool TWriter::beforeCommunication(std::vector<Joint *> joints)
         }
     }
     return param_added;
-}
-
-
-bool TWriter::afterCommunication(std::vector<Joint *> joints)
-{
-    for (auto & joint: joints)
-    {
-        if (joint->present() && joint->shouldReboot()) {
-            if(joint->reboot(5)) {
-                ROS_INFO("joint %s [%d] rebooted", joint->name().c_str(), joint->id());
-                joint->resetRebootCommandFlag();
-            }
-            else {
-                ROS_ERROR("joint %s [%d] failed to reboot", joint->name().c_str(), joint->id());
-                // we do the reset of the command to force the user to reissue the command
-                joint->resetRebootCommandFlag();
-            }
-        }
-    }
-
-    return true;
 }
