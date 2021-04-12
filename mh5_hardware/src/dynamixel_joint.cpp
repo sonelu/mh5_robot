@@ -91,13 +91,13 @@ bool Joint::readRegister(const uint16_t address, const int size, long& value, co
 
         if (dxl_comm_result != COMM_SUCCESS) {
             ROS_ERROR("[%s] readRegister communication failure (%s) for servo %s [%d], register %d (try %d/%d)",
-                      nss_, ph_->getTxRxResult(dxl_comm_result), name_.c_str(), id_, address, n, num_tries);
+                      nss_, ph_->getTxRxResult(dxl_comm_result), name_.c_str(), id_, address, n+1, num_tries);
             continue;
         }
 
         if (dxl_error != 0) {
             ROS_ERROR("[%s] readRegister packet error (%s) for servo %s [%d], register %d (try %d/%d)",
-                      nss_, ph_->getRxPacketError(dxl_error), name_.c_str(), id_, address, n, num_tries);
+                      nss_, ph_->getRxPacketError(dxl_error), name_.c_str(), id_, address, n+1, num_tries);
             continue;
         }
 
@@ -136,13 +136,13 @@ bool Joint::writeRegister(const uint16_t address, const int size, const long val
 
         if (dxl_comm_result != COMM_SUCCESS) {
             ROS_ERROR("[%s] writeRegister communication failure (%s) for servo %s [%d], register %d (try %d/%d)",
-                      nss_, ph_->getTxRxResult(dxl_comm_result), name_.c_str(), id_, address, n, num_tries);
+                      nss_, ph_->getTxRxResult(dxl_comm_result), name_.c_str(), id_, address, n+1, num_tries);
             continue;
         }
 
         if (dxl_error != 0) {
             ROS_ERROR("[%s] writeRegister packet error (%s) for servo %s [%d], register %d (try %d/%d)",
-                      nss_, ph_->getRxPacketError(dxl_error), name_.c_str(), id_, address, n, num_tries);
+                      nss_, ph_->getRxPacketError(dxl_error), name_.c_str(), id_, address, n+1, num_tries);
             continue;
         }
 
