@@ -94,6 +94,12 @@ class JointHandleWithFlag
     :private-members:
     :undoc-members:
 
+.. doxygenclass:: mh5_hardware::JointTorqueAndReboot
+    :members:
+    :protected-members:
+    :private-members:
+    :undoc-members:
+
 class ActiveJointInterface
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 

@@ -403,8 +403,7 @@ public:
      * ROS_DEBUG messages issued but the processing will not be stopped.
      * 
      * @param joints 
-     * @return true 
-     * @return false 
+     * @return true always
      */
     bool afterCommunication(std::vector<Joint *> joints) override;
 };

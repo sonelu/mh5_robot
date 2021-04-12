@@ -152,12 +152,13 @@ public:
 
 
     /**
-     * @brief Reboots the devices by invoking the REBOOT Dynamixel instruction
+     * @brief Reboots the device by invoking the REBOOT Dynamixel instruction
      * 
+     * @param num_tries how many tries to make if there are no answers
      * @return true if the reboot was successful
      * @return false if there were communication of harware errors
      */
-    bool reboot();
+    bool reboot(const int num_tries);
 
 
     /**
@@ -216,6 +217,25 @@ public:
      * @return false communication or harware error
      */
     bool toggleTorque();
+
+    /**
+     * @brief Indicates if there was a command to reboot the joint that
+     * was not yet completed. It simply returns the reboot_command_flag_
+     * member that should be set whenever a controllers wants to reboot
+     * the joint.
+     * 
+     * @return true there is a reset that was not syncronised to hardware
+     * @return false there is no change in the status
+     */
+    bool shouldReboot() { return reboot_command_flag_; }
+
+
+    /**
+     * @brief Resets to false the reboot_command_flag_. Normally 
+     * used by the sync loops after successful processing of an
+     * update.
+     */
+    void resetRebootCommandFlag() { reboot_command_flag_ = 0.0; reboot_command_flag_ = false; }
 
     /**
      * @brief Produces an internal format for torque status based on a desired 
@@ -329,9 +349,10 @@ public:
     /**
      * @brief Returns the handle to the joint activation command interface object for this joint
      * 
-     * @return const mh5_hardware::JointHandleWithFlag& 
+     * @return const mh5_hardware::JointTorqueAndReboot& 
      */
-    const mh5_hardware::JointHandleWithFlag& getJointActiveHandle() { return jointActiveHandle_; }
+    const mh5_hardware::JointTorqueAndReboot& getJointActiveHandle() { return jointActiveHandle_; }
+
 
 protected:
     /// @brief The name of the joint
@@ -399,6 +420,9 @@ protected:
     /// desired torque state and is not yet syncronised.
     bool            active_command_flag_;
 
+    /// @brief Controller requested a reboot and is not yet syncronised
+    bool            reboot_command_flag_;
+
     //hardware handles
     /// @brief A handle that provides access to position, velocity and effort
     hardware_interface::JointStateHandle    jointStateHandle_;
@@ -407,7 +431,7 @@ protected:
     hardware_interface::PosVelJointHandle   jointPosVelHandle_;
 
     /// @brief A handle that provides access to desired torque state
-    mh5_hardware::JointHandleWithFlag       jointActiveHandle_;
+    mh5_hardware::JointTorqueAndReboot       jointActiveHandle_;
 };
 
 
