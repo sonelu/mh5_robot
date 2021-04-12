@@ -154,26 +154,31 @@ bool Joint::writeRegister(const uint16_t address, const int size, const long val
 }
 
 
-bool Joint::reboot()
+bool Joint::reboot(const int num_tries)
 {
-    int dxl_comm_result = COMM_TX_FAIL;             // Communication result
-    uint8_t dxl_error = 0;                          // Dynamixel error
+    for (int n=0; n < num_tries; n++)
+    {
+        int dxl_comm_result = COMM_TX_FAIL;             // Communication result
+        uint8_t dxl_error = 0;                          // Dynamixel error
 
-    dxl_comm_result = ph_->reboot(port_, id_, &dxl_error);
-    if (dxl_comm_result != COMM_SUCCESS) {
-        ROS_ERROR("Failed to reset device %s [%d]: %s", 
-                   name_.c_str(), id_, ph_->getTxRxResult(dxl_comm_result));
-        return false;
+        dxl_comm_result = ph_->reboot(port_, id_, &dxl_error);
+        if (dxl_comm_result != COMM_SUCCESS) {
+            // ROS_ERROR("Failed to reset device %s [%d]: %s", 
+            //         name_.c_str(), id_, ph_->getTxRxResult(dxl_comm_result));
+            continue;
+        }
+        else if (dxl_error != 0) {
+            // ROS_ERROR("Failed to reset device %s [%d]: %s", 
+            //         name_.c_str(), id_, ph_->getRxPacketError(dxl_error));
+            continue;
+        }
+        else {
+            ROS_INFO("Successful rebooted device %s [%d]",  name_.c_str(), id_);
+            return true;
+        }
     }
-    else if (dxl_error != 0) {
-        ROS_ERROR("Failed to reset device %s [%d]: %s", 
-                   name_.c_str(), id_, ph_->getRxPacketError(dxl_error));
-        return false;
-    }
-    else {
-        ROS_INFO("Successful rebooted device %s [%d]",  name_.c_str(), id_);
-        return true;
-    }
+    ROS_ERROR("Failed to reset device %s [%d]: %s", name_.c_str(), id_);
+    return false;
 }
 
 
@@ -236,4 +241,5 @@ void Joint::initRegisters()
 
     active_state_ = 0.0;
     active_command_flag_ = false;
+    reboot_command_flag_ = false;
 }

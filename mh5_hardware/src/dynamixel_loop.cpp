@@ -245,7 +245,7 @@ bool TWriter::afterCommunication(std::vector<Joint *> joints)
     for (auto & joint: joints)
     {
         if (joint->present() && joint->shouldReboot()) {
-            if(joint->reboot()) {
+            if(joint->reboot(5)) {
                 ROS_INFO("joint %s [%d] rebooted", joint->name().c_str(), joint->id());
                 joint->resetRebootCommandFlag();
             }

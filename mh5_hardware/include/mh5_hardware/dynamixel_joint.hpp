@@ -154,10 +154,11 @@ public:
     /**
      * @brief Reboots the device by invoking the REBOOT Dynamixel instruction
      * 
+     * @param num_tries how many tries to make if there are no answers
      * @return true if the reboot was successful
      * @return false if there were communication of harware errors
      */
-    bool reboot();
+    bool reboot(const int num_tries);
 
 
     /**
