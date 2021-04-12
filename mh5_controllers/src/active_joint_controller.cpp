@@ -54,6 +54,7 @@ bool ActiveJointController::init(mh5_hardware::ActiveJointInterface* hw, ros::No
     hw->clearClaims();
 
     torque_srv_ = n.advertiseService("switch_torque", &ActiveJointController::torqueCB, this);
+    reboot_srv_ = n.advertiseService("reboot", &ActiveJointController::rebootCB, this);
 
     return true;
 }
@@ -62,7 +63,7 @@ bool ActiveJointController::init(mh5_hardware::ActiveJointInterface* hw, ros::No
 bool ActiveJointController::torqueCB(mh5_controllers::ActivateJoint::Request &req, mh5_controllers::ActivateJoint::Response &res)
 {
     if (joints_.count(req.name))  {
-        commands_buffer_.writeFromNonRT(req);
+        torque_commands_buffer_.writeFromNonRT(req);
         res.success = true;
         res.message = "Group " + req.name + " torque change buffered";
         return true;
@@ -72,7 +73,7 @@ bool ActiveJointController::torqueCB(mh5_controllers::ActivateJoint::Request &re
     for (auto & group: joints_) {
         for (auto & handle : joints_[group.first]) {
             if (handle.getName() == req.name) {
-                commands_buffer_.writeFromNonRT(req);
+                torque_commands_buffer_.writeFromNonRT(req);
                 res.success = true;
                 res.message = "Joint " + req.name + " torque change buffered";
                 return true;
@@ -87,9 +88,38 @@ bool ActiveJointController::torqueCB(mh5_controllers::ActivateJoint::Request &re
 }
 
 
+bool ActiveJointController::rebootCB(mh5_controllers::ActivateJoint::Request &req, mh5_controllers::ActivateJoint::Response &res)
+{
+    if (joints_.count(req.name))  {
+        reboot_commands_buffer_.writeFromNonRT(req);
+        res.success = true;
+        res.message = "Group " + req.name + " reboot buffered";
+        return true;
+    }
+
+    // a little ugly to search for and 
+    for (auto & group: joints_) {
+        for (auto & handle : joints_[group.first]) {
+            if (handle.getName() == req.name) {
+                reboot_commands_buffer_.writeFromNonRT(req);
+                res.success = true;
+                res.message = "Joint " + req.name + " reboot buffered";
+                return true;
+            }
+        }
+    }
+
+    // no group nor joint with that name available
+    res.success = false;
+    res.message = "No group or joint named " + req.name + " found";
+    return false;
+}
+
+
+
 void ActiveJointController::update(const ros::Time& /*time*/, const ros::Duration& /*period*/)
 {
-    ActivateJoint::Request command = *commands_buffer_.readFromRT();
+    ActivateJoint::Request command = *torque_commands_buffer_.readFromRT();
 
     if (command.name != "")
     {
@@ -97,7 +127,7 @@ void ActiveJointController::update(const ros::Time& /*time*/, const ros::Duratio
             for (auto & handle : joints_[command.name])
                 handle.setCommand(command.state);
             // we need to rest it because it would be latched
-            commands_buffer_.initRT(ActivateJoint::Request());
+            torque_commands_buffer_.initRT(ActivateJoint::Request());
             return;
         }
 
@@ -107,10 +137,34 @@ void ActiveJointController::update(const ros::Time& /*time*/, const ros::Duratio
                 {
                     handle.setCommand(command.state);
                     // we need to rest it because it would be latched
-                    commands_buffer_.initRT(ActivateJoint::Request());
+                    torque_commands_buffer_.initRT(ActivateJoint::Request());
                     return;
                 }
     }
+
+    command = *reboot_commands_buffer_.readFromRT();
+
+    if (command.name != "")
+    {
+        if (joints_.count(command.name))  {
+            for (auto & handle : joints_[command.name])
+                handle.setReboot(command.state);
+            // we need to rest it because it would be latched
+            reboot_commands_buffer_.initRT(ActivateJoint::Request());
+            return;
+        }
+
+        for (auto & group : joints_)
+            for (auto & handle : joints_[group.first])
+                if (handle.getName() == command.name)
+                {
+                    handle.setReboot(command.state);
+                    // we need to rest it because it would be latched
+                    reboot_commands_buffer_.initRT(ActivateJoint::Request());
+                    return;
+                }
+    }
+
 
 }
 

@@ -63,7 +63,26 @@ private:
 
 };
 
+class JointTorqueAndReboot : public JointHandleWithFlag
+{
+public:
+    JointTorqueAndReboot() = default;
 
+    JointTorqueAndReboot(const JointStateHandle& js, double* torque, bool* torque_flag, bool* reboot_flag)
+    : JointHandleWithFlag(js, torque, torque_flag), reboot_flag_(reboot_flag) 
+    {
+        if (!reboot_flag_)
+            throw hardware_interface::HardwareInterfaceException("Cannot create handle '" + js.getName() + "'. Rebbot flag pointer is null.");
+    }
+
+    void setReboot(bool reboot) { assert(reboot_flag_); *reboot_flag_ = reboot; }
+    bool getReboot() { assert(reboot_flag_); return *reboot_flag_; }
+
+private:
+
+    bool* reboot_flag_ = {nullptr};
+
+};
 
 /**
  * @brief Joint that supports activation / deactivation
@@ -74,7 +93,7 @@ private:
  * need to be syncronised and will reset it once the synchronisation is
  * finished.
  */
-class ActiveJointInterface : public hardware_interface::HardwareResourceManager<JointHandleWithFlag> {};
+class ActiveJointInterface : public hardware_interface::HardwareResourceManager<JointTorqueAndReboot> {};
 
 
 }

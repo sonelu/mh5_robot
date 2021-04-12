@@ -403,8 +403,7 @@ public:
      * ROS_DEBUG messages issued but the processing will not be stopped.
      * 
      * @param joints 
-     * @return true 
-     * @return false 
+     * @return true always
      */
     bool afterCommunication(std::vector<Joint *> joints) override;
 };
@@ -471,6 +470,15 @@ public:
      * @return false if no joints were added to the loop
      */
     bool beforeCommunication(std::vector<Joint *> joints) override;
+
+    /**
+     * @brief Used to handle reboot requests for the joints. Checks if there
+     * is any joint that was requested to reboot and executes reboot() for it.
+     * 
+     * @param joints vector of joints for processing
+     * @return true always
+     */
+    bool afterCommunication(std::vector<Joint *> joints) override;
 };
 
 } //namespace

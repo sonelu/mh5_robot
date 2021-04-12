@@ -28,7 +28,7 @@ void Joint::fromParam(ros::NodeHandle& nh, std::string& name, mh5_port_handler::
     // setup hardware handles
     jointStateHandle_ = hardware_interface::JointStateHandle(name_, &position_state_, &velocity_state_, &effort_state_);
     jointPosVelHandle_ = hardware_interface::PosVelJointHandle(jointStateHandle_, &position_command_, &velocity_command_);
-    jointActiveHandle_ = mh5_hardware::JointHandleWithFlag (jointStateHandle_, &active_command_, &active_command_flag_);
+    jointActiveHandle_ = mh5_hardware::JointTorqueAndReboot (jointStateHandle_, &active_command_, &active_command_flag_, &reboot_command_flag_);
 }
 
 
@@ -160,14 +160,20 @@ bool Joint::reboot()
     uint8_t dxl_error = 0;                          // Dynamixel error
 
     dxl_comm_result = ph_->reboot(port_, id_, &dxl_error);
-    if (dxl_comm_result != COMM_SUCCESS)
+    if (dxl_comm_result != COMM_SUCCESS) {
         ROS_ERROR("Failed to reset device %s [%d]: %s", 
                    name_.c_str(), id_, ph_->getTxRxResult(dxl_comm_result));
-    else if (dxl_error != 0)
+        return false;
+    }
+    else if (dxl_error != 0) {
         ROS_ERROR("Failed to reset device %s [%d]: %s", 
                    name_.c_str(), id_, ph_->getRxPacketError(dxl_error));
-    else
+        return false;
+    }
+    else {
         ROS_INFO("Successful rebooted device %s [%d]",  name_.c_str(), id_);
+        return true;
+    }
 }
 
 

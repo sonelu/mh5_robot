@@ -93,19 +93,33 @@ private:
     /**
      * @brief Map group->list of joint handles
      */
-    std::map<std::string, std::vector< mh5_hardware::JointHandleWithFlag >>   joints_;
+    std::map<std::string, std::vector< mh5_hardware::JointTorqueAndReboot >>   joints_;
 
     /**
-     * @brief Holds commands to be processed during the update() processings.
+     * @brief Holds torque activation commands to be processed during the 
+     * update() processings.
      * The service callbacks only store "true" or "false" in this buffer
      * depending on the command processed.
      */
-    realtime_tools::RealtimeBuffer<ActivateJoint::Request> commands_buffer_;
+    realtime_tools::RealtimeBuffer<ActivateJoint::Request> torque_commands_buffer_;
+
+    /**
+     * @brief Holds reboot commands to be processed during the 
+     * update() processings.
+     * The service callbacks only store "true" or "false" in this buffer
+     * depending on the command processed.
+     */
+    realtime_tools::RealtimeBuffer<ActivateJoint::Request> reboot_commands_buffer_;
 
     /**
      * @brief ROS Service that responds to the "switch_torque" calls.
      */
     ros::ServiceServer torque_srv_;
+
+    /**
+     * @brief ROS Service that responds to the "reboot" calls.
+     */
+    ros::ServiceServer reboot_srv_;
 
     /**
      * @brief Callback for processing "switch_torque" calls. Checks if the requested
@@ -117,7 +131,15 @@ private:
      */
     bool torqueCB(mh5_controllers::ActivateJoint::Request &req, mh5_controllers::ActivateJoint::Response &res);
 
-
+   /**
+     * @brief Callback for processing "reboot" calls. Checks if the requested
+     * group exists or if there is a joint by that name
+     * 
+     * @param req the service request; group/joint name  + desired state
+     * @param res the service response; if things are successful + detailed message
+     * @return true always
+     */
+    bool rebootCB(mh5_controllers::ActivateJoint::Request &req, mh5_controllers::ActivateJoint::Response &res);
 };
 
 } // namespace

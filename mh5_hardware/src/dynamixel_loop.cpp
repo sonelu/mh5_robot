@@ -3,7 +3,9 @@
 
 using namespace mh5_hardware;
 
-
+/*****************/
+/* GroupSyncRead */
+/*****************/
 bool GroupSyncRead::prepare(std::vector<Joint *> joints)
 {
     bool params_added = false;
@@ -37,6 +39,9 @@ bool GroupSyncRead::Communicate()
 }
 
 
+/******************/
+/* GroupSyncWrite */
+/******************/
 bool GroupSyncWrite::Communicate()
 {
     int dxl_comm_result = txPacket();
@@ -50,7 +55,9 @@ bool GroupSyncWrite::Communicate()
     return true;
 }
 
-
+/******************/
+/* PVLReader      */
+/******************/
 bool PVLReader::afterCommunication(std::vector<Joint *> joints)
 {
     uint8_t dxl_error = 0;                            // Dynamixel error
@@ -102,6 +109,9 @@ bool PVLReader::afterCommunication(std::vector<Joint *> joints)
 }
 
 
+/******************/
+/* TVReader       */
+/******************/
 bool TVReader::afterCommunication(std::vector<Joint *> joints)
 {
     uint8_t dxl_error = 0;                            // Dynamixel error
@@ -145,6 +155,9 @@ bool TVReader::afterCommunication(std::vector<Joint *> joints)
 }
 
 
+/******************/
+/* PVWriter       */
+/******************/
 bool PVWriter::beforeCommunication(std::vector<Joint *> joints)
 {
     // buffer for Dynamixel values
@@ -192,6 +205,9 @@ bool PVWriter::beforeCommunication(std::vector<Joint *> joints)
 }
 
 
+/******************/
+/* TWriter        */
+/******************/
 bool TWriter::beforeCommunication(std::vector<Joint *> joints)
 {
     // buffer for Dynamixel values
@@ -221,4 +237,25 @@ bool TWriter::beforeCommunication(std::vector<Joint *> joints)
         }
     }
     return param_added;
+}
+
+
+bool TWriter::afterCommunication(std::vector<Joint *> joints)
+{
+    for (auto & joint: joints)
+    {
+        if (joint->present() && joint->shouldReboot()) {
+            if(joint->reboot()) {
+                ROS_INFO("joint %s [%d] rebooted", joint->name().c_str(), joint->id());
+                joint->resetRebootCommandFlag();
+            }
+            else {
+                ROS_ERROR("joint %s [%d] failed to reboot", joint->name().c_str(), joint->id());
+                // we do the reset of the command to force the user to reissue the command
+                joint->resetRebootCommandFlag();
+            }
+        }
+    }
+
+    return true;
 }
