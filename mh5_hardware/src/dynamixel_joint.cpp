@@ -236,9 +236,15 @@ void Joint::initRegisters()
     else
         writeRegister(10, 1, 4, TRIES);  // direct; time profile
 
+    // PID and FF
+    writeRegister(80, 2, 4000, TRIES);      // Position D Gain
+    writeRegister(82, 2, 0, TRIES);         // Position I Gain
+    writeRegister(84, 2, 1280, TRIES);       // Position P Gain
+    writeRegister(88, 2, 0, TRIES);         // FF 2nd Gain
+    writeRegister(90, 2, 0, TRIES);         // FF 1st Gain
+
     // initilizes the active members to avoid issues later when the syncs start
     active_command_ = 0.0;
-
     active_state_ = 0.0;
     active_command_flag_ = false;
     reboot_command_flag_ = false;
