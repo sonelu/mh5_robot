@@ -115,7 +115,7 @@ class Director:
 
         rospy.loginfo(f'[mh5_director] running script: {scr_name} in porfolio {port_name}')
 
-        goal = self.portfolios[port_name].to_joint_trajectory_goal(scr_name)
+        goal = self.portfolios[port_name].to_joint_trajectory_goal(scr_name, msg.playback_speed)
 
         if msg.feedback:
             self.action_client.send_goal(goal, feedback_cb=self.script_feedback_callback)

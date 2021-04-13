@@ -146,10 +146,12 @@ class Portfolio():
     def get_script_names(self):
         return list(self.scripts.keys())
 
-    def to_joint_trajectory_goal(self, script_name):
+    def to_joint_trajectory_goal(self, script_name, speed):
         if not script_name in self.scripts:
             return None
 
+        if speed <= 0.0:
+            speed = 1
         goal = FollowJointTrajectoryGoal()
         goal.trajectory.joint_names = self.joints
 
@@ -169,7 +171,7 @@ class Portfolio():
                 for scene_step in scene_steps:
 
                     pose_name = scene_step['pose']
-                    duration = scene_step['duration']
+                    duration = scene_step['duration'] / speed
 
 
                     if self.units == 'deg':
