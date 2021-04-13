@@ -7,8 +7,8 @@ joints: [
 
 poses:
   pose_prepare: [
-    -25.0, 0, 0, 0,
-    -25.0, 0, 0, 0
+    -25.0, 10.0, 0, 0,
+    -25.0, 10.0, 0, 0
   ]
   
   pose_raise1: [
@@ -37,20 +37,20 @@ poses:
   ]
 
   pose_lower: [
-    -25.0, 0.0, 0.0, 0.0,
-    -25.0, 0.0, 0.0, 0.0
+    -25.0, 10.0, 0.0, 0.0,
+    -25.0, 10.0, 0.0, 0.0
   ]
 
 scenes:
   scene_raise:
-  - {pose: pose_raise1, duration: 3.0}
+  - {pose: pose_raise1, duration: 1.5}
 
   scene_wave_once:
-  - {pose: pose_wave_out, duration: 0.75}
-  - {pose: pose_wave_in, duration: 0.75}
+  - {pose: pose_wave_out, duration: 0.5}
+  - {pose: pose_wave_in, duration: 0.5}
 
   scene_lower:
-  - {pose: pose_lower, duration: 3.0}
+  - {pose: pose_lower, duration: 1.5}
 
 scripts:
   wave_three_times:
