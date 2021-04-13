@@ -79,7 +79,7 @@ lower_body:
   l_kne_p:
     id: 14
     inverse: true
-    offset: -4.71238898038469
+    offset: 1.570796326794897
   l_kne_y:
     id: 13
     inverse: true
@@ -96,7 +96,7 @@ lower_body:
   r_kne_p:
     id: 24
     inverse: true
-    offset: -4.71238898038469
+    offset: 1.570796326794897
   r_kne_y:
     id: 23
   r_ank_p:
