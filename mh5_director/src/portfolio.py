@@ -75,13 +75,20 @@ class Portfolio():
             content = yaml.load(f, Loader=yaml.FullLoader)
         return Portfolio(name=file_name, **content)
         
-    def __init__(self, name='dummy_portfolio', units='rad', joints=[], poses={}, scenes={}, scripts={}, **kwargs):
+    def __init__(self, name='dummy_portfolio', units='rad', variables={}, joints=[], poses={}, scenes={}, scripts={}, **kwargs):
         self.name = name
 
         # check units
         if units not in ['rad', 'deg']:
             raise ValueError(f'>>> Portfolio file {name} units should be "rad" or "deg" only')
         self.units = units
+
+        # check variables
+        if variables:
+            for var, value in variables.items():
+                if not isinstance(value, (int, float)):
+                    raise ValueError(f'>>> Portfolio file {name} variable {var} should be "int" or "float"')
+        self.variables = variables
 
         # check joints
         if not joints:
@@ -94,10 +101,13 @@ class Portfolio():
         for pose_name, pose_details in poses.items():
             if isinstance(pose_details, list):
                 # default joints to be used
-                if not len(pose_details) == len(joints):
+                if not len(pose_details) == len(self.joints):
                     raise ValueError(f'>>> Pose {pose_name} must specify positions for all joints')
                 for value in pose_details:
-                    if not isinstance(value, (int, float)):
+                    if isinstance(value, str):
+                        if value not in self.variables:
+                            raise ValueError(f'>>> Pose {pose_name} unknown variable "{value}"')
+                    elif not isinstance(value, (int, float)):
                         raise ValueError(f'>>> Pose {pose_name} contains value {value} that is not int or float')
             
             elif isinstance(pose_details, dict):
@@ -114,7 +124,10 @@ class Portfolio():
                 if not isinstance(pose_details['positions'], list):
                     raise ValueError(f'>>> Pose {pose_name} "positions" should be a list')
                 for value in pose_details['positions']:
-                    if not isinstance(value, (int, float)):
+                    if isinstance(value, str):
+                        if value not in self.variables:
+                            raise ValueError(f'>>> Pose {pose_name} unknown variable "{value}"')
+                    elif not isinstance(value, (int, float)):
                         raise ValueError(f'>>> Pose {pose_name} contains value {value} that is not int or float')
                 if not len(pose_details['joints']) == len(pose_details['positions']):
                     raise ValueError(f'>>> Pose {pose_name} list of "joints" has different length than "positions')
@@ -184,9 +197,9 @@ class Portfolio():
             pos[joint] = 0.0
 
         if self.units == 'deg':
-            fact = 57.295779513
+            factor = 57.295779513
         else:
-            fact = 1.0
+            factor = 1.0
 
         script_steps = self.scripts[script_name]
         for script_step in script_steps:
@@ -207,14 +220,20 @@ class Portfolio():
                     if isinstance(self.poses[pose_name], list):
                         # full list of joints
                         for index, joint in enumerate(self.joints):
-                            pos[joint] = self.poses[pose_name][index]
+                            position = self.poses[pose_name][index]
+                            if isinstance(position, str):
+                                position = self.variables[position]
+                            pos[joint] = position
                     else:
                         # subset of joints
                         for index, joint in enumerate(self.poses[pose_name]['joints']):
-                            pos[joint] = self.poses[pose_name]['positions'][index]
+                            position = self.poses[pose_name]['positions'][index]
+                            if isinstance(position, str):
+                                position = self.variables[position]
+                            pos[joint] = position
 
                     point = JointTrajectoryPoint()
-                    point.positions = [pos[joint] / fact for joint in self.joints]
+                    point.positions = [pos[joint] / factor for joint in self.joints]
                     point.time_from_start = rospy.Duration.from_sec(running_duration + duration)
                     goal.trajectory.points.append(point)
 
