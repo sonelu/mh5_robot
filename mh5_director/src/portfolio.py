@@ -92,13 +92,36 @@ class Portfolio():
         if not poses:
             raise ValueError(f'>>> Portfolio {name} does not contain any poses')
         for pose_name, pose_details in poses.items():
-            if not isinstance(pose_details, list):
-                raise ValueError(f'>>> Pose {pose_name} must specify a list of postions')
-            if not len(pose_details) == len(joints):
-                raise ValueError(f'>>> Pose {pose_name} must specify positions for all joints')
-            for value in pose_details:
-                if not isinstance(value, (int, float)):
-                    raise ValueError(f'>>> Pose {pose_name} contains value {value} that is not int or float')
+            if isinstance(pose_details, list):
+                # default joints to be used
+                if not len(pose_details) == len(joints):
+                    raise ValueError(f'>>> Pose {pose_name} must specify positions for all joints')
+                for value in pose_details:
+                    if not isinstance(value, (int, float)):
+                        raise ValueError(f'>>> Pose {pose_name} contains value {value} that is not int or float')
+            
+            elif isinstance(pose_details, dict):
+                # subset list of joints
+                if 'joints' not in pose_details:
+                    raise ValueError(f'>>> Pose {pose_name} if using subset of joins you need to use "joints" key')
+                if 'positions' not in pose_details:
+                    raise ValueError(f'>>> Pose {pose_name} if using subset of joins you need to use "positions" key')
+                if not isinstance(pose_details['joints'], list):
+                    raise ValueError(f'>>> Pose {pose_name} "joints" should be a list')
+                for joint in pose_details['joints']:
+                    if joint not in self.joints:
+                        raise ValueError(f'>>> Pose {pose_name} joint {joint} is not listed in the "joints" in the portfolio')
+                if not isinstance(pose_details['positions'], list):
+                    raise ValueError(f'>>> Pose {pose_name} "positions" should be a list')
+                for value in pose_details['positions']:
+                    if not isinstance(value, (int, float)):
+                        raise ValueError(f'>>> Pose {pose_name} contains value {value} that is not int or float')
+                if not len(pose_details['joints']) == len(pose_details['positions']):
+                    raise ValueError(f'>>> Pose {pose_name} list of "joints" has different length than "positions')
+
+            else:
+                raise ValueError(f'>>> Pose {pose_name} must specify a list of postions or a "joints" + "positions" set of lists')
+
         self.poses = poses
 
         # check scenes
@@ -151,11 +174,19 @@ class Portfolio():
             return None
 
         if speed <= 0.0:
-            speed = 1
+            speed = 1.0
         goal = FollowJointTrajectoryGoal()
         goal.trajectory.joint_names = self.joints
 
         running_duration = 0
+        pos = {}
+        for joint in self.joints:
+            pos[joint] = 0.0
+
+        if self.units == 'deg':
+            fact = 57.295779513
+        else:
+            fact = 1.0
 
         script_steps = self.scripts[script_name]
         for script_step in script_steps:
@@ -173,14 +204,17 @@ class Portfolio():
                     pose_name = scene_step['pose']
                     duration = scene_step['duration'] / speed
 
-
-                    if self.units == 'deg':
-                        positions = [pos / 57.295779513 for pos in self.poses[pose_name]]
+                    if isinstance(self.poses[pose_name], list):
+                        # full list of joints
+                        for index, joint in enumerate(self.joints):
+                            pos[joint] = self.poses[pose_name][index]
                     else:
-                        positions = self.poses[pose_name]
+                        # subset of joints
+                        for index, joint in enumerate(self.poses[pose_name]['joints']):
+                            pos[joint] = self.poses[pose_name]['positions'][index]
 
                     point = JointTrajectoryPoint()
-                    point.positions = positions
+                    point.positions = [pos[joint] / fact for joint in self.joints]
                     point.time_from_start = rospy.Duration.from_sec(running_duration + duration)
                     goal.trajectory.points.append(point)
 

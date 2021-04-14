@@ -82,9 +82,9 @@ class Director:
         The function will wait for the action server to become available.
         """
         self.action_client = actionlib.SimpleActionClient('dynamixel_control/follow_joint_trajectory', FollowJointTrajectoryAction)
-        rospy.loginfo(f'[mh5_director] wating for action server: dynamixel_control/follow_joint_trajectory')
+        rospy.loginfo('[mh5_director] wating for action server: dynamixel_control/follow_joint_trajectory')
         self.action_client.wait_for_server()
-        rospy.loginfo(f'[mh5_director]...action server available')
+        rospy.loginfo('[mh5_director]...action server available')
 
     def run_script_callback(self, msg):
         """Callback for ``director/run``
@@ -107,10 +107,10 @@ class Director:
         port_name, scr_name = combo_name.split('.')[:2]
 
         if port_name not in self.portfolios:
-            rospy.logerror(f'[mh5_director] portfolio {port_name} does not exist')
+            rospy.logerr(f'[mh5_director] portfolio {port_name} does not exist')
             return
         if scr_name not in self.portfolios[port_name].scripts:
-            rospy.logerror(f'[mh5_director] script {scr_name} does not exist in portfolio {port_name}')
+            rospy.logerr(f'[mh5_director] script {scr_name} does not exist in portfolio {port_name}')
             return
 
         rospy.loginfo(f'[mh5_director] running script: {scr_name} in porfolio {port_name}')

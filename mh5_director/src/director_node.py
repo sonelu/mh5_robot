@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 
+import os
 import rospy
 import rospkg
-import os
+
 
 
 from director import Director

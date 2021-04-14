@@ -37,11 +37,11 @@ poses:
 scenes:
 
   scene_stand:
-  - {pose: pose_prepare, duration: 3.0}
-  - {pose: pose_stand, duration: 2.0}
+  - {pose: pose_prepare, duration: 1.0}
+  - {pose: pose_stand, duration: 0.5}
 
   scene_sit:
-  - {pose: pose_sit, duration: 6.0}
+  - {pose: pose_sit, duration: 1.5}
 
 
 scripts:

@@ -1,0 +1,78 @@
+units: deg
+
+joints: [
+  # head_p, head_y,
+  # l_sho_p, l_sho_r, l_elb_y, l_elb_p,
+  # r_sho_p, r_sho_r, r_elb_y, r_elb_p,
+  l_hip_r, l_hip_p, l_kne_p, l_kne_y, l_ank_p, l_ank_r,
+  r_hip_r, r_hip_p, r_kne_p, r_kne_y, r_ank_p, r_ank_r,
+]
+
+poses:
+
+  start: [
+    0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+    0.0, 0.0, 0.0, 0.0, 0.0, 0.0
+  ]
+  swing_left: [
+    -15.0, 0.0, 0.0, 0.0, 0.0, 15.0,
+    15.0, 0.0, 0.0, 0.0, 0.0, -15.0
+  ]
+
+  swing_right: [
+    12.0, 0.0, 0.0, 0.0, 0.0, -12.0,
+    -12.0, 0.0, 0.0, 0.0, 0.0, 12.0
+  ]
+
+  left_lift : [
+    18.0, 60.0, 0.0, 0.0, -60.0, -12.0,
+    -12.0, 0.0, 0.0, 0.0, 0.0, 12.0
+  ]
+
+  right_forward: [
+    12.0, 15.0, 0.0, 0.0, -15.0, -12.0,
+    -12.0, -15.0, 0.0, 0.0, 15.0, 12.0
+  ]
+  ankle_right: [
+    12.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+    0.0, 0.0, 0.0, 0.0, 0.0, 0.0
+  ]
+
+scenes:
+
+  start: 
+  - {pose: start, duration: 0.5}
+
+  swing_once:
+  - {pose: swing_left, duration: 1.0}
+  - {pose: swing_right, duration: 1.0}
+
+  left_lift:
+  - {pose: swing_right, duration: 0.5}
+  - {pose: left_lift, duration: 0.5}
+  - {pose: right_forward, duration: 0.5}
+
+  ankle_right:
+  - {pose: ankle_right, duration: 0.5}
+
+scripts:
+
+  swing_1:
+  - {scene: start}
+  - {scene: swing_once, repeat: 1}
+  - {scene: start}
+
+  swing_3:
+  - {scene: start}
+  - {scene: swing_once, repeat: 3}
+  - {scene: start}
+
+  left_lift:
+  - {scene: start}
+  - {scene: left_lift}
+
+
+  ankle_right:
+  - {scene: start}
+  - {scene: ankle_right}
+  - {scene: start}
