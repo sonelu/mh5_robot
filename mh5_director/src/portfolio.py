@@ -5,6 +5,163 @@ import rospy
 from control_msgs.msg import FollowJointTrajectoryGoal
 from trajectory_msgs.msg import JointTrajectoryPoint
 
+
+class Defaults():
+
+    def __init__(self):
+        self.joints = []
+        self.duration = None
+
+    @classmethod
+    def from_xml(cls, xml_elem, portfolio):
+
+        defaults = Defaults()
+
+        if 'joints' in xml_elem.attrib:
+            if isinstance(xml_elem.attrib['joints'], str):
+                defaults.joints = xml_elem.attrib['joints'].split(' ')
+            else:
+                raise ValueError(f'>>> Portfolio {portfolio.name} "joints" should be a string of joint names')
+
+        if 'duration' in xml_elem.attrib:
+            try:
+                defaults.duration = float(xml_elem.attrib['duration'])
+            except:
+                raise ValueError(f'>>> Portfolio {portfolio.name} default duration should be "int" or "float"')
+
+        return defaults
+
+
+
+class Pose():
+
+    def __init__(self): 
+        self.name = ''
+        self.joints = []
+        self.positions = []
+
+    @classmethod
+    def from_xml(cls, xml_elem, portfolio):
+
+        pose = Pose()
+        
+        err = f'>>> Portfolio {portfolio.name} '
+        assert xml_elem.tag == 'pose', err + 'only <pose> tags should be used in <poses>'
+
+        assert 'name' in xml_elem.attrib, err + '"name" attribute expected in <pose> definition'
+        pose.name = xml_elem.attrib['name']
+
+        err = err + f'scene {pose.name} '
+        assert 'positions' in xml_elem.attrib, err + '"positions" attribute expected'
+        positions = xml_elem.attrib['positions']
+        assert isinstance(positions, str), err + '"positions" should be a string of positions'
+        positions = positions.split(' ')
+        try:
+            pose.positions = [float(pos) for pos in positions]
+        except:
+            raise ValueError(err + 'failed to convert positions to floats')
+
+        if 'joints' in xml_elem.attrib:
+            assert isinstance(xml_elem.attrib['joints'], str), err + '"joints" should be a string of joint names'
+            pose.joints = xml_elem.attrib['joints'].split(' ')
+        else:
+            pose.joints = portfolio.defaults.joints
+        assert len(pose.joints) == len(pose.positions), err + 'list of "joints" has different length than "positions"'
+
+        return pose
+
+
+class Scene():
+
+    def __init__(self):
+        self.name = ''
+        self.poses = []
+        self.durations = []
+
+
+    @classmethod
+    def from_xml(cls, xml_elem, portfolio):
+
+        scene = Scene()
+
+        err = f'>>> Portfolio {portfolio.name} '
+        assert xml_elem.tag == 'scene', err + 'only <scene> tags should be used in <scenes>'
+
+        assert 'name' in xml_elem.attrib, err + '"name" attribute expected in <scene> definition'
+        scene.name = xml_elem.attrib['name']
+
+        for pose in list(xml_elem):
+            
+            err = err + f'scene {scene.name} '
+            assert pose.tag == 'pose', err + 'only <pose> tags should be used in <scene>'
+            
+            assert 'name' in pose.attrib, err + '"name" for pose missing'
+            p_name = pose.attrib['name']
+            assert p_name in portfolio.poses, err + f'pose {p_name} unknown'
+            scene.poses.append(p_name)
+
+            if 'duration' in pose.attrib:
+                try:
+                    scene.durations.append(float(pose.attrib['duration']))
+                except:
+                    raise ValueError(err + 'failed to convert duration to float')
+            else:
+                if portfolio.defaults.duration:
+                    scene.durations.append(portfolio.defaults.duration)
+                else:
+                    raise ValueError(err + 'no duration specified')
+            
+        return scene
+
+
+class Script():
+
+    def __init__(self):
+        self.name = ''
+        self.scenes = []
+        self.inverse = []
+        self.repeat = []
+
+    @classmethod
+    def from_xml(cls, xml_elem, portfolio):
+
+        script = Script()
+
+        err = f'>>> Portfolio {portfolio.name} '
+        assert xml_elem.tag == 'script', err + 'only <script> tags should be used in <scripts>'
+
+        assert 'name' in xml_elem.attrib, err + '"name" attribute expected in <script> definition'
+        script.name = xml_elem.attrib['name']
+
+        for scene in list(xml_elem):
+            
+            err = err + f'script {script.name} '
+            assert scene.tag == 'scene', err + 'only <scene> tags should be used in <script>'
+            
+            assert 'name' in scene.attrib, err + '"name" for scene missing'
+            s_name = scene.attrib['name']
+            assert s_name in portfolio.scenes, err + f'scene {s_name} unknown'
+            script.scenes.append(s_name)
+
+            if 'inverse' in scene.attrib:
+                if scene.attrib['inverse'] in ['False', 'false']:
+                    script.inverse.append(False)
+                elif scene.attrib['inverse'] in ['True', 'true']:
+                    script.inverse.append(True)
+                else:
+                    raise ValueError(err + '"inverse" cannot be parse')
+            
+            if 'repeat' in scene.attrib:
+                try:
+                    script.repeat.append(int(scene.attrib['repeat']))
+                except:
+                    raise ValueError(err + '"repeat" should be an "int"')
+            else:
+                script.repeat.append(1)
+
+        return script
+
+
 class Portfolio():
     """A portfolio of scripts.
 
@@ -13,174 +170,67 @@ class Portfolio():
 
     A portfolio is composed of the following elements:
 
-    - ``joint_names``: a list of joints that the scenes in the portfolio can
-      access, in that specific order. To avoid having to list them again
-      and again for each pose it is expected that all joints have to be used
-      precisely in the order they are listed in the ``joint_names``.
-
-    .. code-block:: YAML
-
-        joint_names: [a, b, c, d]
-
-    - ``poses`` is a dictionary of poses, each with its own name, followed
-      by a list of joint positions - for all joints in the ``joint_names`` in
-      that order.
-
-    .. code-block:: YAML
-
-        poses:
-            pose1 : [1.0, 1.0, 0.0, 0.0]
-            pose2 : [2.0, 1.0, 1.0, 1.0]
-            ...
-
-    - ``scenes`` is a dictionary of scenes, each scene containing a list of
-      poses to be reached together with the duration needed to reach that pose.
-
-    .. code-block:: YAML
-
-        scenes:
-            sceneA:
-                - {pose: pose1, duration: 2.0}
-            sceneB:
-                - {pose: pose2, duration: 1.0}
-                - {pose: pose1, duration: 1.0}
-
-    - ``scripts`` is a distionary of scripts, each containing a list of scenes
-      and allowing to specify a number of repeats and if the exeecution should be
-      in reverse.
-
-    .. code-block:: YAML
-
-        scripts:
-            scriptX:
-                - {scene: A, inverse: false}
-                - {scene: B, inverse: false, repeat: 5}
-                - {scene: A, inverse: true}
+    
 
     """
+        
+    def __init__(self):
+        self.name = 'dummy'
+        self.units = 'rad'
+        self.defaults = None
+        self.poses = {}
+        self.scenes = {}
+        self.scripts = {}
+
 
     @classmethod
-    def from_file(cls, path, file_name):
-        """Constructs a ``Portfolio`` object by reading a YAML defintion
-        file and parsing it.
+    def from_xml(cls, xml_elem):
+        """Constructs a ``Portfolio`` object by reading an XML defintion
+        and parsing it.
 
         Raises
         ------
         ValueError:
-            if it cannot find the requested file or the data is
-            incorrect. Addtional details are provided in the exception
-            text.
+            if the data is incorrect. Additional details are provided in 
+            the exception text.
+        :param xml_elem: XML element with the structure of the portfolio
+        :type xml_elem: xml Element
         """
-        with open(join(path, file_name), 'r') as f:
-            content = yaml.load(f, Loader=yaml.FullLoader)
-        return Portfolio(name=file_name, **content)
+        portfolio = Portfolio()
         
-    def __init__(self, name='dummy_portfolio', units='rad', variables={}, joints=[], poses={}, scenes={}, scripts={}, **kwargs):
-        self.name = name
-
+        assert 'name' in xml_elem.attrib, '>>> Missing "name" attribute in portfolio defintion'
+        portfolio.name = xml_elem.attrib['name']
+        
+        portfolio.units = xml_elem.attrib.get('units', 'rad')
         # check units
-        if units not in ['rad', 'deg']:
-            raise ValueError(f'>>> Portfolio file {name} units should be "rad" or "deg" only')
-        self.units = units
+        assert portfolio.units in ['rad', 'deg'], f'>>> Portfolio file {portfolio.name} units should be "rad" or "deg" only'
 
-        # check variables
-        if variables:
-            for var, value in variables.items():
-                if not isinstance(value, (int, float)):
-                    raise ValueError(f'>>> Portfolio file {name} variable {var} should be "int" or "float"')
-        self.variables = variables
+        for child in xml_elem:
 
-        # check joints
-        if not joints:
-            raise ValueError(f'>>> Portfolio file {name} does not contain any joints')
-        self.joints = joints
+            if child.tag == 'defaults':
+                portfolio.defaults = Defaults.from_xml(child, portfolio)
 
-        # check poses
-        if not poses:
-            raise ValueError(f'>>> Portfolio {name} does not contain any poses')
-        for pose_name, pose_details in poses.items():
-            if isinstance(pose_details, list):
-                # default joints to be used
-                if not len(pose_details) == len(self.joints):
-                    raise ValueError(f'>>> Pose {pose_name} must specify positions for all joints')
-                for value in pose_details:
-                    if isinstance(value, str):
-                        if value not in self.variables:
-                            raise ValueError(f'>>> Pose {pose_name} unknown variable "{value}"')
-                    elif not isinstance(value, (int, float)):
-                        raise ValueError(f'>>> Pose {pose_name} contains value {value} that is not int or float')
-            
-            elif isinstance(pose_details, dict):
-                # subset list of joints
-                if 'joints' not in pose_details:
-                    raise ValueError(f'>>> Pose {pose_name} if using subset of joins you need to use "joints" key')
-                if 'positions' not in pose_details:
-                    raise ValueError(f'>>> Pose {pose_name} if using subset of joins you need to use "positions" key')
-                if not isinstance(pose_details['joints'], list):
-                    raise ValueError(f'>>> Pose {pose_name} "joints" should be a list')
-                for joint in pose_details['joints']:
-                    if joint not in self.joints:
-                        raise ValueError(f'>>> Pose {pose_name} joint {joint} is not listed in the "joints" in the portfolio')
-                if not isinstance(pose_details['positions'], list):
-                    raise ValueError(f'>>> Pose {pose_name} "positions" should be a list')
-                for value in pose_details['positions']:
-                    if isinstance(value, str):
-                        if value not in self.variables:
-                            raise ValueError(f'>>> Pose {pose_name} unknown variable "{value}"')
-                    elif not isinstance(value, (int, float)):
-                        raise ValueError(f'>>> Pose {pose_name} contains value {value} that is not int or float')
-                if not len(pose_details['joints']) == len(pose_details['positions']):
-                    raise ValueError(f'>>> Pose {pose_name} list of "joints" has different length than "positions')
+            if child.tag == 'poses':
+                for pose_xml in child:
+                    pose = Pose.from_xml(pose_xml, portfolio)
+                    portfolio.poses[pose.name] = pose
 
-            else:
-                raise ValueError(f'>>> Pose {pose_name} must specify a list of postions or a "joints" + "positions" set of lists')
+            if child.tag == 'scenes':
+                for scene_xml in child:
+                    scene = Scene.from_xml(scene_xml, portfolio)
+                    portfolio.scenes[scene.name] = scene
 
-        self.poses = poses
+            if child.tag == 'scripts':
+                for script_xml in child:
+                    script = Script.from_xml(script_xml, portfolio)
+                    portfolio.scripts[script.name] = script
 
-        # check scenes
-        if not scenes:
-            raise ValueError(f'>>> Portfolio {name} does not contain any scenes')
-        for scene_name, scene_details in scenes.items():
-            if not isinstance(scene_details, list):
-                raise ValueError(f'>>> Scene {scene_name} must specify a list of poses')
-            for index, pose in enumerate(scene_details):
-                if not isinstance(pose, dict):
-                    raise ValueError(f'>>> Scene {scene_name} item {index+1} must be a dictionary pose:<pose name>, duration: <duration>')
-                if 'pose' not in pose:
-                    raise ValueError(f'>>> Scene {scene_name} item {index+1} must be a dictionary pose:<pose name>, duration: <duration>')
-                if pose['pose'] not in self.poses:
-                    raise ValueError(f'>>> Scene {scene_name} item {index+1} pose {pose["pose"]} does not exist')
-                if 'duration' not in pose:
-                    raise ValueError(f'>>> Scene {scene_name} item {index+1} must be a dictionary pose:<pose name>, duration: <duration>')
-                if not isinstance(pose['duration'],(int, float)):
-                    raise ValueError(f'>>> Scene {scene_name} item {index+1} duration {pose["duration"]} should be an int or float')
-        self.scenes = scenes
+        return portfolio
 
-        # check scripts
-        if not scripts:
-            raise ValueError(f'>>> Portfolio file {name} does not contain any scripts')
-        for script_name, script_details in scripts.items():
-            if not isinstance(script_details, list):
-                raise ValueError(f'>>> Script {script_name} must specify a list of scenes')
-            for index, scene in enumerate(script_details):
-                if not isinstance(scene, dict):
-                    raise ValueError(f'>>> Script {script_name} item {index+1} must be a dictionary scene:<scene name>, inverse: <True/False>, repeat: <repeats>')
-                if 'scene' not in scene:
-                    raise ValueError(f'>>> Script {script_name} item {index+1} must be a dictionary scene:<scene name>, inverse: <True/False>, repeat: <repeats>')
-                if scene['scene'] not in self.scenes:
-                    raise ValueError(f'>>> Script {script_name} item {index+1} scene {scene["scene"]} does not exist')
-                if 'inverse' not in scene:
-                    scene['inverse'] = False
-                elif not isinstance(scene['inverse'], bool):
-                    raise ValueError(f'>>> Script {script_name} item {index+1} inverse {scene["inverse"]} should be an bool')
-                if 'repeat' not in scene:
-                    scene['repeat'] = 1
-                elif not isinstance(scene['repeat'], int):
-                    raise ValueError(f'>>> Script {script_name} item {index+1} inverse {scene["repeat"]} should be an int')
-        self.scripts = scripts
 
     def get_script_names(self):
         return list(self.scripts.keys())
+
 
     def to_joint_trajectory_goal(self, script_name, speed):
         if not script_name in self.scripts:

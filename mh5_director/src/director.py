@@ -9,6 +9,8 @@ import rospkg
 import rospy
 import actionlib
 
+import xml.etree.ElementTree as ET
+
 from control_msgs.msg import FollowJointTrajectoryAction
 from mh5_director.msg import RunScript
 
@@ -36,8 +38,9 @@ class Director:
         :type portfolio_path: string, optional
         """
         if not portfolio_path:
-            portfolio_path = join(rospkg.RosPack().get_path('mh5_director'), 'portfolio')
-        self.portfolio_path = portfolio_path
+            self.portfolio_path = '/portfolio'
+        else:
+            self.portfolio_path = portfolio_path
         self.portfolios =  {}
         # self.joint_controllers = {}
         # self.clients = {}
@@ -46,24 +49,28 @@ class Director:
 
 
     def load_scripts(self):
-        """Loads YAML files from the ``portfolio_path`` and stores them
+        """Loads XML definitions from the param server and stores them
         in the ``portfolios`` attribute.
-        
-        Searches for YAML files in the provided directory to extract script
-        defintions.
 
         """
-        files = [f for f in listdir(self.portfolio_path) 
-                    if isfile(join(self.portfolio_path, f)) and
-                       ('.yml' in f or '.yaml' in f)]
-        for file in files:
-            rospy.loginfo(f"[mh5_director] loading portfolio {file}")
-            portfolio = Portfolio.from_file(self.portfolio_path, file)
+
+        root = ET.fromstring(rospy.get_param(self.portfolio_path))
+
+        for p in root:
+            if p.tag != 'portfolio':
+                raise ValueError(f'>>> unexpected {p.tag} tag; only <portfolio> tag should be used')
+
+            if 'name' not in p.attrib:
+                raise ValueError('[mh5_director] missing name attribute in portfolio definition')
+
+            name = p.attrib['name']
+            rospy.loginfo(f'[mh5_director] loading portfolio {name}')
+            portfolio = Portfolio.from_xml(p)
+
             if (portfolio):
-                name = file.split('.')[0]
-                self.portfolios[name] = portfolio
+                self.portfolios[portfolio.name] = portfolio
                 for script in portfolio.scripts:
-                    rospy.loginfo(f"[mh5_director] ... script {script} avaialable in portfolio {name}")
+                    rospy.loginfo(f"[mh5_director] ... script {script} available in portfolio {portfolio.name}")
 
     def setup_services(self):
         """Starts the subscriptions.
@@ -113,7 +120,7 @@ class Director:
             rospy.logerr(f'[mh5_director] script {scr_name} does not exist in portfolio {port_name}')
             return
 
-        rospy.loginfo(f'[mh5_director] running script: {scr_name} in porfolio {port_name}')
+        rospy.loginfo(f'[mh5_director] running script: {scr_name} in portfolio {port_name}')
 
         goal = self.portfolios[port_name].to_joint_trajectory_goal(scr_name, msg.playback_speed)
 

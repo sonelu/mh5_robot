@@ -1,5 +1,6 @@
 *.pyc
 *.swp
+*.xlsx
 
 src/action_client_test.py
 
@@ -9,3 +10,4 @@ src/action_client_test.py
 
 documentation/_build
 documentation/_xml
+

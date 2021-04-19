@@ -11,16 +11,9 @@ from director import Director
 
 if __name__ == '__main__':
 
-    rospy.init_node('mh5_director', log_level=rospy.INFO)
+    rospy.init_node('mh5_director')
 
-    # portfolio directory
-    if rospy.has_param('~portfolio_directory'):
-        portfolio_path = rospy.get_param('~portfolio_directory')
-    else:
-        portfolio_path = os.path.join(rospkg.RosPack().get_path('mh5_director'), 'portfolio')
-    rospy.loginfo(f'[mh5_director] using path: {portfolio_path}')
-
-    director = Director(portfolio_path)
+    director = Director()
 
     director.load_scripts()
     director.setup_services()
