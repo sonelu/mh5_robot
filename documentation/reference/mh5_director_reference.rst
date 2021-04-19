@@ -16,3 +16,27 @@ class Portfolio
     :members:
     :private-members:
     :undoc-members:
+
+class Script
+------------
+
+.. autoclass:: portfolio.Script
+    :members:
+    :private-members:
+    :undoc-members:
+
+class Scene
+-----------
+
+.. autoclass:: portfolio.Scene
+    :members:
+    :private-members:
+    :undoc-members:
+
+class Pose
+----------
+
+.. autoclass:: portfolio.Pose
+    :members:
+    :private-members:
+    :undoc-members:
