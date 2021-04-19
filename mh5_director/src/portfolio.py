@@ -10,20 +10,17 @@ from trajectory_msgs.msg import JointTrajectoryPoint
 class Pose():
 
     def __init__(self):
-        #: Pose name
-        #: :type str
+        #: str: Pose name
         self.name = ''
 
-        #: Joints used by the Pose. If the source XACRO did not use 
-        #: ``joints=`` the Pose will inherit by default all the joints
+        #: list of str: Joints used by the `Pose`. If the source XACRO did not 
+        #: use ``joints=`` the `Pose` will inherit by default all the joints
         #: defined in the portfolio
-        #: :type list(str)
         self.joints = []
 
-        #: Positions for each of the joints associated with this Pose.
-        #: Each position matches the order of joints and is expressed
+        #: list of float: Positions for each of the joints associated with
+        #: this `Pose`. Each position matches the order of joints and is expressed
         #: in the unit of measures defined by the portfolio.
-        #: :type list(float)
         self.positions = []
 
     @classmethod
