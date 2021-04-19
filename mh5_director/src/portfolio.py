@@ -9,17 +9,17 @@ from trajectory_msgs.msg import JointTrajectoryPoint
 
 class Pose():
 
-    def __init__(self): 
-        self.name = ''
+    def __init__(self):
         #: Pose name
-        self.joints = []
+        self.name = ''
         #: Joints used by the Pose. If the source XACRO did not use 
         #: ``joints=`` the Pose will inherit by default all the joints
         #: defined in the portfolio
-        self.positions = []
+        self.joints = []
         #: Positions for each of the joints associated with this Pose.
         #: Each position matches the order of joints and is expressed
         #: in the unit of measures defined by the portfolio.
+        self.positions = []
 
     @classmethod
     def from_xml(cls, xml_elem, portfolio):
