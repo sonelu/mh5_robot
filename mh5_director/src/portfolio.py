@@ -11,8 +11,15 @@ class Pose():
 
     def __init__(self): 
         self.name = ''
+        #: Pose name
         self.joints = []
+        #: Joints used by the Pose. If the source XACRO did not use 
+        #: ``joints=`` the Pose will inherit by default all the joints
+        #: defined in the portfolio
         self.positions = []
+        #: Positions for each of the joints associated with this Pose.
+        #: Each position matches the order of joints and is expressed
+        #: in the unit of measures defined by the portfolio.
 
     @classmethod
     def from_xml(cls, xml_elem, portfolio):
