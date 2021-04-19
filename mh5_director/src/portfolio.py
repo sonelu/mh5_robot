@@ -6,14 +6,16 @@ from control_msgs.msg import FollowJointTrajectoryGoal
 from trajectory_msgs.msg import JointTrajectoryPoint
 
 
-
 class Pose():
+    """A `Pose` groups together the joints and the positions needed to
+    produce a specific robot pose.
+    """
 
     def __init__(self):
         #: str: Pose name
         self.name = ''
 
-        #: list of str: Joints used by the `Pose`. If the source XACRO did not 
+        #: list of str: Joints used by the `Pose`. If the source XACRO did not
         #: use ``joints=`` the `Pose` will inherit by default all the joints
         #: defined in the portfolio
         self.joints = []
@@ -25,7 +27,29 @@ class Pose():
 
     @classmethod
     def from_xml(cls, xml_elem, portfolio):
+        """Initializes the `Pose` from an XML element tree structure.
 
+        Parameters
+        ----------
+        xml_elem : xml.etree.ElementTree.ElementTree
+            The XML element tree that contains the structure of the `Pose`
+        portfolio : :obj:`Portfolio`
+            The top `Portfolio` object that ownes this `Pose`
+
+        Returns
+        -------
+        :obj:`Pose`
+            The initiazed `Pose` object.
+
+        Raises
+        ------
+        ValueError
+            If values included in the XML are incorrect. More details are
+            provided in the exception text.
+        AssertError
+            If certain attributes are not included in the XML. More details
+            are provided in the exception text.
+        """
         pose = Pose()
         
         err = f'>>> Portfolio {portfolio.name} '
@@ -42,7 +66,7 @@ class Pose():
         try:
             pose.positions = [float(pos) for pos in positions]
         except:
-            raise ValueError(err + 'failed to convert positions to floats')
+            raise ValueError(err + 'failed to convert positions to floats') from None
 
         if 'joints' in xml_elem.attrib:
             assert isinstance(xml_elem.attrib['joints'], str), err + '"joints" should be a string of joint names'
@@ -87,7 +111,7 @@ class Scene():
                 try:
                     scene.durations.append(float(pose.attrib['duration']))
                 except:
-                    raise ValueError(err + 'failed to convert duration to float')
+                    raise ValueError(err + 'failed to convert duration to float') from None
             else:
                 if portfolio.duration:
                     scene.durations.append(portfolio.duration)
@@ -140,7 +164,7 @@ class Script():
                 try:
                     script.repeat.append(int(scene.attrib['repeat']))
                 except:
-                    raise ValueError(err + '"repeat" should be an "int"')
+                    raise ValueError(err + '"repeat" should be an "int"') from None
             else:
                 script.repeat.append(1)
 
@@ -235,7 +259,7 @@ class Portfolio():
             try:
                 portfolio.duration = float(xml_elem.attrib['duration'])
             except:
-                raise ValueError(f'>>> Portfolio {portfolio.name} default duration should be "int" or "float"')
+                raise ValueError(f'>>> Portfolio {portfolio.name} default duration should be "int" or "float"') from None
 
         for child in xml_elem:
 
