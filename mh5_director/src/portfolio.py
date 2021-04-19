@@ -29,7 +29,7 @@ class Pose():
         assert 'positions' in xml_elem.attrib, err + '"positions" attribute expected'
         positions = xml_elem.attrib['positions']
         assert isinstance(positions, str), err + '"positions" should be a string of positions'
-        positions = positions.split(' ')
+        positions = positions.split()
         try:
             pose.positions = [float(pos) for pos in positions]
         except:
@@ -37,7 +37,7 @@ class Pose():
 
         if 'joints' in xml_elem.attrib:
             assert isinstance(xml_elem.attrib['joints'], str), err + '"joints" should be a string of joint names'
-            pose.joints = xml_elem.attrib['joints'].split(' ')
+            pose.joints = xml_elem.attrib['joints'].split()
         else:
             pose.joints = portfolio.joints
         assert len(pose.joints) == len(pose.positions), err + 'list of "joints" has different length than "positions"'
@@ -124,6 +124,8 @@ class Script():
                     script.inverse.append(True)
                 else:
                     raise ValueError(err + '"inverse" cannot be parse')
+            else:
+                script.inverse.append(False)
             
             if 'repeat' in scene.attrib:
                 try:
@@ -182,7 +184,7 @@ class Portfolio():
 
         if 'joints' in xml_elem.attrib:
             if isinstance(xml_elem.attrib['joints'], str):
-                portfolio.joints = xml_elem.attrib['joints'].split(' ')
+                portfolio.joints = xml_elem.attrib['joints'].split()
             else:
                 raise ValueError(f'>>> Portfolio {portfolio.name} "joints" should be a string of joint names')
 
@@ -222,7 +224,6 @@ class Portfolio():
 
         running_duration = 0
         pos = {}
-
 
         if speed <= 0.0:
             speed = 1.0
