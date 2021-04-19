@@ -11,14 +11,19 @@ class Pose():
 
     def __init__(self):
         #: Pose name
+        #: :type str
         self.name = ''
+
         #: Joints used by the Pose. If the source XACRO did not use 
         #: ``joints=`` the Pose will inherit by default all the joints
         #: defined in the portfolio
+        #: :type list(str)
         self.joints = []
+
         #: Positions for each of the joints associated with this Pose.
         #: Each position matches the order of joints and is expressed
         #: in the unit of measures defined by the portfolio.
+        #: :type list(float)
         self.positions = []
 
     @classmethod
@@ -148,7 +153,7 @@ class Script():
 class Portfolio():
     """A portfolio of scripts.
 
-    A Portfolio is a collection of scripts that can share between them
+    A Portfolio is a collection of scripts that can share certain
     elements like scenes and poses.
 
     A portfolio is composed of the following elements:
@@ -158,12 +163,40 @@ class Portfolio():
     """
         
     def __init__(self):
+        #: the name of the Portfolio
         self.name = 'dummy'
+
+        #: Unit of measurements for positions angles. Only ``rad`` and ``deg``
+        #: allowed and by default it will be ``rad`` if no attribute is
+        #: specified in the souce XACRO.
+        #: :type str
         self.units = 'rad'
+
+        #: The default list of joints to be used across the scripts in this
+        #: portfolio. The order of joints is important as all the ``positions``
+        #: sppecifications will assume the same order. A portfolio can use
+        #: a subset of all the joints of the robot and only the joints
+        #: specified here will be passed when constructing the communcation
+        #: messages with the robots' controllers.
+        #: :type list(str)
         self.joints = []
+
+        #: The default duration (in seconds) for poses in scenes. If scenes
+        #: do not specify a ``duration=`` attribute, they will inherit
+        #: automatically this duration from the portfolio.
+        #: :type float
         self.duration = None
+
+        #: A dictionary of Pose() defined in this portfolio.
+        #: type dict{name: Pose}
         self.poses = {}
+
+        #: A dictionary of Scene() defined in this portfolio.
+        #: type dict{name: Scene}
         self.scenes = {}
+
+        #: A dictionary of Script() defined in this portfolio.
+        #: type dict{name: Script}
         self.scripts = {}
 
 
@@ -172,13 +205,19 @@ class Portfolio():
         """Constructs a ``Portfolio`` object by reading an XML defintion
         and parsing it.
 
+        Parameters
+        ----------
+        xml_elem : xml.etree.ElementTree.ElementTree
+            The XML element with the structure of the portfolio.
+
         Raises
         ------
         ValueError:
-            if the data is incorrect. Additional details are provided in 
+            If the data is incorrect. Additional details are provided in 
             the exception text.
-        :param xml_elem: XML element with the structure of the portfolio
-        :type xml_elem: xml Element
+        AssertionError:
+            If attributes are missing or missmatched with the expected ones. 
+
         """
         portfolio = Portfolio()
         
