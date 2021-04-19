@@ -6,32 +6,6 @@ from control_msgs.msg import FollowJointTrajectoryGoal
 from trajectory_msgs.msg import JointTrajectoryPoint
 
 
-class Defaults():
-
-    def __init__(self):
-        self.joints = []
-        self.duration = None
-
-    @classmethod
-    def from_xml(cls, xml_elem, portfolio):
-
-        defaults = Defaults()
-
-        if 'joints' in xml_elem.attrib:
-            if isinstance(xml_elem.attrib['joints'], str):
-                defaults.joints = xml_elem.attrib['joints'].split(' ')
-            else:
-                raise ValueError(f'>>> Portfolio {portfolio.name} "joints" should be a string of joint names')
-
-        if 'duration' in xml_elem.attrib:
-            try:
-                defaults.duration = float(xml_elem.attrib['duration'])
-            except:
-                raise ValueError(f'>>> Portfolio {portfolio.name} default duration should be "int" or "float"')
-
-        return defaults
-
-
 
 class Pose():
 
@@ -65,7 +39,7 @@ class Pose():
             assert isinstance(xml_elem.attrib['joints'], str), err + '"joints" should be a string of joint names'
             pose.joints = xml_elem.attrib['joints'].split(' ')
         else:
-            pose.joints = portfolio.defaults.joints
+            pose.joints = portfolio.joints
         assert len(pose.joints) == len(pose.positions), err + 'list of "joints" has different length than "positions"'
 
         return pose
@@ -106,8 +80,8 @@ class Scene():
                 except:
                     raise ValueError(err + 'failed to convert duration to float')
             else:
-                if portfolio.defaults.duration:
-                    scene.durations.append(portfolio.defaults.duration)
+                if portfolio.duration:
+                    scene.durations.append(portfolio.duration)
                 else:
                     raise ValueError(err + 'no duration specified')
             
@@ -177,7 +151,8 @@ class Portfolio():
     def __init__(self):
         self.name = 'dummy'
         self.units = 'rad'
-        self.defaults = None
+        self.joints = []
+        self.duration = None
         self.poses = {}
         self.scenes = {}
         self.scripts = {}
@@ -205,10 +180,19 @@ class Portfolio():
         # check units
         assert portfolio.units in ['rad', 'deg'], f'>>> Portfolio file {portfolio.name} units should be "rad" or "deg" only'
 
-        for child in xml_elem:
+        if 'joints' in xml_elem.attrib:
+            if isinstance(xml_elem.attrib['joints'], str):
+                portfolio.joints = xml_elem.attrib['joints'].split(' ')
+            else:
+                raise ValueError(f'>>> Portfolio {portfolio.name} "joints" should be a string of joint names')
 
-            if child.tag == 'defaults':
-                portfolio.defaults = Defaults.from_xml(child, portfolio)
+        if 'duration' in xml_elem.attrib:
+            try:
+                portfolio.duration = float(xml_elem.attrib['duration'])
+            except:
+                raise ValueError(f'>>> Portfolio {portfolio.name} default duration should be "int" or "float"')
+
+        for child in xml_elem:
 
             if child.tag == 'poses':
                 for pose_xml in child:
@@ -236,13 +220,15 @@ class Portfolio():
         if not script_name in self.scripts:
             return None
 
+        running_duration = 0
+        pos = {}
+
+
         if speed <= 0.0:
             speed = 1.0
         goal = FollowJointTrajectoryGoal()
         goal.trajectory.joint_names = self.joints
 
-        running_duration = 0
-        pos = {}
         for joint in self.joints:
             pos[joint] = 0.0
 
@@ -251,36 +237,20 @@ class Portfolio():
         else:
             factor = 1.0
 
-        script_steps = self.scripts[script_name]
-        for script_step in script_steps:
+        script = self.scripts[script_name]
+        for scene_name, inverse, repeat in zip(script.scenes, script.inverse, script.repeat):
             # TODO handle inverse
-            scene_name = script_step['scene']
-            inverse = script_step['inverse']
-            repeat = script_step['repeat']
 
             for _ in range(repeat):
                 
-                scene_steps = self.scenes[scene_name]
+                scene = self.scenes[scene_name]
+                for pose_name, duration in zip(scene.poses, scene.durations):
 
-                for scene_step in scene_steps:
+                    duration = duration / speed
 
-                    pose_name = scene_step['pose']
-                    duration = scene_step['duration'] / speed
-
-                    if isinstance(self.poses[pose_name], list):
-                        # full list of joints
-                        for index, joint in enumerate(self.joints):
-                            position = self.poses[pose_name][index]
-                            if isinstance(position, str):
-                                position = self.variables[position]
-                            pos[joint] = position
-                    else:
-                        # subset of joints
-                        for index, joint in enumerate(self.poses[pose_name]['joints']):
-                            position = self.poses[pose_name]['positions'][index]
-                            if isinstance(position, str):
-                                position = self.variables[position]
-                            pos[joint] = position
+                    pose = self.poses[pose_name]
+                    for joint, position in zip(pose.joints, pose.positions):
+                        pos[joint] = position
 
                     point = JointTrajectoryPoint()
                     point.positions = [pos[joint] / factor for joint in self.joints]

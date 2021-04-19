@@ -1,9 +1,7 @@
 <?xml version="1.0" ?>
 <portfolios xmlns:xacro="http://ros.org/wiki/xacro">
 
-<portfolio name="head" units="deg">
-
-    <defaults joints="head_p head_y" duration="0.5" />
+<portfolio name="head" units="deg" joints="head_p head_y" duration="0.5">
 
     <xacro:property name="lr_swing" value="30"/>
     <xacro:property name="up_swing" value="15"/>
@@ -19,7 +17,7 @@
     <scenes>
 
         <scene name="head_front">
-            <pose name="head_front" />
+            <pose name="head_front" duration="0.25" />
         </scene>
 
         <scene name="no">
