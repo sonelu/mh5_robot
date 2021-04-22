@@ -8,5 +8,12 @@
     </description>
   </class>
 
+  <class name="mh5_hardware/MH5I2CInterface"
+         type="mh5_hardware::MH5I2CInterface"
+         base_class_type="hardware_interface::RobotHW">
+    <description>
+      I2C interface for MH5
+    </description>
+  </class>
 </library>
 
