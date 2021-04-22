@@ -27,6 +27,10 @@ Distributed as-is; no warranty is given.
 #ifndef __LSM6DS3IMU_H__
 #define __LSM6DS3IMU_H__
 
+#include <stdint.h>
+#include <cstddef>
+#include <sys/ioctl.h>
+
 // #include "Arduino.h"
 // #include "Wire.h"
 // #include "SPI.h"
@@ -54,11 +58,10 @@ typedef enum
 class LSM6DS3Core
 {
 public:
-	LSM6DS3Core( uint8_t );
-	LSM6DS3Core( uint8_t, uint8_t );
+	LSM6DS3Core(int port, uint8_t address);
 	~LSM6DS3Core() = default;
 	
-	status_t beginCore( void );
+	status_t initialize(void);
 	
 	//The following utilities read and write to the IMU
 
@@ -85,10 +88,11 @@ public:
 private:
 	
 	//Communication stuff
-	uint8_t commInterface;
-	uint8_t I2CAddress;
-	uint8_t chipSelectPin;
-
+	// uint8_t commInterface;
+	// uint8_t I2CAddress;
+	// uint8_t chipSelectPin;
+    int        port_;
+    uint8_t    address_;
 };
 
 //This struct holds the settings the driver uses to do calculations
@@ -145,11 +149,11 @@ public:
 
 	//Constructor generates default SensorSettings.
 	//(over-ride after construction if desired)
-	LSM6DS3( uint8_t busType = I2C_MODE, uint8_t inputArg = 0x6B );
+	LSM6DS3( int port, uint8_t address);
 	~LSM6DS3() = default;
 	
 	//Call to apply SensorSettings
-	status_t begin(SensorSettings* pSettingsYouWanted = NULL);
+	status_t initialize(SensorSettings* pSettingsYouWanted = NULL);
 
 	//Returns the raw bits from the sensor cast as 16-bit signed integers
 	int16_t readRawAccelX( void );

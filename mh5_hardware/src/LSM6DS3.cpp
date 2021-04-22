@@ -26,8 +26,11 @@ Distributed as-is; no warranty is given.
 ******************************************************************************/
 
 //See SparkFunLSM6DS3.h for additional topology notes.
+  #include <linux/i2c-dev.h>
+  #include <i2c/smbus.h>
 
-#include "LSM6DS3.hpp"
+
+#include "mh5_hardware/LSM6DS3.hpp"
 
 //****************************************************************************//
 //
@@ -45,83 +48,22 @@ Distributed as-is; no warranty is given.
 //  Default construction is I2C mode, address 0x6B.
 //
 //****************************************************************************//
-LSM6DS3Core::LSM6DS3Core( uint8_t busType, uint8_t inputArg) : commInterface(I2C_MODE), I2CAddress(0x6B), chipSelectPin(10)
+LSM6DS3Core::LSM6DS3Core(int port, uint8_t address)
+: port_(port), address_(address)
+{}
+
+status_t LSM6DS3Core::initialize(void)
 {
-	commInterface = busType;
-	if( commInterface == I2C_MODE )
-	{
-		I2CAddress = inputArg;
-	}
-	if( commInterface == SPI_MODE )
-	{
-		chipSelectPin = inputArg;
-	}
-
-}
-
-status_t LSM6DS3Core::beginCore(void)
-{
-	status_t returnError = IMU_SUCCESS;
-
-	switch (commInterface) {
-
-	case I2C_MODE:
-		Wire.begin();
-		break;
-
-	case SPI_MODE:
-		// start the SPI library:
-		SPI.begin();
-		// Maximum SPI frequency is 10MHz, could divide by 2 here:
-		SPI.setClockDivider(SPI_CLOCK_DIV4);
-		// Data is read and written MSb first.
-#ifdef ESP32
-		SPI.setBitOrder(SPI_MSBFIRST);
-#elif ESP8266
-		SPI.setBitOrder(SPI_MSBFIRST);
-#else
-		SPI.setBitOrder(MSBFIRST);
-#endif
-		// Data is captured on rising edge of clock (CPHA = 0)
-		// Base value of the clock is HIGH (CPOL = 1)
-
-		// MODE3 for 328p operation
-#ifdef __AVR__
-		SPI.setDataMode(SPI_MODE3);
-#else
-#endif
-
-		// MODE0 for Teensy 3.1 operation
-#ifdef __MK20DX256__
-		SPI.setDataMode(SPI_MODE0);
-#else
-#endif
-		
-		// initalize the  data ready and chip select pins:
-		pinMode(chipSelectPin, OUTPUT);
-		digitalWrite(chipSelectPin, HIGH);
-		break;
-	default:
-		break;
-	}
-
-	//Spin for a few ms
-	volatile uint8_t temp = 0;
-	for( uint16_t i = 0; i < 10000; i++ )
-	{
-		temp++;
-	}
+	if (ioctl(port_, I2C_SLAVE, address_) < 0)
+        return IMU_HW_ERROR;
 
 	//Check the ID register to determine if the operation was a success.
 	uint8_t readCheck;
 	readRegister(&readCheck, LSM6DS3_ACC_GYRO_WHO_AM_I_REG);
 	if( readCheck != 0x69 )
-	{
-		returnError = IMU_HW_ERROR;
-	}
+        return IMU_HW_ERROR;
 
-	return returnError;
-
+	return IMU_SUCCESS;
 }
 
 //****************************************************************************//
@@ -148,58 +90,30 @@ status_t LSM6DS3Core::readRegisterRegion(uint8_t *outputPointer , uint8_t offset
 	uint8_t c = 0;
 	uint8_t tempFFCounter = 0;
 
-	switch (commInterface) {
+	// switch (commInterface) {
 
-	case I2C_MODE:
-		Wire.beginTransmission(I2CAddress);
-		Wire.write(offset);
-		if( Wire.endTransmission() != 0 )
-		{
-			returnError = IMU_HW_ERROR;
-		}
-		else  //OK, all worked, keep going
-		{
-			// request 6 bytes from slave device
-			Wire.requestFrom(I2CAddress, length);
-			while ( (Wire.available()) && (i < length))  // slave may send less than requested
-			{
-				c = Wire.read(); // receive a byte as character
-				*outputPointer = c;
-				outputPointer++;
-				i++;
-			}
-		}
-		break;
+	// case I2C_MODE:
+	// 	Wire.beginTransmission(I2CAddress);
+	// 	Wire.write(offset);
+	// 	if( Wire.endTransmission() != 0 )
+	// 	{
+	// 		returnError = IMU_HW_ERROR;
+	// 	}
+	// 	else  //OK, all worked, keep going
+	// 	{
+	// 		// request 6 bytes from slave device
+	// 		Wire.requestFrom(I2CAddress, length);
+	// 		while ( (Wire.available()) && (i < length))  // slave may send less than requested
+	// 		{
+	// 			c = Wire.read(); // receive a byte as character
+	// 			*outputPointer = c;
+	// 			outputPointer++;
+	// 			i++;
+	// 		}
+	// 	}
+	// 	break;
 
-	case SPI_MODE:
-		// take the chip select low to select the device:
-		digitalWrite(chipSelectPin, LOW);
-		// send the device the register you want to read:
-		SPI.transfer(offset | 0x80);  //Ored with "read request" bit
-		while ( i < length ) // slave may send less than requested
-		{
-			c = SPI.transfer(0x00); // receive a byte as character
-			if( c == 0xFF )
-			{
-				//May have problem
-				tempFFCounter++;
-			}
-			*outputPointer = c;
-			outputPointer++;
-			i++;
-		}
-		if( tempFFCounter == i )
-		{
-			//Ok, we've recieved all ones, report
-			returnError = IMU_ALL_ONES_WARNING;
-		}
-		// take the chip select high to de-select:
-		digitalWrite(chipSelectPin, HIGH);
-		break;
 
-	default:
-		break;
-	}
 
 	return returnError;
 }
@@ -219,42 +133,21 @@ status_t LSM6DS3Core::readRegister(uint8_t* outputPointer, uint8_t offset) {
 	uint8_t numBytes = 1;
 	status_t returnError = IMU_SUCCESS;
 
-	switch (commInterface) {
+	// switch (commInterface) {
 
-	case I2C_MODE:
-		Wire.beginTransmission(I2CAddress);
-		Wire.write(offset);
-		if( Wire.endTransmission() != 0 )
-		{
-			returnError = IMU_HW_ERROR;
-		}
-		Wire.requestFrom(I2CAddress, numBytes);
-		while ( Wire.available() ) // slave may send less than requested
-		{
-			result = Wire.read(); // receive a byte as a proper uint8_t
-		}
-		break;
-
-	case SPI_MODE:
-		// take the chip select low to select the device:
-		digitalWrite(chipSelectPin, LOW);
-		// send the device the register you want to read:
-		SPI.transfer(offset | 0x80);  //Ored with "read request" bit
-		// send a value of 0 to read the first byte returned:
-		result = SPI.transfer(0x00);
-		// take the chip select high to de-select:
-		digitalWrite(chipSelectPin, HIGH);
-		
-		if( result == 0xFF )
-		{
-			//we've recieved all ones, report
-			returnError = IMU_ALL_ONES_WARNING;
-		}
-		break;
-
-	default:
-		break;
-	}
+	// case I2C_MODE:
+	// 	Wire.beginTransmission(I2CAddress);
+	// 	Wire.write(offset);
+	// 	if( Wire.endTransmission() != 0 )
+	// 	{
+	// 		returnError = IMU_HW_ERROR;
+	// 	}
+	// 	Wire.requestFrom(I2CAddress, numBytes);
+	// 	while ( Wire.available() ) // slave may send less than requested
+	// 	{
+	// 		result = Wire.read(); // receive a byte as a proper uint8_t
+	// 	}
+	// 	break;
 
 	*outputPointer = result;
 	return returnError;
@@ -290,35 +183,18 @@ status_t LSM6DS3Core::readRegisterInt16( int16_t* outputPointer, uint8_t offset 
 //****************************************************************************//
 status_t LSM6DS3Core::writeRegister(uint8_t offset, uint8_t dataToWrite) {
 	status_t returnError = IMU_SUCCESS;
-	switch (commInterface) {
-	case I2C_MODE:
-		//Write the byte
-		Wire.beginTransmission(I2CAddress);
-		Wire.write(offset);
-		Wire.write(dataToWrite);
-		if( Wire.endTransmission() != 0 )
-		{
-			returnError = IMU_HW_ERROR;
-		}
-		break;
 
-	case SPI_MODE:
-		// take the chip select low to select the device:
-		digitalWrite(chipSelectPin, LOW);
-		// send the device the register you want to read:
-		SPI.transfer(offset);
-		// send a value of 0 to read the first byte returned:
-		SPI.transfer(dataToWrite);
-		// decrement the number of bytes left to read:
-		// take the chip select high to de-select:
-		digitalWrite(chipSelectPin, HIGH);
-		break;
-		
-		//No way to check error on this write (Except to read back but that's not reliable)
-
-	default:
-		break;
-	}
+	// switch (commInterface) {
+	// case I2C_MODE:
+	// 	//Write the byte
+	// 	Wire.beginTransmission(I2CAddress);
+	// 	Wire.write(offset);
+	// 	Wire.write(dataToWrite);
+	// 	if( Wire.endTransmission() != 0 )
+	// 	{
+	// 		returnError = IMU_HW_ERROR;
+	// 	}
+	// 	break;
 
 	return returnError;
 }
@@ -345,7 +221,7 @@ status_t LSM6DS3Core::basePage( void )
 //  Construct with same rules as the core ( uint8_t busType, uint8_t inputArg )
 //
 //****************************************************************************//
-LSM6DS3::LSM6DS3( uint8_t busType, uint8_t inputArg ) : LSM6DS3Core( busType, inputArg )
+LSM6DS3::LSM6DS3(int port, uint8_t address) : LSM6DS3Core(port, address)
 {
 	//Construct with these default settings
 
@@ -388,13 +264,13 @@ LSM6DS3::LSM6DS3( uint8_t busType, uint8_t inputArg ) : LSM6DS3Core( busType, in
 //  "myIMU.settings.accelEnabled = 1;" to configure before calling .begin();
 //
 //****************************************************************************//
-status_t LSM6DS3::begin(SensorSettings* pSettingsYouWanted)
+status_t LSM6DS3::initialize(SensorSettings* pSettingsYouWanted)
 {
 	//Check the settings structure values to determine how to setup the device
 	uint8_t dataToWrite = 0;  //Temporary variable
 
 	//Begin the inherited core.  This gets the physical wires connected
-	status_t returnError = beginCore();
+	status_t returnError = LSM6DS3Core::initialize();
 	
 	// Copy the values from the user's settings into the output 'pSettingsYouWanted'
 	// compare settings with 'pSettingsYouWanted' after 'begin' to see if anything changed
@@ -425,75 +301,75 @@ status_t LSM6DS3::begin(SensorSettings* pSettingsYouWanted)
 		//Build config reg
 		//First patch in filter bandwidth
 		switch (settings.accelBandWidth) {
-		case 50:
-			dataToWrite |= LSM6DS3_ACC_GYRO_BW_XL_50Hz;
-			break;
-		case 100:
-			dataToWrite |= LSM6DS3_ACC_GYRO_BW_XL_100Hz;
-			break;
-		case 200:
-			dataToWrite |= LSM6DS3_ACC_GYRO_BW_XL_200Hz;
-			break;
-		default:  //set default case to max passthrough
-			settings.accelEnabled = 400;
-		case 400:
-			dataToWrite |= LSM6DS3_ACC_GYRO_BW_XL_400Hz;
-			break;
+            case 50:
+                dataToWrite |= LSM6DS3_ACC_GYRO_BW_XL_50Hz;
+                break;
+            case 100:
+                dataToWrite |= LSM6DS3_ACC_GYRO_BW_XL_100Hz;
+                break;
+            case 200:
+                dataToWrite |= LSM6DS3_ACC_GYRO_BW_XL_200Hz;
+                break;
+            case 400:
+                dataToWrite |= LSM6DS3_ACC_GYRO_BW_XL_400Hz;
+                break;
+            default:  //set default case to max passthrough
+                dataToWrite |= LSM6DS3_ACC_GYRO_BW_XL_400Hz;
 		}
 		//Next, patch in full scale
 		switch (settings.accelRange) {
-		case 2:
-			dataToWrite |= LSM6DS3_ACC_GYRO_FS_XL_2g;
-			break;
-		case 4:
-			dataToWrite |= LSM6DS3_ACC_GYRO_FS_XL_4g;
-			break;
-		case 8:
-			dataToWrite |= LSM6DS3_ACC_GYRO_FS_XL_8g;
-			break;
-		default:  //set default case to 16(max)
-			settings.accelRange = 16;
-		case 16:
-			dataToWrite |= LSM6DS3_ACC_GYRO_FS_XL_16g;
-			break;
+            case 2:
+                dataToWrite |= LSM6DS3_ACC_GYRO_FS_XL_2g;
+                break;
+            case 4:
+                dataToWrite |= LSM6DS3_ACC_GYRO_FS_XL_4g;
+                break;
+            case 8:
+                dataToWrite |= LSM6DS3_ACC_GYRO_FS_XL_8g;
+                break;
+            case 16:
+                dataToWrite |= LSM6DS3_ACC_GYRO_FS_XL_16g;
+                break;
+            default:  //set default case to 16(max)
+                dataToWrite |= LSM6DS3_ACC_GYRO_FS_XL_16g;
 		}
 		//Lastly, patch in accelerometer ODR
 		switch (settings.accelSampleRate) {
-		case 13:
-			dataToWrite |= LSM6DS3_ACC_GYRO_ODR_XL_13Hz;
-			break;
-		case 26:
-			dataToWrite |= LSM6DS3_ACC_GYRO_ODR_XL_26Hz;
-			break;
-		case 52:
-			dataToWrite |= LSM6DS3_ACC_GYRO_ODR_XL_52Hz;
-			break;
-		default:  //Set default to 104
-			settings.accelSampleRate = 104;
-		case 104:
-			dataToWrite |= LSM6DS3_ACC_GYRO_ODR_XL_104Hz;
-			break;
-		case 208:
-			dataToWrite |= LSM6DS3_ACC_GYRO_ODR_XL_208Hz;
-			break;
-		case 416:
-			dataToWrite |= LSM6DS3_ACC_GYRO_ODR_XL_416Hz;
-			break;
-		case 833:
-			dataToWrite |= LSM6DS3_ACC_GYRO_ODR_XL_833Hz;
-			break;
-		case 1660:
-			dataToWrite |= LSM6DS3_ACC_GYRO_ODR_XL_1660Hz;
-			break;
-		case 3330:
-			dataToWrite |= LSM6DS3_ACC_GYRO_ODR_XL_3330Hz;
-			break;
-		case 6660:
-			dataToWrite |= LSM6DS3_ACC_GYRO_ODR_XL_6660Hz;
-			break;
-		case 13330:
-			dataToWrite |= LSM6DS3_ACC_GYRO_ODR_XL_13330Hz;
-			break;
+            case 13:
+                dataToWrite |= LSM6DS3_ACC_GYRO_ODR_XL_13Hz;
+                break;
+            case 26:
+                dataToWrite |= LSM6DS3_ACC_GYRO_ODR_XL_26Hz;
+                break;
+            case 52:
+                dataToWrite |= LSM6DS3_ACC_GYRO_ODR_XL_52Hz;
+                break;
+            case 104:
+                dataToWrite |= LSM6DS3_ACC_GYRO_ODR_XL_104Hz;
+                break;
+            case 208:
+                dataToWrite |= LSM6DS3_ACC_GYRO_ODR_XL_208Hz;
+                break;
+            case 416:
+                dataToWrite |= LSM6DS3_ACC_GYRO_ODR_XL_416Hz;
+                break;
+            case 833:
+                dataToWrite |= LSM6DS3_ACC_GYRO_ODR_XL_833Hz;
+                break;
+            case 1660:
+                dataToWrite |= LSM6DS3_ACC_GYRO_ODR_XL_1660Hz;
+                break;
+            case 3330:
+                dataToWrite |= LSM6DS3_ACC_GYRO_ODR_XL_3330Hz;
+                break;
+            case 6660:
+                dataToWrite |= LSM6DS3_ACC_GYRO_ODR_XL_6660Hz;
+                break;
+            case 13330:
+                dataToWrite |= LSM6DS3_ACC_GYRO_ODR_XL_13330Hz;
+                break;
+            default:  //Set default to 104
+                dataToWrite |= LSM6DS3_ACC_GYRO_ODR_XL_104Hz;
 		}
 	}
 	else
@@ -518,52 +394,52 @@ status_t LSM6DS3::begin(SensorSettings* pSettingsYouWanted)
 		//Build config reg
 		//First, patch in full scale
 		switch (settings.gyroRange) {
-		case 125:
-			dataToWrite |= LSM6DS3_ACC_GYRO_FS_125_ENABLED;
-			break;
-		case 245:
-			dataToWrite |= LSM6DS3_ACC_GYRO_FS_G_245dps;
-			break;
-		case 500:
-			dataToWrite |= LSM6DS3_ACC_GYRO_FS_G_500dps;
-			break;
-		case 1000:
-			dataToWrite |= LSM6DS3_ACC_GYRO_FS_G_1000dps;
-			break;
-		default:  //Default to full 2000DPS range
-			settings.gyroRange = 2000;
-		case 2000:
-			dataToWrite |= LSM6DS3_ACC_GYRO_FS_G_2000dps;
-			break;
+            case 125:
+                dataToWrite |= LSM6DS3_ACC_GYRO_FS_125_ENABLED;
+                break;
+            case 245:
+                dataToWrite |= LSM6DS3_ACC_GYRO_FS_G_245dps;
+                break;
+            case 500:
+                dataToWrite |= LSM6DS3_ACC_GYRO_FS_G_500dps;
+                break;
+            case 1000:
+                dataToWrite |= LSM6DS3_ACC_GYRO_FS_G_1000dps;
+                break;
+            case 2000:
+                dataToWrite |= LSM6DS3_ACC_GYRO_FS_G_2000dps;
+                break;
+            default:  //Default to full 2000DPS range
+                dataToWrite |= LSM6DS3_ACC_GYRO_FS_G_2000dps;
 		}
 		//Lastly, patch in gyro ODR
 		switch (settings.gyroSampleRate) {
-		case 13:
-			dataToWrite |= LSM6DS3_ACC_GYRO_ODR_G_13Hz;
-			break;
-		case 26:
-			dataToWrite |= LSM6DS3_ACC_GYRO_ODR_G_26Hz;
-			break;
-		case 52:
-			dataToWrite |= LSM6DS3_ACC_GYRO_ODR_G_52Hz;
-			break;
-		default:  //Set default to 104
-			settings.gyroSampleRate = 104;
-		case 104:
-			dataToWrite |= LSM6DS3_ACC_GYRO_ODR_G_104Hz;
-			break;
-		case 208:
-			dataToWrite |= LSM6DS3_ACC_GYRO_ODR_G_208Hz;
-			break;
-		case 416:
-			dataToWrite |= LSM6DS3_ACC_GYRO_ODR_G_416Hz;
-			break;
-		case 833:
-			dataToWrite |= LSM6DS3_ACC_GYRO_ODR_G_833Hz;
-			break;
-		case 1660:
-			dataToWrite |= LSM6DS3_ACC_GYRO_ODR_G_1660Hz;
-			break;
+            case 13:
+                dataToWrite |= LSM6DS3_ACC_GYRO_ODR_G_13Hz;
+                break;
+            case 26:
+                dataToWrite |= LSM6DS3_ACC_GYRO_ODR_G_26Hz;
+                break;
+            case 52:
+                dataToWrite |= LSM6DS3_ACC_GYRO_ODR_G_52Hz;
+                break;
+            case 104:
+                dataToWrite |= LSM6DS3_ACC_GYRO_ODR_G_104Hz;
+                break;
+            case 208:
+                dataToWrite |= LSM6DS3_ACC_GYRO_ODR_G_208Hz;
+                break;
+            case 416:
+                dataToWrite |= LSM6DS3_ACC_GYRO_ODR_G_416Hz;
+                break;
+            case 833:
+                dataToWrite |= LSM6DS3_ACC_GYRO_ODR_G_833Hz;
+                break;
+            case 1660:
+                dataToWrite |= LSM6DS3_ACC_GYRO_ODR_G_1660Hz;
+                break;
+            default:  //Set default to 104
+                dataToWrite |= LSM6DS3_ACC_GYRO_ODR_G_104Hz;
 		}
 	}
 	else

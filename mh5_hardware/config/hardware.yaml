@@ -1,6 +1,7 @@
 robot_hardware:
   - upper_body
   - lower_body
+  - i2c
 upper_body:
   type: mh5_hardware/MH5DynamixelInterface
   joints:
@@ -105,3 +106,6 @@ lower_body:
   r_ank_r:
     id: 21
     inverse: true
+i2c:
+  type: mh5_hardware/MH5I2CInterface
+  port: /dev/i2c-1

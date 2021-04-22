@@ -1,4 +1,5 @@
 #include <hardware_interface/robot_hw.h>
+#include "LSM6DS3.hpp"
 
 #pragma once
 
@@ -78,7 +79,8 @@ protected:
     const char* nss_;       // c string for nh_ namespace; used for messages
     
     // communication
-    std::string     port_;
+    std::string     port_name_;
+    int             port_;
 
     // Read Loops
     // /// @brief Sync Loop for reading the position, velocity and load
@@ -100,10 +102,10 @@ protected:
     // mh5_hardware::CommunicationStatsInterface   communication_stats_interface;
 
     // Devices
+    LSM6DS3*                imu;
     // int                         num_joints_;
     // std::vector<Joint *>        joints_;
 
-    // LSM6DS3*      IMU;
     // TLA2024*      ADC;
 
     // /**

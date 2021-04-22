@@ -1,4 +1,5 @@
-
+#include <stdio.h>
+#include <fcntl.h>
 #include <pluginlib/class_list_macros.hpp>
 
 #include "mh5_hardware/i2c_interface.hpp"
@@ -24,10 +25,20 @@ bool MH5I2CInterface::init(ros::NodeHandle& root_nh, ros::NodeHandle& robot_hw_n
     nss_ = nh_.getNamespace().c_str();     // to avoid calling it all the time
     
     // init port
-
+    if (!nh_.getParam("port", port_name_)) {
+        ROS_ERROR("[%s] no 'port' specified", nh_.getNamespace().c_str());
+        return false;
+    }
+    if ((port_ = open(port_name_.c_str(), O_RDWR)) < 0) {
+        ROS_ERROR("[%s] failed to open port %s", nh_.getNamespace().c_str(), port_name_.c_str());
+        return false;
+    }
+    ROS_INFO("[%s] successfully opened port %s", nh_.getNamespace().c_str(), port_name_.c_str());
 
     // init devices
-
+    imu = new LSM6DS3(port_, 0x6a);
+    imu->initialize();
+    
     // register handles
     // //State
     // joint_state_interface.registerHandle(joints_[i]->getJointStateHandle());

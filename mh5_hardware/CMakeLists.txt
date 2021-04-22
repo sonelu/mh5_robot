@@ -30,5 +30,6 @@ add_library(mh5_hardware
     src/dynamixel_joint.cpp
     src/dynamixel_loop.cpp
     src/i2c_interface.cpp
+    src/LSM6DS3.cpp
 )
 target_link_libraries(mh5_hardware ${catkin_LIBRARIES})
