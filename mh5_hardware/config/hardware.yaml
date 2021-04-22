@@ -109,3 +109,5 @@ lower_body:
 i2c:
   type: mh5_hardware/MH5I2CInterface
   port: /dev/i2c-1
+  rates:
+    imu: 100.0

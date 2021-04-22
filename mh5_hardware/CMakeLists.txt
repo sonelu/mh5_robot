@@ -32,4 +32,4 @@ add_library(mh5_hardware
     src/i2c_interface.cpp
     src/LSM6DS3.cpp
 )
-target_link_libraries(mh5_hardware ${catkin_LIBRARIES})
+target_link_libraries(mh5_hardware ${catkin_LIBRARIES} i2c)

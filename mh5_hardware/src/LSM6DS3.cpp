@@ -26,9 +26,13 @@ Distributed as-is; no warranty is given.
 ******************************************************************************/
 
 //See SparkFunLSM6DS3.h for additional topology notes.
-  #include <linux/i2c-dev.h>
-  #include <i2c/smbus.h>
 
+extern "C" {
+    #include <linux/i2c-dev.h>
+    #include <i2c/smbus.h>
+}
+
+#include <cstdio>
 
 #include "mh5_hardware/LSM6DS3.hpp"
 
@@ -54,9 +58,6 @@ LSM6DS3Core::LSM6DS3Core(int port, uint8_t address)
 
 status_t LSM6DS3Core::initialize(void)
 {
-	if (ioctl(port_, I2C_SLAVE, address_) < 0)
-        return IMU_HW_ERROR;
-
 	//Check the ID register to determine if the operation was a success.
 	uint8_t readCheck;
 	readRegister(&readCheck, LSM6DS3_ACC_GYRO_WHO_AM_I_REG);
@@ -128,29 +129,18 @@ status_t LSM6DS3Core::readRegisterRegion(uint8_t *outputPointer , uint8_t offset
 //
 //****************************************************************************//
 status_t LSM6DS3Core::readRegister(uint8_t* outputPointer, uint8_t offset) {
-	//Return value
-	uint8_t result = 0;
-	uint8_t numBytes = 1;
-	status_t returnError = IMU_SUCCESS;
 
-	// switch (commInterface) {
+	if (ioctl(port_, I2C_SLAVE, address_) < 0) {
+        return IMU_COMM_ERROR;
+    }
 
-	// case I2C_MODE:
-	// 	Wire.beginTransmission(I2CAddress);
-	// 	Wire.write(offset);
-	// 	if( Wire.endTransmission() != 0 )
-	// 	{
-	// 		returnError = IMU_HW_ERROR;
-	// 	}
-	// 	Wire.requestFrom(I2CAddress, numBytes);
-	// 	while ( Wire.available() ) // slave may send less than requested
-	// 	{
-	// 		result = Wire.read(); // receive a byte as a proper uint8_t
-	// 	}
-	// 	break;
+	__s32 result = i2c_smbus_read_byte_data(port_, offset);
+    if (result < 0)
+        return IMU_READ_ERROR;
 
-	*outputPointer = result;
-	return returnError;
+	*outputPointer = (uint8_t)result;
+
+	return IMU_SUCCESS;
 }
 
 //****************************************************************************//
@@ -164,12 +154,21 @@ status_t LSM6DS3Core::readRegister(uint8_t* outputPointer, uint8_t offset) {
 //****************************************************************************//
 status_t LSM6DS3Core::readRegisterInt16( int16_t* outputPointer, uint8_t offset )
 {
-	uint8_t myBuffer[2];
-	status_t returnError = readRegisterRegion(myBuffer, offset, 2);  //Does memory transfer
-	int16_t output = (int16_t)myBuffer[0] | int16_t(myBuffer[1] << 8);
+	// uint8_t myBuffer[2];
+
+    if (ioctl(port_, I2C_SLAVE, address_) < 0) {
+        return IMU_COMM_ERROR;
+    }
+
+	__s32 result = i2c_smbus_read_word_data(port_, offset);
+    if (result < 0)
+        return IMU_READ_ERROR;
+
+	// int16_t output = (int16_t)myBuffer[0] | int16_t(myBuffer[1] << 8);
 	
-	*outputPointer = output;
-	return returnError;
+	*outputPointer = (int16_t)result;
+
+	return IMU_SUCCESS;
 }
 
 //****************************************************************************//
@@ -182,21 +181,17 @@ status_t LSM6DS3Core::readRegisterInt16( int16_t* outputPointer, uint8_t offset 
 //
 //****************************************************************************//
 status_t LSM6DS3Core::writeRegister(uint8_t offset, uint8_t dataToWrite) {
-	status_t returnError = IMU_SUCCESS;
 
-	// switch (commInterface) {
-	// case I2C_MODE:
-	// 	//Write the byte
-	// 	Wire.beginTransmission(I2CAddress);
-	// 	Wire.write(offset);
-	// 	Wire.write(dataToWrite);
-	// 	if( Wire.endTransmission() != 0 )
-	// 	{
-	// 		returnError = IMU_HW_ERROR;
-	// 	}
-	// 	break;
+	if (ioctl(port_, I2C_SLAVE, address_) < 0) {
+        return IMU_COMM_ERROR;
+    }
 
-	return returnError;
+	//Check the ID register to determine if the operation was a success.
+	__s32 result = i2c_smbus_write_byte_data(port_, offset, dataToWrite);
+    if (result < 0)
+        return IMU_WRITE_ERROR;
+
+	return IMU_SUCCESS;
 }
 
 status_t LSM6DS3Core::embeddedPage( void )
@@ -266,12 +261,15 @@ LSM6DS3::LSM6DS3(int port, uint8_t address) : LSM6DS3Core(port, address)
 //****************************************************************************//
 status_t LSM6DS3::initialize(SensorSettings* pSettingsYouWanted)
 {
-	//Check the settings structure values to determine how to setup the device
-	uint8_t dataToWrite = 0;  //Temporary variable
+	uint8_t result;
+	status_t returnError = readRegister(&result, LSM6DS3_ACC_GYRO_WHO_AM_I_REG);
 
-	//Begin the inherited core.  This gets the physical wires connected
-	status_t returnError = LSM6DS3Core::initialize();
-	
+    if (returnError != IMU_SUCCESS)
+        return returnError;
+
+    if (result != 0x6a)
+        return IMU_HW_ERROR;
+
 	// Copy the values from the user's settings into the output 'pSettingsYouWanted'
 	// compare settings with 'pSettingsYouWanted' after 'begin' to see if anything changed
 	if(pSettingsYouWanted != NULL){ 
@@ -296,7 +294,7 @@ status_t LSM6DS3::initialize(SensorSettings* pSettingsYouWanted)
 	}
 
 	//Setup the accelerometer******************************
-	dataToWrite = 0; //Start Fresh!
+	uint8_t dataToWrite = 0; //Start Fresh!
 	if ( settings.accelEnabled == 1) {
 		//Build config reg
 		//First patch in filter bandwidth
@@ -372,21 +370,24 @@ status_t LSM6DS3::initialize(SensorSettings* pSettingsYouWanted)
                 dataToWrite |= LSM6DS3_ACC_GYRO_ODR_XL_104Hz;
 		}
 	}
-	else
-	{
-		//dataToWrite already = 0 (powerdown);
-	}
 
 	//Now, write the patched together data
-	writeRegister(LSM6DS3_ACC_GYRO_CTRL1_XL, dataToWrite);
+	returnResult = writeRegister(LSM6DS3_ACC_GYRO_CTRL1_XL, dataToWrite);
+    if (returnResult != IMU_SUCCESS)
+        return returnResult;
 
 	//Set the ODR bit
-	readRegister(&dataToWrite, LSM6DS3_ACC_GYRO_CTRL4_C);
+	returnResult = readRegister(&dataToWrite, LSM6DS3_ACC_GYRO_CTRL4_C);
+    if (returnResult != IMU_SUCCESS)
+        return returnResult;
+
 	dataToWrite &= ~((uint8_t)LSM6DS3_ACC_GYRO_BW_SCAL_ODR_ENABLED);
 	if ( settings.accelODROff == 1) {
 		dataToWrite |= LSM6DS3_ACC_GYRO_BW_SCAL_ODR_ENABLED;
 	}
-	writeRegister(LSM6DS3_ACC_GYRO_CTRL4_C, dataToWrite);
+	returnResult = writeRegister(LSM6DS3_ACC_GYRO_CTRL4_C, dataToWrite);
+    if (returnResult != IMU_SUCCESS)
+        return returnResult;
 
 	//Setup the gyroscope**********************************************
 	dataToWrite = 0; //Start Fresh!
@@ -442,22 +443,17 @@ status_t LSM6DS3::initialize(SensorSettings* pSettingsYouWanted)
                 dataToWrite |= LSM6DS3_ACC_GYRO_ODR_G_104Hz;
 		}
 	}
-	else
-	{
-		//dataToWrite already = 0 (powerdown);
-	}
+
 	//Write the byte
-	writeRegister(LSM6DS3_ACC_GYRO_CTRL2_G, dataToWrite);
+	returnResult = writeRegister(LSM6DS3_ACC_GYRO_CTRL2_G, dataToWrite);
+    if (returnResult != IMU_SUCCESS)
+        return returnResult;
 
 	//Setup the internal temperature sensor
 	if ( settings.tempEnabled == 1) {
 	}
 
-	//Return WHO AM I reg  //Not no mo!
-	uint8_t result;
-	readRegister(&result, LSM6DS3_ACC_GYRO_WHO_AM_I_REG);
-
-	return returnError;
+	return IMU_SUCCESS;
 }
 
 //****************************************************************************//
@@ -465,7 +461,7 @@ status_t LSM6DS3::initialize(SensorSettings* pSettingsYouWanted)
 //  Accelerometer section
 //
 //****************************************************************************//
-int16_t LSM6DS3::readRawAccelX( void )
+int16_t LSM6DS3::readRawAccelX(void)
 {
 	int16_t output;
 	status_t errorLevel = readRegisterInt16( &output, LSM6DS3_ACC_GYRO_OUTX_L_XL );

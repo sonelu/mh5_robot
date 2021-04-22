@@ -37,7 +37,12 @@ bool MH5I2CInterface::init(ros::NodeHandle& root_nh, ros::NodeHandle& robot_hw_n
 
     // init devices
     imu = new LSM6DS3(port_, 0x6a);
-    imu->initialize();
+    status_t result = imu->initialize();
+    if (result != IMU_SUCCESS) {
+        ROS_ERROR("[%s] failed to communicate with the IMU: %i", nh_.getNamespace().c_str(), result);
+        return false;
+    }
+    ROS_INFO("[%s] IMU initialized", nh_.getNamespace().c_str());
     
     // register handles
     // //State

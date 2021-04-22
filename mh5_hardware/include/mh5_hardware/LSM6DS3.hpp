@@ -42,7 +42,10 @@ Distributed as-is; no warranty is given.
 typedef enum
 {
 	IMU_SUCCESS,
+    IMU_COMM_ERROR,
 	IMU_HW_ERROR,
+    IMU_READ_ERROR,
+    IMU_WRITE_ERROR,
 	IMU_NOT_SUPPORTED,
 	IMU_GENERIC_ERROR,
 	IMU_OUT_OF_BOUNDS,

@@ -102,9 +102,18 @@ protected:
     // mh5_hardware::CommunicationStatsInterface   communication_stats_interface;
 
     // Devices
+    /**
+     * @brief IMU object
+     */
     LSM6DS3*                imu;
-    // int                         num_joints_;
-    // std::vector<Joint *>        joints_;
+    /**
+     * @brief Keeps the desired execution rate (in Hz) the for IMU
+     */
+    double                  imu_loop_rate_;
+    /**
+     * @brief Stores the last time the IMU read was executed
+     */
+    ros::Time               imu_last_execution_time_;
 
     // TLA2024*      ADC;
 
