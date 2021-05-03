@@ -69,13 +69,14 @@ void MH5I2CInterface::read(const ros::Time& time, const ros::Duration& period)
     if (imu_loop_rate_ > 0.0 && imu_last_execution_time_ + ros::Duration(1.0/imu_loop_rate_) < time)
     {
         imu_last_execution_time_ += ros::Duration(1.0/imu_loop_rate_);
-    
-        ang_vel_[0] = imu->readFloatGyroX();
-        ang_vel_[1] = imu->readFloatGyroY();
-        ang_vel_[2] = imu->readFloatGyroZ();
-        lin_acc_[0] = imu->readFloatAccelX();
-        lin_acc_[1] = imu->readFloatAccelY();
-        lin_acc_[2] = imu->readFloatAccelZ();
+        // convert to rad/s
+        ang_vel_[0] = imu->readFloatGyroX() * 0.017453293;
+        ang_vel_[1] = imu->readFloatGyroY() * 0.017453293;
+        ang_vel_[2] = imu->readFloatGyroZ() * 0.017453293;
+        // convert to m/s^2
+        lin_acc_[0] = imu->readFloatAccelX() * 9.80665;
+        lin_acc_[1] = imu->readFloatAccelY() * 9.80665;
+        lin_acc_[2] = imu->readFloatAccelZ() * 9.80665;
     }
 
     // read ADC
