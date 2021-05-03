@@ -111,3 +111,6 @@ i2c:
   port: /dev/i2c-1
   rates:
     imu: 100.0
+    adc: 1.0
+  imu:
+    id: 106

@@ -262,10 +262,10 @@ LSM6DS3::LSM6DS3(int port, uint8_t address) : LSM6DS3Core(port, address)
 status_t LSM6DS3::initialize(SensorSettings* pSettingsYouWanted)
 {
 	uint8_t result;
-	status_t returnError = readRegister(&result, LSM6DS3_ACC_GYRO_WHO_AM_I_REG);
+	status_t returnResult = readRegister(&result, LSM6DS3_ACC_GYRO_WHO_AM_I_REG);
 
-    if (returnError != IMU_SUCCESS)
-        return returnError;
+    if (returnResult != IMU_SUCCESS)
+        return returnResult;
 
     if (result != 0x6a)
         return IMU_HW_ERROR;

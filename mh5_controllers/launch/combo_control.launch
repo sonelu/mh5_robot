@@ -13,5 +13,6 @@
              dynamixel_control
              torque_control
              communication_statistics
+             imu_state
     "/>
 </launch>

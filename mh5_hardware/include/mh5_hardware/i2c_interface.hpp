@@ -1,4 +1,6 @@
 #include <hardware_interface/robot_hw.h>
+#include <hardware_interface/imu_sensor_interface.h>
+
 #include "LSM6DS3.hpp"
 
 #pragma once
@@ -114,6 +116,12 @@ protected:
      * @brief Stores the last time the IMU read was executed
      */
     ros::Time               imu_last_execution_time_;
+
+    double ang_vel_[3];
+    double lin_acc_[3];
+
+    //interfaces
+    hardware_interface::ImuSensorInterface     imu_sensor_interface;
 
     // TLA2024*      ADC;
 

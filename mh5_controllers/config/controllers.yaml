@@ -37,3 +37,7 @@ torque_control:
   right_leg: [r_hip_r, r_hip_p, r_kne_p, r_kne_y, r_ank_p, r_ank_r]
   legs: [left_leg, right_leg]
   all: [head, arms, legs]
+
+imu_state:
+  type: imu_sensor_controller/ImuSensorController
+  publish_rate: 100
