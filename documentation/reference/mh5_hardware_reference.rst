@@ -13,6 +13,12 @@ class MH5DynamixelInterface
     :private-members:
     :undoc-members:
 
+.. doxygenclass:: mh5_hardware::MH5I2CInterface
+    :members:
+    :protected-members:
+    :private-members:
+    :undoc-members:
+
 Supporting classes
 ------------------
 
@@ -29,6 +35,15 @@ class Joint
 ^^^^^^^^^^^
 
 .. doxygenclass:: mh5_hardware::Joint
+    :members:
+    :protected-members:
+    :private-members:
+    :undoc-members:
+
+class LSM6DS3
+^^^^^^^^^^^^^
+
+.. doxygenclass:: LSM6DS3
     :members:
     :protected-members:
     :private-members:
