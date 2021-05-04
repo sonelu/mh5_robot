@@ -13,6 +13,9 @@ class MH5DynamixelInterface
     :private-members:
     :undoc-members:
 
+class MH5I2CInterface
+^^^^^^^^^^^^^^^^^^^^^
+
 .. doxygenclass:: mh5_hardware::MH5I2CInterface
     :members:
     :protected-members:
