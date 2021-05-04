@@ -86,11 +86,13 @@ protected:
 
     // Devices
     /// IMU object
-    LSM6DS3*        imu;
+    LSM6DS3*        imu_;
     /// Stores the read velocities from the IMU converted to rad/s
-    double          ang_vel_[3];
+    double          ang_vel_[3] = {0.0, 0.0, 0.0};
     /// Stores the read accelerations from the IMU converted in m/s^2
-    double          lin_acc_[3];
+    double          lin_acc_[3] = {0.0, 0.0, 0.0};
+    /// Low-pass filter factor for IMU
+    double             imu_lpf_ = 0.1;
     /// Keeps the desired execution rate (in Hz) the for IMU
     double          imu_loop_rate_;
     /// Stores the last time the IMU read was executed
@@ -98,9 +100,13 @@ protected:
 
 
     //interfaces
-    hardware_interface::ImuSensorInterface     imu_sensor_interface;
+    std::vector<double>                        imu_orientation_ = {0.0, 0.0, 0.0, 1.0};
+    hardware_interface::ImuSensorHandle        imu_h_;
+    hardware_interface::ImuSensorInterface     imu_sensor_interface_;
 
     // TLA2024*      ADC;
+
+    double calcLPF(double old_val, double new_val, double factor);
 
 };
 

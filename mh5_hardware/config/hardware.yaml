@@ -110,7 +110,9 @@ i2c:
   type: mh5_hardware/MH5I2CInterface
   port: /dev/i2c-1
   rates:
-    imu: 100.0
+    imu: 200.0
     adc: 1.0
   imu:
     id: 106
+    lpf: 0.1
+    # orientation: [ 0.7071068, 0.0, -0.7071068, 0.0 ]

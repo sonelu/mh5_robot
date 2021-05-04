@@ -221,9 +221,9 @@ LSM6DS3::LSM6DS3(int port, uint8_t address) : LSM6DS3Core(port, address)
 	//Construct with these default settings
 
 	settings.gyroEnabled = 1;  //Can be 0 or 1
-	settings.gyroRange = 500;   //Max deg/s.  Can be: 125, 245, 500, 1000, 2000
+	settings.gyroRange = 245;   //Max deg/s.  Can be: 125, 245, 500, 1000, 2000
 	settings.gyroSampleRate = 416;   //Hz.  Can be: 13, 26, 52, 104, 208, 416, 833, 1666
-	settings.gyroBandWidth = 400;  //Hz.  Can be: 50, 100, 200, 400;
+	settings.gyroBandWidth = 100;  //Hz.  Can be: 50, 100, 200, 400;
 	settings.gyroFifoEnabled = 1;  //Set to include gyro in FIFO
 	settings.gyroFifoDecimation = 1;  //set 1 for on /1
 
@@ -478,9 +478,9 @@ int16_t LSM6DS3::readRawAccelX(void)
 	}
 	return output;
 }
-float LSM6DS3::readFloatAccelX( void )
+double LSM6DS3::readFloatAccelX( void )
 {
-	float output = calcAccel(readRawAccelX());
+	double output = calcAccel(readRawAccelX());
 	return output;
 }
 
@@ -501,9 +501,9 @@ int16_t LSM6DS3::readRawAccelY( void )
 	}
 	return output;
 }
-float LSM6DS3::readFloatAccelY( void )
+double LSM6DS3::readFloatAccelY( void )
 {
-	float output = calcAccel(readRawAccelY());
+	double output = calcAccel(readRawAccelY());
 	return output;
 }
 
@@ -524,15 +524,15 @@ int16_t LSM6DS3::readRawAccelZ( void )
 	}
 	return output;
 }
-float LSM6DS3::readFloatAccelZ( void )
+double LSM6DS3::readFloatAccelZ( void )
 {
-	float output = calcAccel(readRawAccelZ());
+	double output = calcAccel(readRawAccelZ());
 	return output;
 }
 
-float LSM6DS3::calcAccel( int16_t input )
+double LSM6DS3::calcAccel( int16_t input )
 {
-	float output = (float)input * 0.061 * (settings.accelRange >> 1) / 1000;
+	double output = (double)input * 0.061 * (settings.accelRange >> 1) / 1000 * 9.80665;
 	return output;
 }
 
@@ -558,9 +558,10 @@ int16_t LSM6DS3::readRawGyroX( void )
 	}
 	return output;
 }
-float LSM6DS3::readFloatGyroX( void )
+
+double LSM6DS3::readFloatGyroX( void )
 {
-	float output = calcGyro(readRawGyroX());
+	double output = calcGyro(readRawGyroX());
 	return output;
 }
 
@@ -581,9 +582,10 @@ int16_t LSM6DS3::readRawGyroY( void )
 	}
 	return output;
 }
-float LSM6DS3::readFloatGyroY( void )
+
+double LSM6DS3::readFloatGyroY( void )
 {
-	float output = calcGyro(readRawGyroY());
+	double output = calcGyro(readRawGyroY());
 	return output;
 }
 
@@ -604,20 +606,21 @@ int16_t LSM6DS3::readRawGyroZ( void )
 	}
 	return output;
 }
-float LSM6DS3::readFloatGyroZ( void )
+
+double LSM6DS3::readFloatGyroZ( void )
 {
-	float output = calcGyro(readRawGyroZ());
+	double output = calcGyro(readRawGyroZ());
 	return output;
 }
 
-float LSM6DS3::calcGyro( int16_t input )
+double LSM6DS3::calcGyro( int16_t input )
 {
 	uint8_t gyroRangeDivisor = settings.gyroRange / 125;
 	if ( settings.gyroRange == 245 ) {
 		gyroRangeDivisor = 2;
 	}
 
-	float output = (float)input * 4.375 * (gyroRangeDivisor) / 1000;
+	double output = (double)input * 4.375 * (gyroRangeDivisor) / 1000 * 0.017453293;
 	return output;
 }
 

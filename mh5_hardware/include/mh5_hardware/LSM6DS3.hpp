@@ -167,12 +167,12 @@ public:
 	int16_t readRawGyroZ( void );
 
 	//Returns the values as floats.  Inside, this calls readRaw___();
-	float readFloatAccelX( void );
-	float readFloatAccelY( void );
-	float readFloatAccelZ( void );
-	float readFloatGyroX( void );
-	float readFloatGyroY( void );
-	float readFloatGyroZ( void );
+	double readFloatAccelX( void );
+	double readFloatAccelY( void );
+	double readFloatAccelZ( void );
+	double readFloatGyroX( void );
+	double readFloatGyroY( void );
+	double readFloatGyroZ( void );
 
 	//Temperature related methods
 	int16_t readRawTemp( void );
@@ -186,8 +186,8 @@ public:
 	uint16_t fifoGetStatus( void );
 	void fifoEnd( void );
 	
-	float calcGyro( int16_t );
-	float calcAccel( int16_t );
+	double calcGyro( int16_t );
+	double calcAccel( int16_t );
 	
 private:
 
