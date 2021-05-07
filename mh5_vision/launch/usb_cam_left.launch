@@ -2,7 +2,7 @@
     <arg name="image_width" default="1280"/>
     <arg name="image_height" default="720"/>
     <arg name="frame_rate" default="20.0"/>
-    <arg name-"pixel_format" default="mjpeg" />
+    <arg name="pixel_format" default="mjpeg" />
 
     <node name="left_camera" pkg="usb_cam" type="usb_cam_node">
         <param name="video_device" value="/dev/video2"/>
