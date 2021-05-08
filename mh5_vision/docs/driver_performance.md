@@ -175,7 +175,7 @@ usb_cam | mjpeg  | 640 x 480    | 20.0          | 30.0           | 0.895        
 usb_cam | mjpeg  | 1280 x 720   | 20.0          | 19.5           | 1.42            | 1.54
 usb_cam | mjpeg  | 1980 x 1080  | 20.0          | 9.5            | 1.09            | 1.60
 **cv_camera** |
-cv_camera | mjpeg  | 160 x 120    | 30.0          | 18.5           | 0.078          | 0.18
+cv_camera | mjpeg  | 160 x 120    | 30.0          | 30.0           | 0.143          | 0.21
 cv_camera | mjpeg  | 640 x 480    | 20.0          | 20.0           | 0.55           | 0.50
 cv_camera | mjpeg  | 1280 x 720   | 20.0          | 14.4           | 1.16           | 1.15
 
