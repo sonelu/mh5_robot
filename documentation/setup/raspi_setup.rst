@@ -16,8 +16,8 @@ Once the Sd card is initialized, you need to activate ``ssh`` access. For this, 
 
 .. code-block:: bash
 
-   cd /Volumes/boot
-   touch ssh
+   $ cd /Volumes/boot
+   $ touch ssh
 
 Now you can unmount the disk from your system and place the card in the Raspberry Pi. Attach the MH5 HAT, connect an Ethernet cable (this is the easiest way to setup the Raspberry Pi and we will setup the WiFi later), insert the WiFi dongle and turn the power on for the Raspberry Pi. Wait for it to boot for the first time and you will see the activity LED on the side of the Raspberry Pi blinking intensely (will stay lit a continuous period of time) after which the system will reboot and the activity LED will go back to short bursts of light. We are now ready to setup the hardware.
 
@@ -30,7 +30,7 @@ Connect to the Pi using a ssh client. For MacOS and Linux simply run from a new 
 
 .. code-block:: bash
 
-   ssh 192.192.168.45 -l pi
+   $ ssh 192.192.168.45 -l pi
 
 You will be asked for the password which, for the newly installed Raspberry Pis is *raspberry* (you will be heckled by the system that it is not safe to keep the default password and you should change it). Depending on your ssh client you might be asked to save the sha256 key generated for the device into your list of known connection to avoid security risks deriving from a spoofed remote machine.
 
@@ -86,7 +86,7 @@ In the ssh console run:
 
 .. code-block:: bash
 
-   sudo raspi-config
+   $ sudo raspi-config
 
 Select ``1 System Options`` > ``S1 Wireless LAN``. You will now be asked for the country where the system is to be used. Each country has it's own frequencies allocated to WiFi and by default Raspbian deactivates WiFi until the correct country is setup so that no laws are broken. You will get a confirmation about the country being setup, and then you will be asked for the SSID of the network to connect to. **Do not use this**. We will setup the WiFi manually by building an Access Point (AP) using the 5Ghz WiFi interface that is built in the Pi and we will use to connect to an external WiFi (if there is one) using the dongle that is inserted in the USB port. So click ``<Cancel>`` in this screen. You will be sent back to the main menu.
 
@@ -135,12 +135,12 @@ Before doing the other installations we need to make sure that all packages and 
 
 .. code-block:: bash 
 
-    sudo apt update
-    sudo apt-get update
-    sudo apt-get -y upgrade
+    $ sudo apt update
+    $ sudo apt-get update
+    $ sudo apt-get -y upgrade
 
-    sudo apt-get install -y python3-pip
-    sudo pip3 install --upgrade setuptools
+    $ sudo apt-get install -y python3-pip
+    $ sudo pip3 install --upgrade setuptools
 
 Install the TFT display driver
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -149,11 +149,11 @@ We use Adafruit 2.0" display (no touch) and the installation of the hardware dri
 
 .. code-block:: bash 
 
-    cd ~
-    sudo apt-get install -y git
-    sudo pip3 install --upgrade adafruit-python-shell click==7.0
-    git clone https://github.com/adafruit/Raspberry-Pi-Installer-Scripts.git
-    cd Raspberry-Pi-Installer-Scripts
+    $ cd ~
+    $ sudo apt-get install -y git
+    $ sudo pip3 install --upgrade adafruit-python-shell click==7.0
+    $ git clone https://github.com/adafruit/Raspberry-Pi-Installer-Scripts.git
+    $ cd Raspberry-Pi-Installer-Scripts
 
 Before we run the installation we will need to change on pin setting in the device tree overlay: in the Adafruit implementation the back-light of the display is connected to GPIO12 (it's PWM and the only one remaining if GPIO18 is used by I2S - which will happen because we activate it later to provide support for WM8960 chip on the HAT). So we will need to change the pin to GPIO13 (actually we are not using it, but the driver will fail to initialize if the GPIO12 is used after the fan control that uses this pin for real is initialized).
 
@@ -161,7 +161,7 @@ So run
 
 .. code-block:: bash 
 
-    nano overlays/st7789v_240x320-overlay.dts
+    $ nano overlays/st7789v_240x320-overlay.dts
 
 In the file change the sequence:
 
@@ -191,7 +191,7 @@ The you can run:
 
 .. code-block:: bash
 
-    sudo python3 adafruit-pitft.py
+    $ sudo python3 adafruit-pitft.py
 
 You should see a list as follows:
 
@@ -302,25 +302,25 @@ You have to compile the ``dts`` file using the ``dtc`` (Device Tree Complier) to
 
 .. code-block:: bash
 
-    dtc --warning no-unit_address_vs_reg -I dts -O dtb -o sc16is762-spi0-ce1.dtbo sc16is762-spi0-overlay.dts
+    $ dtc --warning no-unit_address_vs_reg -I dts -O dtb -o sc16is762-spi0-ce1.dtbo sc16is762-spi0-overlay.dts
 
 A file ``sc16is762-spi0-ce1.dtbo`` should have been created in the same directory. Now place the file in the ``/boot/overlays/`` to be used by the kernel:
 
 .. code-block:: bash
 
-    sudo cp sc16is762-spi0-ce1.dtbo /boot/overlays/
+    $ sudo cp sc16is762-spi0-ce1.dtbo /boot/overlays/
 
 Now the only thing left is to activate the device in the ``/boot/config.txt`` so that the kernel driver is loaded at boot time. Run:
 
 .. code-block:: bash
 
-    sudo nano /boot/config.txt
+    $ sudo nano /boot/config.txt
 
 And add the following line after the line with the ``dtoverlay=gpio-fan,gpiopin=12,temp=60000`` (this was added by the ``rasppi-config``):
 
 .. code-block::
 
-    dtoverlay=sc16is762-spi0-ce1
+    $ dtoverlay=sc16is762-spi0-ce1
 
 Save the file and reboot your system. When you log back in you should be able to see two additional ``tty`` ports in the ``/dev`` directory:
 
@@ -356,10 +356,10 @@ To be able to use the device first clone the repository:
 
 .. code-block:: bash
 
-    git clone https://github.com/HinTak/seeed-voicecard.git
-    cd seed-voicecard
-    git checkout v5.9
-    sudo ./install.sh
+    $ git clone https://github.com/HinTak/seeed-voicecard.git
+    $ cd seed-voicecard
+    $ git checkout v5.9
+    $ sudo ./install.sh
 
 After the installation is complete you should reboot the Raspberry Pi. When logging in back with ``ssh`` you should now see if running the I2C tool:
 
@@ -443,4 +443,119 @@ The card is shown as ``seeed2micvoicec`` which is correct. You can configure the
     │            └──┘                                └──┘     └──┘     └──┘     └──┘              └──┘                              │
     │ 100<>100          100<>100   100       80                                        100<>100    0                                │
     │<Headphon>Headphon Speaker  Speaker  Speaker  Speaker  PCM Play Mono Out Mono Out Playback    3D    3D Filte 3D Filte ADC Data │
+
+Installing ROS Noetic
+---------------------
+
+We will now install ROS Noetic from sources.
+
+Setup the repo
+~~~~~~~~~~~~~~
+
+.. code-block:: bash
+
+    $ sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu buster main" > /etc/apt/sources.list.d/ros-noetic.list'
+    $ sudo apt-key adv --keyserver 'hkp://keyserver.ubuntu.com:80' --recv-key C1CF6E31E6BADE8868B172B4F42ED6FBAB17C654
+    $ sudo apt update
+
+You should see additional sources listed:
+
+.. code-block::
+
+    Get:3 http://packages.ros.org/ros/ubuntu buster InRelease [4,671 B]
+    Get:4 http://packages.ros.org/ros/ubuntu buster/main armhf Packages [28.6 kB]
+
+Install dependencies
+~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: bash
+
+    $ sudo apt-get install -y python-rosdep python-rosinstall-generator python-wstool python-rosinstall build-essential cmake
+
+We now need to initialize ``rosdep``:
+
+.. code-block:: bash
+
+    $ sudo rosdep init
+    $ rosdep update
+
+Setup a catkin space
+~~~~~~~~~~~~~~~~~~~~
+
+Because we install from sources we need to download all packages to a catkin workspace.
+
+.. code-block:: bash
+
+    $ mkdir ~/ros_catkin_ws
+    $ cd ~/ros_catkin_ws
+
+We now create a generator with a given variant of ROS (collection of packages). In out case we will use the robot and perception (that does not include GUI components like ``rviz`` and ``rqt`` as we will not run those on the robot).
+
+.. code-block:: bash
+
+    $ rosinstall_generator robot perception --rosdistro noetic --deps --wet-only --tar > noetic-ros_MH5-wet.rosinstall
+
+This will create a file ``noetic-ros_MH5-wet.rosinstall`` that contains the details for the packages that need to be installed. It is used in by ``wstool`` in the next step.
+
+
+Fetching the packages
+~~~~~~~~~~~~~~~~~~~~~
+
+We now use the ``wstool`` to download the packages that were specificated by the ``rosinstall_generator`` in the ``noetic-ros_MH5-wet.rosinstall`` file.
+
+.. code-block:: bash
+
+    $ wstool init src noetic-ros_MH5-wet.rosinstall
+
+This will take some minutes to download all these packages and place them in the ``src/`` directory in the workspace. Then before compiling the packages in the ``src`` folder, we install all system dependencies using ``rosdep install``:
+
+.. code-block:: bash
+
+    $ rosdep install -y --from-paths src --ignore-src --rosdistro noetic -r --os=debian:buster
+
+
+Building the packages
+~~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: bash
+
+    $ sudo src/catkin/bin/catkin_make_isolated --install -DCMAKE_BUILD_TYPE=Release --install-space /opt/ros/noetic -j4 -DPYTHON_EXECUTABLE=/usr/bin/python3
+
+
+Switching to ``catkin_tools``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+To build the ROS packages in the future we will use ``catkin_tools`` that we need first to install:
+
+.. code-block:: bash
+
+    $ sudo apt-get install python-catkin-tools
+
+Then we can run:
+
+.. code-block:: bash
+
+    $ catkin build
+
+Updating the installation
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If you need to add / update packages then the following activities must be performed:
+
+.. code-block:: bash
+
+    $ mv -i noetic-ros_MH5-wet.rosinstall noetic-ros_MH5-wet.rosinstall.old
+    $ rosinstall_generator <packages> --rosdistro noetic --deps --tar > noetic-ros_MH5-wet.rosinstall
+
+You can use ``diff`` to see what will be updated:
+
+.. code-block:: bash
+
+    $ diff -u noetic-desktop.rosinstall noetic-desktop.rosinstall.old
+
+Incorporate the changes:
+
+.. code-block:: bash
+
+    $ vcs import --input noetic-desktop.rosinstall ./src
 
