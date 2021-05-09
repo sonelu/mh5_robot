@@ -234,3 +234,213 @@ Wait for the installation to complete. This will update the kernel too. When ask
     Would you like the console to appear on the PiTFT display? [y/n]
 
 Answer [y]. And at the end when asked to REBOOT NOW? answer Y and press Enter. After a short pause, you should be able to see the console messages being listed on the display as the system boots and then you should see a prompt with the user pi.
+
+Configure the SC16IS762 drivers
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The drivers in the Raspberry Pi kernel are ok and they are now working fine. What we need is the overlay that will activate the drivers and contains the settings specific to out board. The stock overlays provided in the Raspberry Pi kernel for SPI interface do not support using the CE1 select, they all assume the connection is using CE0. Also the overlays are for SC16IS752 which supports lower SPI speeds and we take advantage of the increased speed of SC16IS762 to support higher baud-rates for our UART ports.
+
+For this reason we have a changed overlay definition that is provided in the SC16IS762 directory. Bellow it is listed for further reference:
+
+.. code-block::
+
+    /dts-v1/;
+    /plugin/;
+
+    / {
+        compatible = "brcm,bcm2835";
+
+        fragment@0 {
+            target = <&spi0>;
+            __overlay__ {
+                status = "okay";
+                spidev@1{
+                    status = "disabled";
+                };
+            };
+        };
+
+        fragment@1 {
+            target = <&spi0>;
+            __overlay__ {
+                #address-cells = <1>;
+                #size-cells = <0>;
+                status = "okay";
+
+                sc16is762: sc16is762@0 {
+                    compatible = "nxp,sc16is762";
+                    reg = <1>; /* CE1 */
+                    clocks = <&sc16is762_clk>;
+                    interrupt-parent = <&gpio>;
+                    interrupts = <23 2>; /* IRQ_TYPE_EDGE_FALLING */
+                    gpio-controller;
+                    #gpio-cells = <2>;
+                    spi-max-frequency = <4000000>;
+
+                };
+            };
+        };
+        fragment@2 {
+            target-path = "/";
+            __overlay__ {
+                sc16is762_clk: sc16is762_clk {
+                    compatible = "fixed-clock";
+                    #clock-cells = <0>;
+                    clock-frequency = <32000000>;
+                };
+            };
+        };
+
+        __overrides__ {
+            int_pin = <&sc16is762>,"interrupts:0";
+            xtal = <&sc16is762_clk>,"clock-frequency:0";
+            ce = <&sc16is762>,"reg:0";
+        };
+    };
+
+You have to compile the ``dts`` file using the ``dtc`` (Device Tree Complier) tool that was already installed by the TFT installer. For this run in the directory where the overlay is located:
+
+.. code-block:: bash
+
+    dtc --warning no-unit_address_vs_reg -I dts -O dtb -o sc16is762-spi0-ce1.dtbo sc16is762-spi0-overlay.dts
+
+A file ``sc16is762-spi0-ce1.dtbo`` should have been created in the same directory. Now place the file in the ``/boot/overlays/`` to be used by the kernel:
+
+.. code-block:: bash
+
+    sudo cp sc16is762-spi0-ce1.dtbo /boot/overlays/
+
+Now the only thing left is to activate the device in the ``/boot/config.txt`` so that the kernel driver is loaded at boot time. Run:
+
+.. code-block:: bash
+
+    sudo nano /boot/config.txt
+
+And add the following line after the line with the ``dtoverlay=gpio-fan,gpiopin=12,temp=60000`` (this was added by the ``rasppi-config``):
+
+.. code-block::
+
+    dtoverlay=sc16is762-spi0-ce1
+
+Save the file and reboot your system. When you log back in you should be able to see two additional ``tty`` ports in the ``/dev`` directory:
+
+.. code-block:: bash
+
+    pi@MH5-3B76:~ $ ls /dev | grep SC
+    ttySC0
+    ttySC1
+
+Installing the audio drivers
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The MH5 HAT includes a high-performance audio chip WM8960 that provides support for stereo speakers (2 x 1W) and 2 microphones that are already included on the board.
+
+To make sure that the device is recognized by the system run the following command to display the I2C devices:
+
+.. code-block:: bash
+
+    pi@MH5-3B76:~ $ i2cdetect -y 1
+        0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f
+    00:          -- -- -- -- -- -- -- -- -- -- -- -- --
+    10: -- -- -- -- -- -- -- -- -- -- 1a -- -- -- -- --
+    20: -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
+    30: -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
+    40: -- -- -- -- -- -- -- -- 48 -- -- -- -- -- -- --
+    50: -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
+    60: -- -- -- -- -- -- -- -- -- -- 6a -- -- -- -- --
+    70: -- -- -- -- -- -- -- --
+
+The device ``1a`` is the audio chip control interface. ``48`` is the ADC chip (TLA2024) that is used to monitor the voltages on the various buses on the board and ``6a`` is the accelerometer / gyroscope device.
+
+To be able to use the device first clone the repository:
+
+.. code-block:: bash
+
+    git clone https://github.com/HinTak/seeed-voicecard.git
+    cd seed-voicecard
+    git checkout v5.9
+    sudo ./install.sh
+
+After the installation is complete you should reboot the Raspberry Pi. When logging in back with ``ssh`` you should now see if running the I2C tool:
+
+.. code-block:: bash
+
+    pi@MH5-3B76:~ $ i2cdetect -y 1
+        0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f
+    00:          -- -- -- -- -- -- -- -- -- -- -- -- --
+    10: -- -- -- -- -- -- -- -- -- -- UU -- -- -- -- --
+    20: -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
+    30: -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
+    40: -- -- -- -- -- -- -- -- 48 -- -- -- -- -- -- --
+    50: -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
+    60: -- -- -- -- -- -- -- -- -- -- 6a -- -- -- -- --
+    70: -- -- -- -- -- -- -- --
+
+The fact that the device at ``1a`` is now marked as ``UU`` is indicating that the device is now managed by a dedicated driver instead of being a generic I2C device.
+
+Let's confirm that the "card" is seen:
+
+.. code-block:: bash
+
+    pi@MH5-3B76:~ $ aplay -l
+    **** List of PLAYBACK Hardware Devices ****
+    card 0: Headphones [bcm2835 Headphones], device 0: bcm2835 Headphones [bcm2835 Headphones]
+        Subdevices: 8/8
+        Subdevice #0: subdevice #0
+        Subdevice #1: subdevice #1
+        Subdevice #2: subdevice #2
+        Subdevice #3: subdevice #3
+        Subdevice #4: subdevice #4
+        Subdevice #5: subdevice #5
+        Subdevice #6: subdevice #6
+        Subdevice #7: subdevice #7
+    card 1: seeed2micvoicec [seeed-2mic-voicecard], device 0: bcm2835-i2s-wm8960-hifi wm8960-hifi-0 [bcm2835-i2s-wm8960-hifi wm8960-hifi-0]
+        Subdevices: 1/1
+        Subdevice #0: subdevice #0
+
+The card is shown as ``seeed2micvoicec`` which is correct. You can configure the output of the card by running ``alsamixer``. Select the card with **F6** key:
+
+.. code-block::
+
+    ┌────────────────────────────────────────────────────── AlsaMixer v1.1.8 ───────────────────────────────────────────────────────┐
+    │ Card: seeed-2mic-voicecard                                                                            F1:  Help               │
+    │ Chip:                                                                                                 F2:  System information │
+    │ View: F3:[Playback] F4: Capture  F5: All                                                              F6:  Select sound card  │
+    │ Item: Headphone [dB gain: 6.00, 6.00]                                                                 Esc: Exit               │
+    │                                                                                                                               │
+    │                                                                                                                               │
+    │                                                                                                                               │
+    │                                                                                                                               │
+    │                                                                                                                               │
+    │                                                                                                                               │
+    │                                                                                                                               │
+    │   ┌──┐              ┌──┐     ┌──┐     ┌──┐                                         ┌──┐     ┌──┐                              │
+    │   │▒▒│              │▒▒│     │▒▒│     │  │                                         │▒▒│     │  │                              │
+    │   │▒▒│              │▒▒│     │▒▒│     │  │                                         │▒▒│     │  │                              │
+    │   │▒▒│              │▒▒│     │▒▒│     │  │                                         │▒▒│     │  │                              │
+    │   │▒▒│              │▒▒│     │▒▒│     │  │                                         │▒▒│     │  │                              │
+    │   │▒▒│              │▒▒│     │▒▒│     │  │                                         │▒▒│     │  │                              │
+    │   │▒▒│              │▒▒│     │▒▒│     │▒▒│                                         │▒▒│     │  │                              →
+    │   │▒▒│              │▒▒│     │▒▒│     │▒▒│                                         │▒▒│     │  │                              →
+    │   │▒▒│              │▒▒│     │▒▒│     │▒▒│                                         │▒▒│     │  │                              →
+    │   │▒▒│              │▒▒│     │▒▒│     │▒▒│                                         │▒▒│     │  │                              →
+    │   │▒▒│              │▒▒│     │▒▒│     │▒▒│                                         │▒▒│     │  │                              →
+    │   │▒▒│              │▒▒│     │▒▒│     │▒▒│                                         │▒▒│     │  │                              →
+    │   │▒▒│              │▒▒│     │▒▒│     │▒▒│                                         │▒▒│     │  │                              →
+    │   │▒▒│              │▒▒│     │▒▒│     │▒▒│                                         │▒▒│     │  │                              →
+    │   │▒▒│              │▒▒│     │▒▒│     │▒▒│                                         │▒▒│     │  │                              →
+    │   │▒▒│              │▒▒│     │▒▒│     │▒▒│                                         │▒▒│     │  │                              →
+    │   │▒▒│              │▒▒│     │▒▒│     │▒▒│                                         │▒▒│     │  │                              →
+    │   │▒▒│              │▒▒│     │▒▒│     │▒▒│                                         │▒▒│     │  │                              →
+    │   │▒▒│              │▒▒│     │▒▒│     │▒▒│                                         │▒▒│     │  │                              →
+    │   │▒▒│              │▒▒│     │▒▒│     │▒▒│                                         │▒▒│     │  │                              │
+    │   │▒▒│              │▒▒│     │▒▒│     │▒▒│                                         │▒▒│     │  │                              │
+    │   │▒▒│              │▒▒│     │▒▒│     │▒▒│                                         │▒▒│     │  │                              │
+    │   │▒▒│              │▒▒│     │▒▒│     │▒▒│                                         │▒▒│     │  │                              │
+    │   │▒▒│              │▒▒│     │▒▒│     │▒▒│                                         │▒▒│     │  │                              │
+    │   └──┘     ┌──┐     └──┘     └──┘     └──┘     ┌──┐     ┌──┐     ┌──┐     ┌──┐     └──┘     ├──┤     Low      High   Left Dat │
+    │            │MM│                                │MM│     │MM│     │MM│     │MM│              │MM│                              │
+    │            └──┘                                └──┘     └──┘     └──┘     └──┘              └──┘                              │
+    │ 100<>100          100<>100   100       80                                        100<>100    0                                │
+    │<Headphon>Headphon Speaker  Speaker  Speaker  Speaker  PCM Play Mono Out Mono Out Playback    3D    3D Filte 3D Filte ADC Data │
+
