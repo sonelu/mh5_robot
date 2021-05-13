@@ -19,7 +19,7 @@ Once the Sd card is initialized, you need to activate ``ssh`` access. For this, 
    $ cd /Volumes/boot
    $ touch ssh
 
-Now you can unmount the disk from your system and place the card in the Raspberry Pi. Attach the MH5 HAT, connect an Ethernet cable (this is the easiest way to setup the Raspberry Pi and we will setup the WiFi later), insert the WiFi dongle and turn the power on for the Raspberry Pi. Wait for it to boot for the first time and you will see the activity LED on the side of the Raspberry Pi blinking intensely (will stay lit a continuous period of time) after which the system will reboot and the activity LED will go back to short bursts of light. We are now ready to setup the hardware.
+Now you can un-mount the disk from your system and place the card in the Raspberry Pi. Attach the MH5 HAT, connect an Ethernet cable (this is the easiest way to setup the Raspberry Pi and we will setup the WiFi later), insert the WiFi dongle and turn the power on for the Raspberry Pi. Wait for it to boot for the first time and you will see the activity LED on the side of the Raspberry Pi blinking intensely (will stay lit a continuous period of time) after which the system will reboot and the activity LED will go back to short bursts of light. We are now ready to setup the hardware.
 
 Connecting over ``ssh``
 -----------------------
@@ -35,6 +35,8 @@ Connect to the Pi using a ssh client. For MacOS and Linux simply run from a new 
 You will be asked for the password which, for the newly installed Raspberry Pis is *raspberry* (you will be heckled by the system that it is not safe to keep the default password and you should change it). Depending on your ssh client you might be asked to save the sha256 key generated for the device into your list of known connection to avoid security risks deriving from a spoofed remote machine.
 
 Now you should be connected to the system and should see the prompt.
+
+.. _running_raspi_config:
 
 Running ``raspi-config``
 ------------------------
@@ -82,7 +84,7 @@ The first is the Ethernet interface that is connected to the LAN. It is followed
 
 What we want now is to make some configurations that will make this particular robot different from other robots that might be connected in the same network or present in the same room. For this we will use the last 4 hex codes of the MAC address of the ``wlan0`` (the inbuilt WiFi) to identify the robot and later for the setup of the Access Point. In the example above the ``wlan0`` has ``3b:76`` as the last codes of the MAC address so, we will call this robot **MH5-3B76**.
 
-In the ssh console run:
+In the ``ssh`` console run:
 
 .. code-block:: bash
 
@@ -122,6 +124,31 @@ When loging in the system you should see the prompt reflecting the new hostname 
     This is a security risk - please login as the 'pi' user and type 'passwd' to set a new password.
 
     pi@MH5-3B76:~ $
+
+Setting the ``performance`` governor
+------------------------------------
+
+The governor is the way the processor cores are behaving when different type of load is presented. By default the Raspberry Pi uses "on demand" which means that the frequency of the cores is automatically reduced when the load is small and it will pick up when the load is increased:
+
+.. code-block:: bash 
+
+    $ cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor
+    ondemand
+
+We can change the governor by replacing with one of the available options that we can obtain by running: 
+
+.. code-block:: bash 
+
+    $ cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_available_governors
+    conservative ondemand userspace powersave performance schedutil
+
+What we are after is the ``performance`` one which we can set by executing:
+
+.. code-block:: bash 
+
+    sudo sh -c "echo performance > /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor"
+
+We need the ``sudo sh ...`` because it requires ``sudo`` elevation and ``echo`` does not support sudo direct (you cannot write ``sudo echo...``. This statement should also be included in the 
 
 Installing the drivers for hardware
 -----------------------------------
@@ -181,11 +208,12 @@ In the file change the sequence:
                                     led-gpios = <&gpio 12 0>;
                                     debug = <0>;
 
-To read:
+And change these parameters:
 
 .. code-block::
 
     led-gpios = <&gpio 13 0>;
+    spi-max-frequency = <40000000>;
 
 The you can run:
 
@@ -275,7 +303,7 @@ For this reason we have a changed overlay definition that is provided in the SC1
                     interrupts = <23 2>; /* IRQ_TYPE_EDGE_FALLING */
                     gpio-controller;
                     #gpio-cells = <2>;
-                    spi-max-frequency = <4000000>;
+                    spi-max-frequency = <15000000>;
 
                 };
             };
@@ -444,6 +472,314 @@ The card is shown as ``seeed2micvoicec`` which is correct. You can configure the
     │ 100<>100          100<>100   100       80                                        100<>100    0                                │
     │<Headphon>Headphon Speaker  Speaker  Speaker  Speaker  PCM Play Mono Out Mono Out Playback    3D    3D Filte 3D Filte ADC Data │
 
+Changing default ``python`` to ``python3``
+------------------------------------------
+
+The fresh Reasppberry Pi installation will use ``python2`` as the default python interpreter. We will change that to ``python3``.
+
+.. code-block:: bash
+
+    $ sudo rm /usr/bin/python
+    $ sudo ln -s /usr/bin/python3 /usr/bin/python
+    $ sudo rm /usr/bin/python-config
+    $ sudo ln -s /usr/bin/python3-config /usr/bin/python-config
+
+Verify that the links are to the version 3 of the interpreter:
+
+.. code-block:: bash
+
+    $ ls -al /usr/bin/python*
+    lrwxrwxrwx 1 root root      16 May 10 13:15 /usr/bin/python -> /usr/bin/python3
+    lrwxrwxrwx 1 root root       9 Mar  4  2019 /usr/bin/python2 -> python2.7
+    -rwxr-xr-x 1 root root 2984816 Oct 10  2019 /usr/bin/python2.7
+    lrwxrwxrwx 1 root root      36 Oct 10  2019 /usr/bin/python2.7-config -> arm-linux-gnueabihf-python2.7-config
+    lrwxrwxrwx 1 root root      16 Mar  4  2019 /usr/bin/python2-config -> python2.7-config
+    lrwxrwxrwx 1 root root       9 Mar 26  2019 /usr/bin/python3 -> python3.7
+    -rwxr-xr-x 2 root root 4275580 Jan 22 20:04 /usr/bin/python3.7
+    lrwxrwxrwx 1 root root      36 Jan 22 20:04 /usr/bin/python3.7-config -> arm-linux-gnueabihf-python3.7-config
+    -rwxr-xr-x 1 root root     407 Jan 25  2019 /usr/bin/python3.7-coverage
+    -rwxr-xr-x 2 root root 4275580 Jan 22 20:04 /usr/bin/python3.7m
+    lrwxrwxrwx 1 root root      37 Jan 22 20:04 /usr/bin/python3.7m-config -> arm-linux-gnueabihf-python3.7m-config
+    lrwxrwxrwx 1 root root      16 Mar 26  2019 /usr/bin/python3-config -> python3.7-config
+    -rwxr-xr-x 1 root root     403 Jan 25  2019 /usr/bin/python3-coverage
+    lrwxrwxrwx 1 root root      10 Mar 26  2019 /usr/bin/python3m -> python3.7m
+    lrwxrwxrwx 1 root root      17 Mar 26  2019 /usr/bin/python3m-config -> python3.7m-config
+    -rwxr-xr-x 1 root root     152 Dec 30  2018 /usr/bin/python3-pbr
+    lrwxrwxrwx 1 root root      23 May 10 13:16 /usr/bin/python-config -> /usr/bin/python3-config
+
+Setting-up the WiFi and router
+------------------------------
+
+Previously we have activated the WiFi interfaces. Now we will configure the system so that: the internal WiFI card will be used to setup an Access Point (AP) that can be used to connect directly to the robot, while the WiFi dongle would be used to connect to any exiting infrastructure network avaialble. We will setup packet routing between the built-in WiFi and the dongle WiFi as well as the Ethernet port. This way, if the robot is connected to an WiFi or a cabled network, if you connected with a desktop to the AP you still have internet access via this routing.
+
+Activating the AP
+~~~~~~~~~~~~~~~~~
+
+We will setup the AP to use the ``wlan0`` and bridge the second ``wlan1`` wifi and ``eth0``.
+
+We aim to use 5GHz frequency to provide very low latency. It would be recommended that when running ROS applications the remote computers are connected directly to the Access Point instead of using another network to route the traffic. We will install the needed software as follows (details from the [original Raspberry Pi documentation](https://www.raspberrypi.org/documentation/configuration/wireless/access-point-routed.md))
+
+.. code-block:: bash
+
+    $ sudo apt install hostapd
+    $ sudo systemctl unmask hostapd
+    $ sudo systemctl enable hostapd
+    $ sudo apt install dnsmasq
+    $ sudo DEBIAN_FRONTEND=noninteractive apt install -y netfilter-persistent iptables-persistent
+
+Configure the static address for the ``wlan0``:
+
+.. code-block:: bash
+
+    $ sudo nano /etc/dhcpcd.conf
+
+Add at the end of the file:
+
+.. code-block::
+
+    interface wlan0
+        static ip_address=192.168.XX.1/24
+        nohook wpa_supplicant
+
+Where XX is the last hex of the MAC address as explained in the :ref:`running_raspi_config`.
+
+Configure routing
+~~~~~~~~~~~~~~~~~
+
+We will first create create a routing configuration file:
+
+.. code-block:: bash
+
+    $ sudo nano /etc/sysctl.d/routed-ap.conf
+
+And add these lines into it:
+
+.. code-block::
+
+    # https://www.raspberrypi.org/documentation/configuration/wireless/access-point-routed.md
+    # Enable IPv4 routing
+    net.ipv4.ip_forward=1
+
+We will add the following routing rules and save them to be loaded by the ``netfilter-persistent`` service:
+
+.. code-block:: bash
+
+    $ sudo iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
+    $ sudo iptables -t nat -A POSTROUTING -o wlan1 -j MASQUERADE
+    $ sudo netfilter-persistent save
+
+Filtering rules are saved to the directory ``/etc/iptables/``.
+
+Configure the DHCP and DNS services:
+
+.. code-block:: bash
+
+    $ sudo mv /etc/dnsmasq.conf /etc/dnsmasq.conf.orig
+    $ sudo nano /etc/dnsmasq.conf
+
+And enter in the file:
+
+.. code-block::
+
+    # Listening interface
+    interface=wlan0 
+    # Pool of IP addresses served via DHCP
+    dhcp-range=192.168.XX.2,192.168.XX.100,255.255.255.0,24h
+    # Local wireless DNS domain
+    domain=wlan
+    # Alias for this router
+    address=/gw.wlan/192.168.XX.1
+
+Where you have to replace ``XX`` with the same number as above. The Raspberry Pi will deliver IP addresses between ``192.168.XX.2`` and ``192.168.XX.100``, with a lease time of 24 hours, to wireless DHCP clients. You should be able to reach the Raspberry Pi under the name ``gw.wlan`` from wireless clients.
+
+To ensure that WiFi is not blocked run the following command:
+
+.. code-block::
+
+    $ sudo rfkill unblock wlan
+
+Configure the AP
+~~~~~~~~~~~~~~~~
+
+Run the following to setup a configuration file for AP daemon:
+
+.. code-block:: bash
+
+    $ sudo nano /etc/hostapd/hostapd.conf
+
+And enter the following:
+
+.. code-block::
+
+    country_code=GB
+    interface=wlan0
+    ssid=MH5-3B76
+    hw_mode=a
+    channel=40
+    macaddr_acl=0
+    auth_algs=1
+    ignore_broadcast_ssid=0
+    wpa=2
+    wpa_passphrase=Pass4MH5
+    wpa_key_mgmt=WPA-PSK
+    wpa_pairwise=TKIP
+    rsn_pairwise=CCMP
+
+The ``ssid`` should be "MH5" plus the last 4 codes of the MAC address of the ``wlan0`` device in order to avoid conflicts if multiple robots are in the same room.
+
+``wpa_passphrase`` should be always "Pass4MH5" before sending the device to the user. They can change it with a custom password to enhance security. If the robot is to be used in a different location, the country must be set for that location and the channel should be revisited to make sure it is allowed in that country. Make sure though that it is a 5GHz channel to take advantage of the low latency that it offers. Reboot.
+
+.. code-block:: bash
+
+    $ sudo reboot now
+
+You should now be able to see the network in the list of available networks. Connect to the network from the remote desktop. You should still be able to access the internet as the RPi is connected to the Ethernet and the routing demon will effectively convert the Pi in a router.
+
+Check the latency of the connection from your connected laptop:
+
+.. code-block:: bash
+
+    $ ping 192.168.XX.1
+    PING 192.168.4.1 (192.168.4.1): 56 data bytes
+    64 bytes from 192.168.4.1: icmp_seq=0 ttl=64 time=2.181 ms
+    64 bytes from 192.168.4.1: icmp_seq=1 ttl=64 time=2.084 ms
+    64 bytes from 192.168.4.1: icmp_seq=2 ttl=64 time=1.975 ms
+    64 bytes from 192.168.4.1: icmp_seq=3 ttl=64 time=1.601 ms
+    64 bytes from 192.168.4.1: icmp_seq=4 ttl=64 time=1.088 ms
+    64 bytes from 192.168.4.1: icmp_seq=5 ttl=64 time=2.001 ms
+    64 bytes from 192.168.4.1: icmp_seq=6 ttl=64 time=1.024 ms
+    64 bytes from 192.168.4.1: icmp_seq=7 ttl=64 time=1.503 ms
+    64 bytes from 192.168.4.1: icmp_seq=8 ttl=64 time=2.127 ms
+    64 bytes from 192.168.4.1: icmp_seq=9 ttl=64 time=2.028 ms
+    64 bytes from 192.168.4.1: icmp_seq=10 ttl=64 time=1.101 ms
+    64 bytes from 192.168.4.1: icmp_seq=11 ttl=64 time=2.159 ms
+    64 bytes from 192.168.4.1: icmp_seq=12 ttl=64 time=2.025 ms
+    64 bytes from 192.168.4.1: icmp_seq=13 ttl=64 time=2.184 ms
+
+You should see something less that 2ms for the packets.
+
+Setting up a secure WiFi connection
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If you want to use the dongle to connect to a WiFi netwoork, but you don't want the passphrase for that network to be shown in clear in the ``wpa_supplicant.conf`` follow the following steps:
+
+First connect to the nework by entering the passphrase in clear:
+
+.. code-block:: bash
+
+    $ sudo nano /etc/wpa_supplicant/wpa_supplicant.conf
+
+And enter the acces information as:
+
+.. code-block::
+
+    network={
+        ssid="testing"
+        psk="testingPassword"
+    }
+
+Change the SSID and and the PSK to the ones specific for your network and make sure that the connection works by triggering the reconfiguration of the the interface:
+
+.. code-block:: bash
+
+    wpa_cli -i wlan0 reconfigure
+
+To encode the password you can use ``wpa_passphrase``:
+
+.. code-block:: bash
+
+    $ wpa_passphrase "testing" | sudo tee -a /etc/wpa_supplicant/wpa_supplicant.conf > /dev/null
+
+The program will wait fro you to enter the password (it will be displayed while you enter it, so please be careful) and it will update the ``wpa_supplicant.conf`` file with the encripted value, so you will now have two sets of details for the same SSID:
+
+.. code-block::
+
+    network={
+      ssid="testing"
+      psk="testingPassword"
+    }
+    # reading passphrase from stdin
+    network={
+      ssid="testing"
+      #psk="testingPassword"
+      psk=131e1e221f6e06e3911a2d11ff2fac9182665c004de85300f9cac208a6a80531
+    }
+
+And now you can delete the line with the password in clear and the previous section with the details in clear.
+
+Setting-up the Bluetooth Keyboard
+---------------------------------
+
+Run ``bluetoothctl`` to pair the Keyboard.
+
+.. code-block:: bash
+
+    $ bluetoothctl
+    Agent registered
+
+At the changed prompt (that indicates we are in the tool) scan the available devices and make sure that the keyboard is in pair mode by pressing the bluetooth key:
+
+.. code-block:: bash
+
+    [bluetooth]# scan on
+    Discovery started
+    [CHG] Controller DC:A6:32:49:3B:78 Discovering: yes
+    [NEW] Device 8C:85:90:D3:B8:8B 8C-85-90-D3-B8-8B
+    [NEW] Device 64:DF:3D:3E:56:6E 64-DF-3D-3E-56-6E
+    [NEW] Device 53:1D:2E:57:C3:4D 53-1D-2E-57-C3-4D
+    [CHG] Device 64:DF:3D:3E:56:6E RSSI: -53
+    [CHG] Device 53:1D:2E:57:C3:4D ManufacturerData Key: 0x004c
+    [CHG] Device 53:1D:2E:57:C3:4D ManufacturerData Value:
+    0c 0e 00 5e bd a0 e3 8c 88 26 80 fc ae 05 00 72  ...^.....&.....r
+    [NEW] Device CC:C5:0A:23:20:4E CC-C5-0A-23-20-4E
+    [CHG] Device CC:C5:0A:23:20:4E LegacyPairing: no
+    [CHG] Device CC:C5:0A:23:20:4E Name: Bluetooth 3.0 Macro Keyboard
+    [CHG] Device CC:C5:0A:23:20:4E Alias: Bluetooth 3.0 Macro Keyboard
+    [CHG] Device 53:1D:2E:57:C3:4D ManufacturerData Key: 0x004c
+    [CHG] Device 53:1D:2E:57:C3:4D ManufacturerData Value:
+    0c 0e 00 5f bd 19 f2 f8 d5 8b 42 cd 0f 66 d9 ea  ..._......B..f..
+    [CHG] Device 64:DF:3D:3E:56:6E RSSI: -64
+    [CHG] Device CC:C5:0A:23:20:4E LegacyPairing: yes
+
+The keyboard should be listed along with its addess. We will use this address to initiate pairing:
+
+.. code-block:: bash
+
+    [bluetooth]# pair CC:C5:0A:23:20:4E
+    Attempting to pair with CC:C5:0A:23:20:4E
+    [CHG] Device CC:C5:0A:23:20:4E Connected: yes
+    [CHG] Device CC:C5:0A:23:20:4E Modalias: usb:v05ACp8502d011B
+    [CHG] Device CC:C5:0A:23:20:4E UUIDs: 00001000-0000-1000-8000-00805f9b34fb
+    [CHG] Device CC:C5:0A:23:20:4E UUIDs: 00001124-0000-1000-8000-00805f9b34fb
+    [CHG] Device CC:C5:0A:23:20:4E UUIDs: 00001200-0000-1000-8000-00805f9b34fb
+    [CHG] Device CC:C5:0A:23:20:4E ServicesResolved: yes
+    [CHG] Device CC:C5:0A:23:20:4E Paired: yes
+    Pairing successful
+    [CHG] Device CC:C5:0A:23:20:4E ServicesResolved: no
+    [CHG] Device CC:C5:0A:23:20:4E Connected: no
+
+Once paired we will connect to it:
+
+.. code-block:: bash
+
+    [bluetooth]# connect CC:C5:0A:23:20:4E
+    Attempting to connect to CC:C5:0A:23:20:4E
+    [CHG] Device CC:C5:0A:23:20:4E Connected: yes
+    Connection successful
+    [CHG] Device CC:C5:0A:23:20:4E ServicesResolved: yes
+    [CHG] Device 53:1D:2E:57:C3:4D ManufacturerData Key: 0x004c
+    [CHG] Device 53:1D:2E:57:C3:4D ManufacturerData Value:
+    0c 0e 08 60 bd 99 ab 8f 8c 7a ac a1 36 f9 2c 32  .........z..6.,2
+    [Bluetooth 3.0 Macro Keyboard]# trust CC:C5:0A:23:20:4E
+    [CHG] Device CC:C5:0A:23:20:4E Trusted: yes
+    Changing CC:C5:0A:23:20:4E trust succeeded
+
+We can now leave the tool:
+
+.. code-block:: bash
+
+    [Bluetooth 3.0 Macro Keyboard]# quit
+
 Installing ROS Noetic
 ---------------------
 
@@ -470,7 +806,7 @@ Install dependencies
 
 .. code-block:: bash
 
-    $ sudo apt-get install -y python-rosdep python-rosinstall-generator python-wstool python-rosinstall build-essential cmake
+    $ sudo apt-get install -y python3-rosdep python3-rosinstall-generator python3-wstool python3-rosinstall build-essential cmake
 
 We now need to initialize ``rosdep``:
 
